@@ -101,6 +101,9 @@ export default defineComponent({
     const menuActivo = ref("Candidato");
     const submenuActivo = ref(submenus.Candidato[0]);
 
+    // Indica si se está obteniendo la etapa actual del lead desde el backend
+    const cargandoEtapa = ref(true);
+
     function cambiarMenu(menu: string) {
       menuActivo.value = menu;
       submenuActivo.value = submenus[menu][0];
@@ -108,6 +111,7 @@ export default defineComponent({
 
 
     const cargarEtapaActual = async () => {
+      cargandoEtapa.value = true;
       try {
         const etapa: IEtapaActualLeadResponse =
           await obtenerEtapaActualLead(idLead);
@@ -122,6 +126,8 @@ export default defineComponent({
         }
       } catch (error) {
         console.error(error);
+      } finally {
+        cargandoEtapa.value = false;
       }
     };
     onMounted(() => {
@@ -137,6 +143,7 @@ export default defineComponent({
       submenuActivo,
       etapaActual,
       idLead,
+      cargandoEtapa,
       cambiarMenu,
       cargarEtapaActual,
       obtenerIdEtapa,
