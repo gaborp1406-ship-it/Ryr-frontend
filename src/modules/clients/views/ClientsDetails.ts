@@ -47,12 +47,21 @@ export default defineComponent({
   },
 
   setup() {
-    const menus = ["Candidato", "Oportunidad", "Desistió"];
+    const menus = ["Candidato", "Oportunidad"];
 
     const route = useRoute();
     const etapaActual = ref(1);
     const idLead = Number(route.params.id);
+    function esEtapaAccesible(nombreSubmenu: string): boolean {
+      const idEtapa = obtenerIdEtapa(nombreSubmenu);
+      return idEtapa !== 0 && idEtapa <= etapaActual.value;
+    }
 
+    function irASubmenu(item: string) {
+      if (esEtapaAccesible(item)) {
+        submenuActivo.value = item;
+      }
+    }
     const etapas: Record<number, EtapaConfig> = {
       1: { menu: "Candidato", submenu: "Asignación" },
       2: { menu: "Candidato", submenu: "Contacto" },
@@ -61,13 +70,13 @@ export default defineComponent({
       5: { menu: "Oportunidad", submenu: "Atención" },
       6: { menu: "Oportunidad", submenu: "Negociación" },
       7: { menu: "Oportunidad", submenu: "Cierre" },
-      8: { menu: "Desistió", submenu: "Desistió" },
+      8: { menu: "Oportunidad", submenu: "Desistió-O" },
     };
 
     const submenus: Record<string, string[]> = {
       Candidato: ["Asignación", "Contacto", "Desistió", "Agendar reunión"],
-      Oportunidad: ["Atención", "Negociación", "Cierre"],
-      Desistió: ["Desistió"],
+      Oportunidad: ["Atención", "Negociación", "Cierre", "Desistió-O"],
+     
     };
 
     const iconos: Record<string, any> = {
@@ -91,6 +100,7 @@ export default defineComponent({
       { id: 5, nombre: "Atención" },
       { id: 6, nombre: "Negociación" },
       { id: 7, nombre: "Cierre" },
+      { id: 8, nombre: "Desistió-O" },
     ];
 
     function obtenerIdEtapa(nombreSubmenu: string): number {
@@ -137,6 +147,8 @@ export default defineComponent({
     return {
       menus,
       submenus,
+      esEtapaAccesible,
+      irASubmenu,
       iconos,
       estadoColor,
       menuActivo,

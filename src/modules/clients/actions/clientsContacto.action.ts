@@ -29,7 +29,7 @@ export const obtenerHistorialCorreo = async (
 ): Promise<IHistorialCorreoResponse[]> => {
   try {
     const { data } = await automatizateApiNest.get(
-      `/lead/historial-correo/${idEstadoContacto}`
+      `/lead/historial-correo/${idEstadoContacto}/20`
     );
 
     return data;
@@ -50,7 +50,7 @@ export const obtenerHistorialWhatsapp = async (
 ): Promise<IHistorialWhatsappResponse[]> => {
   try {
     const { data } = await automatizateApiNest.get(
-      `/lead/historial-whatsapp/${idEstadoContacto}`
+      `/lead/historial-whatsapp/${idEstadoContacto}/20`
     );
 
     return data;
@@ -71,7 +71,7 @@ export const obtenerHistorialLlamadas = async (
 ): Promise<IHistorialLlamadaResponse[]> => {
   try {
     const { data } = await automatizateApiNest.get(
-      `/lead/historial-llamadas/${idEstadoContacto}`
+      `/lead/historial-llamadas/${idEstadoContacto}/20`
     );
 
     return data;

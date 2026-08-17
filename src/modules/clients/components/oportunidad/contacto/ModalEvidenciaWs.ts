@@ -1,10 +1,10 @@
+import { registrarWhatsappReunion } from "@/modules/clients/actions/clients.atencion.action";
 import { defineComponent, ref } from "vue";
-import { registrarWhatsapp } from "@/modules/clients/actions/clientsContacto.action";
 
 export default defineComponent({
   props: {
     visible: { type: Boolean, required: true },
-    idEstadoContacto: { type: Number, required: true },
+    idEstadoReunion: { type: Number, required: true },
   },
 
   emits: {
@@ -66,11 +66,11 @@ export default defineComponent({
 
       try {
         // El backend sube a Supabase y guarda la URL real en BD
-        await registrarWhatsapp({
-          id_estado_contacto: props.idEstadoContacto,
+        await registrarWhatsappReunion({
+          id_estado_reunion: props.idEstadoReunion,
           url_evidencia: archivoBase64.value,
           mensaje: descripcionWhatsapp.value.trim() || undefined,
-          tipo_historial: 20,
+          tipo_historial: 21,
         });
 
         // Avisamos al padre que terminó: él recarga el historial desde el backend

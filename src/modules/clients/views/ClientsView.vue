@@ -33,9 +33,7 @@
       </div>
 
       <div class="hidden lg:block h-8 w-px bg-slate-100"></div>
-
-      <!-- Combobox: Asesor -->
-      <div class="relative w-full lg:w-52" @click.stop>
+      <div v-if="!authStore.isAgent" class="relative w-full lg:w-52" @click.stop>
         <label class="mb-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">Asesor</label>
         <div class="relative">
           <input v-model="queryAsesor" @focus="abiertoAsesor = true" @input="onInputAsesor" type="text"

@@ -33,9 +33,10 @@
 
                 <template v-else>
                     <div class="flex gap-1 px-4 pt-3 border-b border-slate-100 overflow-x-auto">
-                        <button v-for="item in submenus[menuActivo]" :key="item" @click="submenuActivo = item"
-                            class="relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-200"
-                            :class="[
+                        <button v-for="item in submenus[menuActivo]" :key="item" @click="irASubmenu(item)"
+                            :disabled="!esEtapaAccesible(item)" :class="[
+                                'relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-200',
+                                !esEtapaAccesible(item) ? 'cursor-not-allowed opacity-50' : '',
                                 item === submenuActivo
                                     ? 'text-[#2d8c4a]'
                                     : obtenerIdEtapa(item) < etapaActual
@@ -67,12 +68,14 @@
                                 :id-lead="idLead" />
                             <ClientsReunion
                                 v-else-if="menuActivo === 'Candidato' && submenuActivo === 'Agendar reunión'"
-                                :id-lead="idLead" />
-                            <ClientsAtencion v-else-if="menuActivo === 'Oportunidad' && submenuActivo === 'Atención'" />
+                                :id-lead="idLead" @etapa-finalizada="cargarEtapaActual" />
+                            <ClientsAtencion v-else-if="menuActivo === 'Oportunidad' && submenuActivo === 'Atención'"
+                             :id-lead="idLead" @etapa-finalizada="cargarEtapaActual" />
                             <ClientsNegociacion
                                 v-else-if="menuActivo === 'Oportunidad' && submenuActivo === 'Negociación'" />
                             <ClientsCierre v-else-if="menuActivo === 'Oportunidad' && submenuActivo === 'Cierre'" />
-                            <ClientsDesistioO v-else-if="menuActivo === 'Desistió' && submenuActivo === 'Desistió'" />
+                            <ClientsDesistioO
+                                v-else-if="menuActivo === 'Oportunidad' && submenuActivo === 'Desistió-O'" />
 
                         </div>
                     </transition>

@@ -46,6 +46,10 @@ export default defineComponent({
     const router = useRouter();
     const idEstadoContacto = ref<number | null>(null);
 
+    // Controla la animación de carga hasta que se resuelve el estado de contacto
+    // (estadoContacto es el responsable de decidir qué botones mostrar/ocultar)
+    const cargando = ref(true);
+
     const historialRef = ref<HistorialRefExpuesto | null>(null);
 
 
@@ -125,6 +129,10 @@ export default defineComponent({
           error
         );
 
+      } finally {
+        // Recién aquí sabemos si mostrar u ocultar los botones,
+        // así que apagamos la animación de carga en este punto.
+        cargando.value = false;
       }
     }
     const contacto = ref({
@@ -195,15 +203,15 @@ export default defineComponent({
       modalWhatsappAbierto.value = false;
     }
 
-    async function onGuardarWhatsapp(item: HistorialItem) {
-      historialRef.value?.agregarItem(item);
+    async function onGuardarWhatsapp() {
+      // recarga el historial real desde el backend (con la URL real de Supabase, no el blob)
+      await historialRef.value?.cargarHistorial();
 
       // refresca fecha/hora de primer contacto (por si era el primer registro)
       await cargarEstadoContacto();
 
       cerrarModalWhatsapp();
     }
-
     // ---------- Email ----------
     const modalEmailAbierto = ref(false);
 
@@ -215,12 +223,9 @@ export default defineComponent({
       modalEmailAbierto.value = false;
     }
 
-    async function onGuardarEmail(item: HistorialItem) {
-      historialRef.value?.agregarItem(item);
-
-      // refresca fecha/hora de primer contacto (por si era el primer registro)
+    async function onGuardarEmail() {
+      await historialRef.value?.cargarHistorial();
       await cargarEstadoContacto();
-
       cerrarModalEmail();
     }
 
@@ -277,6 +282,7 @@ export default defineComponent({
     return {
       idLead: props.idLead,
       contacto,
+      cargando,
       historialRef,
       onPrimerContactoCargado,
       verDetalleLlamada,

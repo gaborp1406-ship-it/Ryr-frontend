@@ -1,10 +1,7 @@
 import { isAxiosError } from "axios";
 import { automatizateApiNest } from "@/api/automatizateApiNest";
-import type { IActualizarFechaHoraActividadRequest, IActualizarFechaHoraActividadResponse, IAgendarReunionRequest, IAgendarReunionResponse, IListarActividadLeadResponse } from "../interfaces/clientsreunion.interface";
+import type { IActualizarFechaHoraActividadRequest, IActualizarFechaHoraActividadResponse, IAgendarReunionRequest, IAgendarReunionResponse, IListarActividadLeadResponse, IObtenerInfoAgendarReuLeadResponse } from "../interfaces/clientsreunion.interface";
 import type { IListarOpcionesResponse } from "../interfaces/clients.interface";
-
-
-
 
 
 export const agendarReunion = async (
@@ -35,6 +32,37 @@ export const agendarReunion = async (
   }
 
 };
+export const obtenerInfoAgendarReuLead = async (
+  idLead: number
+): Promise<IObtenerInfoAgendarReuLeadResponse[]> => {
+
+  try {
+
+    const { data } = await automatizateApiNest.get(
+      `/lead/obtener-info-agendarreu-lead/${idLead}`
+    );
+
+    return data;
+
+  } catch (error) {
+
+    if (isAxiosError(error)) {
+
+      throw new Error(
+        error.response?.data?.message ??
+        "Error al obtener información de agendar reunión."
+      );
+
+    }
+
+    throw error;
+  }
+
+};
+
+
+
+
 
 export const listarOpciones = async (
   idListado: number
@@ -78,7 +106,7 @@ export const listarActividadesPorLead = async (
 
     throw error;
   }
-}; 
+};
 
 export const actualizarFechaHoraActividad = async (
   payload: IActualizarFechaHoraActividadRequest
@@ -95,10 +123,14 @@ export const actualizarFechaHoraActividad = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          "Error al actualizar fecha y hora de la actividad."
+        "Error al actualizar fecha y hora de la actividad."
       );
     }
 
     throw error;
   }
 };
+
+
+
+

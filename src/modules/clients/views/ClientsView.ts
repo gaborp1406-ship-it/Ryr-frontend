@@ -13,7 +13,7 @@ import {
   listarOpciones,
   listarProyectos,
 } from '../actions/clients.action';
-
+import { useAuthStore } from '@/modules/auth/stores/auth.store';
 interface IComboOption {
   id: number;
   label: string;
@@ -23,27 +23,21 @@ export default defineComponent({
   setup() {
     const toast = useToast();
     const router = useRouter();
-
+    const authStore = useAuthStore();
     const cargando = ref(true);
     const clientes = ref<IClientePotencial[]>([]);
     const search = ref('');
-
-    // ================= DATA PARA FILTROS =================
     const asesores = ref<IListarAsesoresResponse[]>([]);
     const proyectos = ref<IListarProyectoResponse[]>([]);
     const opcionesFuente = ref<IListarOpcionesResponse[]>([]);
-
-    // ================= FILTROS SELECCIONADOS =================
     const filtroAsesor = ref<IComboOption | null>(null);
     const filtroProyecto = ref<IComboOption | null>(null);
     const filtroFuente = ref<IComboOption | null>(null);
-
-    // ================= FILTROS DE FECHA =================
     const filtroFechaInicio = ref('');
     const filtroFechaFin = ref('');
 
     const onCambioFecha = () => {
-      // Si el usuario invierte el rango, no bloqueamos, pero avisamos
+
       if (
         filtroFechaInicio.value &&
         filtroFechaFin.value &&
@@ -55,8 +49,6 @@ export default defineComponent({
       cargarClientes();
     };
 
-    // ================= COMBOBOX GENÉRICO (buscable) =================
-    // Guardamos el texto que el usuario escribe en cada combo por separado
     const queryAsesor = ref('');
     const queryProyecto = ref('');
     const queryFuente = ref('');
@@ -122,7 +114,6 @@ export default defineComponent({
       cargarClientes();
     };
 
-    // Si el usuario borra el texto manualmente, limpiamos la selección
     const onInputAsesor = () => {
       abiertoAsesor.value = true;
       if (!queryAsesor.value) filtroAsesor.value = null;
@@ -144,7 +135,6 @@ export default defineComponent({
       abiertoFuente.value = false;
     };
 
-    // ================= PAGINACIÓN =================
     const itemsPorPagina = 8;
     const paginaActual = ref(1);
 
@@ -194,7 +184,6 @@ export default defineComponent({
       if (paginaActual.value < totalPaginas.value) paginaActual.value++;
     };
 
-    // ================= CARGA DE DATOS =================
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const cargarClientes = async () => {
@@ -227,29 +216,28 @@ export default defineComponent({
 
     const limpiarFiltros = () => {
       search.value = '';
-      filtroAsesor.value = null;
+      if (!authStore.isAgent) {
+        filtroAsesor.value = null;
+        queryAsesor.value = '';
+      }
       filtroProyecto.value = null;
       filtroFuente.value = null;
       filtroFechaInicio.value = '';
       filtroFechaFin.value = '';
-      queryAsesor.value = '';
       queryProyecto.value = '';
       queryFuente.value = '';
       cargarClientes();
     };
-
     const hayFiltrosActivos = computed(
-      () =>
-        !!search.value ||
-        !!filtroAsesor.value ||
-        !!filtroProyecto.value ||
-        !!filtroFuente.value ||
-        !!filtroFechaInicio.value ||
-        !!filtroFechaFin.value
-    );
+  () =>
+    !!search.value ||
+    (!authStore.isAgent && !!filtroAsesor.value) ||
+    !!filtroProyecto.value ||
+    !!filtroFuente.value ||
+    !!filtroFechaInicio.value ||
+    !!filtroFechaFin.value
+);
 
-    // ================= NAVEGACIÓN =================
-    // Ruta falsa temporal: envía el id del lead por la URL
     const verLead = (idLead: number) => {
       router.push({
         name: "client-details",
@@ -269,6 +257,13 @@ export default defineComponent({
         proyectos.value = proyectosData;
         asesores.value = asesoresData;
 
+        if (authStore.isAgent) {
+          const idPropio = authStore.idEmploye ?? null;
+          const propio = opcionesAsesorCombo.value.find((o) => o.id === idPropio) ?? null;
+          filtroAsesor.value = propio;
+          queryAsesor.value = propio?.label ?? '';
+        }
+
         await cargarClientes();
       } catch (error: any) {
         toast.error(error.message);
@@ -276,17 +271,14 @@ export default defineComponent({
     });
 
     return {
+      authStore,
       cargando,
       clientes,
       search,
       onBuscarTexto,
-
-      // filtros de fecha
       filtroFechaInicio,
       filtroFechaFin,
       onCambioFecha,
-
-      // filtros combobox
       queryAsesor,
       queryProyecto,
       queryFuente,
@@ -308,11 +300,7 @@ export default defineComponent({
       cerrarCombos,
       limpiarFiltros,
       hayFiltrosActivos,
-
-      // navegación
       verLead,
-
-      // paginación
       clientesPaginados,
       paginaActual,
       totalPaginas,

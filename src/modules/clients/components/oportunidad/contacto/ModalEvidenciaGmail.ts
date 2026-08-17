@@ -1,5 +1,5 @@
+import { registrarCorreoReunion } from "@/modules/clients/actions/clients.atencion.action";
 import { defineComponent, ref } from "vue";
-import { registrarCorreo } from "@/modules/clients/actions/clientsContacto.action";
 
 export default defineComponent({
     props: {
@@ -7,14 +7,14 @@ export default defineComponent({
             type: Boolean,
             required: true
         },
-        idEstadoContacto: {
+        idEstadoReunion: {
             type: Number,
             required: true
         }
     },
     emits: {
         close: () => true,
-        guardar: () => true, // ya no manda item, el padre recarga el historial real
+        guardar: () => true, 
     },
 
     setup(props, { emit }) {
@@ -59,7 +59,6 @@ export default defineComponent({
 
             archivoEmailPreview.value = URL.createObjectURL(file);
 
-            // convertir a base64
             const reader = new FileReader();
 
             reader.onload = () => {
@@ -76,14 +75,12 @@ export default defineComponent({
             errorEmail.value = null;
 
             try {
-                // Registrar en backend (backend sube a Supabase y guarda URL real en BD)
-                await registrarCorreo({
-                    id_estado_contacto: props.idEstadoContacto,
+                await registrarCorreoReunion({
+                    id_estado_reunion: props.idEstadoReunion,
                     url_evidencia: archivoEmailBase64.value,
                     mensaje: descripcionEmail.value.trim() || undefined,
-                    tipo_historial: 20,
+                    tipo_historial: 21,
                 });
-                // Avisar al padre que se guardó con éxito: él recarga el historial real
                 emit("guardar");
 
                 cerrarModalEmail();

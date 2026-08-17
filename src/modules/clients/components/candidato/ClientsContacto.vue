@@ -29,7 +29,17 @@
             :id-estado-contacto="idEstadoContacto" />
         <!-- Card: Acciones -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
-            <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <!-- Animación de carga mientras se determina el estado de contacto (responsable de ocultar botones) -->
+            <div v-if="cargando" class="px-6 py-8 flex items-center justify-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span class="text-sm text-slate-400 font-medium">Cargando acciones...</span>
+            </div>
+
+            <div v-else class="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex flex-wrap gap-2">
                     <button @click="abrirModalWhatsapp"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">

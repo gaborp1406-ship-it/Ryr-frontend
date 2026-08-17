@@ -107,7 +107,7 @@ export default defineComponent({
     });
 
     function resetFilters() {
-      filters.idAsesor = null;
+      filters.idAsesor = authStore.isAgent ? (authStore.idEmploye ?? null) : null;
       filters.idTipoActividad = null;
       filters.estado = null;
     }
@@ -166,7 +166,10 @@ export default defineComponent({
       try {
         const { fechaInicio, fechaFin } = rangeForView();
         const payload: IListarActividadesAsesoresRequest = { fechaInicio, fechaFin };
-        if (filters.idAsesor != null) payload.idAsesor = filters.idAsesor;
+
+        const idAsesorEfectivo = authStore.isAgent ? authStore.idEmploye : filters.idAsesor;
+        if (idAsesorEfectivo != null) payload.idAsesor = idAsesorEfectivo;
+
         if (filters.idTipoActividad != null) payload.idTipoActividad = filters.idTipoActividad;
         if (filters.estado != null) payload.estado = filters.estado;
 
@@ -187,6 +190,9 @@ export default defineComponent({
     );
 
     onMounted(async () => {
+      if (authStore.isAgent) {
+        filters.idAsesor = authStore.idEmploye ?? null;
+      }
       await loadCatalogos();
       await loadActividades();
     });
@@ -268,115 +274,7 @@ export default defineComponent({
       view.value = 'dia';
     }
 
-    // ── MODAL: crear / ver / editar / eliminar actividad ──────────
-    // NOTA: aún no se recibió un endpoint de creación/edición/eliminación
-    // de actividades, así que estas acciones sólo actualizan la lista en
-    // memoria (se perderán al recargar filtros/vista). Cuando exista el
-    // endpoint, reemplaza addEventLocal/updateEventLocal/removeEventLocal
-    // por llamadas reales a la API y luego refresca con loadActividades().
-    const modalOpen = ref(false);
-    const editingEvent = ref<CalendarEvent | null>(null);
-    const form = reactive({
-      idTipoActividad: null as number | null,
-      title: '',
-      date: todayStr,
-      time: '10:00',
-      cliente: '',
-      asesor: authStore.nameEmploye ?? '',
-      notas: '',
-      estado: null as number | null,
-    });
 
-    function openNewModal(dateStr?: string) {
-      editingEvent.value = null;
-      Object.assign(form, {
-        idTipoActividad: tiposActividad.value[0]?.id ?? null,
-        title: '',
-        date: dateStr || currentDateStr.value,
-        time: '10:00',
-        cliente: '',
-        asesor: authStore.nameEmploye ?? '',
-        notas: '',
-        estado: estadosOpciones.value[0]?.id ?? null,
-      });
-      modalOpen.value = true;
-    }
-
-    function openDetail(ev: CalendarEvent) {
-      editingEvent.value = ev;
-      Object.assign(form, {
-        idTipoActividad: ev.idTipoActividad,
-        title: ev.title,
-        date: ev.date,
-        time: ev.time,
-        cliente: ev.cliente,
-        asesor: ev.asesor,
-        notas: ev.notas,
-        estado: ev.estado,
-      });
-      modalOpen.value = true;
-    }
-
-    function closeModal() {
-      modalOpen.value = false;
-    }
-
-    function saveEvent() {
-      if (!form.title || !form.date || !form.time || form.idTipoActividad == null) return;
-      const tipoMeta = tiposActividad.value.find((t) => t.id === form.idTipoActividad);
-      const estadoMeta = estadosOpciones.value.find((e) => e.id === form.estado);
-      try {
-        if (editingEvent.value) {
-          Object.assign(editingEvent.value, {
-            title: form.title,
-            date: form.date,
-            time: form.time,
-            idTipoActividad: form.idTipoActividad,
-            tipoActividad: tipoMeta?.nombre ?? editingEvent.value.tipoActividad,
-            cliente: form.cliente,
-            asesor: form.asesor,
-            notas: form.notas,
-            estado: form.estado ?? editingEvent.value.estado,
-            estadoLabel: estadoMeta?.nombre ?? editingEvent.value.estadoLabel,
-          });
-          toast.success('Actividad actualizada correctamente (local, pendiente de endpoint)');
-        } else {
-          calendarEvents.push({
-            id: Date.now(),
-            title: form.title,
-            date: form.date,
-            time: form.time,
-            idTipoActividad: form.idTipoActividad,
-            tipoActividad: tipoMeta?.nombre ?? '',
-            idAsesor: 0,
-            asesor: form.asesor,
-            cliente: form.cliente,
-            leadId: null,
-            notas: form.notas,
-            estado: form.estado ?? 0,
-            estadoLabel: estadoMeta?.nombre ?? '',
-            estadoActividad: true,
-          });
-          toast.success('Actividad creada correctamente (local, pendiente de endpoint)');
-        }
-        modalOpen.value = false;
-      } catch (err) {
-        toast.error('Ocurrió un error al guardar la actividad');
-      }
-    }
-
-    function deleteCurrent() {
-      if (!editingEvent.value) return;
-      try {
-        const i = calendarEvents.findIndex((e) => e.id === editingEvent.value!.id);
-        if (i !== -1) calendarEvents.splice(i, 1);
-        toast.success('Actividad eliminada (local, pendiente de endpoint)');
-      } catch (err) {
-        toast.error('Ocurrió un error al eliminar la actividad');
-      } finally {
-        modalOpen.value = false;
-      }
-    }
 
     return {
       toast,
@@ -409,14 +307,7 @@ export default defineComponent({
       eventsAtHour,
       currentDateStr,
 
-      modalOpen,
-      editingEvent,
-      form,
-      openNewModal,
-      openDetail,
-      closeModal,
-      saveEvent,
-      deleteCurrent,
+  
     };
   },
 });

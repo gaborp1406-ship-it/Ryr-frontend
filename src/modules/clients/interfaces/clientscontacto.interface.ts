@@ -35,12 +35,14 @@ export interface IRegistrarWhatsappRequest {
   id_estado_contacto: number;
   url_evidencia: string;
   mensaje?: string;
+  tipo_historial: number
 }
 
 export interface IRegistrarCorreoRequest {
   id_estado_contacto: number;
   url_evidencia: string;
   mensaje?: string;
+  tipo_historial: number
 }
 
 export interface IRegistrarLlamadaRequest {

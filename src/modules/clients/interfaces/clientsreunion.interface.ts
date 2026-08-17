@@ -60,3 +60,12 @@ export interface IActualizarFechaHoraActividadRequest {
 export interface IActualizarFechaHoraActividadResponse {
   fn_reprogramar_actividad: boolean;
 }
+
+export interface IObtenerInfoAgendarReuLeadResponse {
+  id: number;
+  id_lead_etapa: number;
+  fecha_creacion: string;
+  estado: boolean;
+}
+
+

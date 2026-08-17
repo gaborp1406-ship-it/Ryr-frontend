@@ -19,6 +19,7 @@ export default defineComponent({
         const opciones = ref<IListarOpcionesResponse[]>([]);
         const cargando = ref(false);
         const error = ref<string | null>(null);
+        
         const idSeleccionado = ref<number | null>(null);
         const procesando = ref(false);
         async function cargarOpciones() {

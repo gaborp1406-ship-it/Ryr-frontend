@@ -57,32 +57,32 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = '';
   };
 
-// stores/auth.store.ts
-const checkAuthStatus = async (): Promise<boolean> => {
-  try {
-    if (!token.value || token.value.length < 10) {
+  // stores/auth.store.ts
+  const checkAuthStatus = async (): Promise<boolean> => {
+    try {
+      if (!token.value || token.value.length < 10) {
+        logout();
+        return false;
+      }
+
+      const statusResp = await checkAuthAction(token.value); // 👈 le pasás el token en memoria
+
+      if (!statusResp.status || !statusResp.data) {
+        logout();
+        return false;
+      }
+
+      authCheckStatus.value = statusResp.data;
+      token.value = statusResp.data.token ?? token.value;
+      authStatus.value = AuthStatus.Authenticated;
+
+      return true;
+    } catch (error) {
+      console.error('Auth check error:', error);
       logout();
       return false;
     }
-
-    const statusResp = await checkAuthAction(token.value); // 👈 le pasás el token en memoria
-
-    if (!statusResp.status || !statusResp.data) {
-      logout();
-      return false;
-    }
-
-    authCheckStatus.value = statusResp.data;
-    token.value = statusResp.data.token ?? token.value;
-    authStatus.value = AuthStatus.Authenticated;
-
-    return true;
-  } catch (error) {
-    console.error('Auth check error:', error);
-    logout();
-    return false;
-  }
-};
+  };
   const getPermission = (url: string) => {
     if (!authCheckStatus.value?.permisos) return null;
     for (const menu of authCheckStatus.value.permisos) {
@@ -148,8 +148,11 @@ const checkAuthStatus = async (): Promise<boolean> => {
     isAdmin: computed(() =>
       authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Administrador),
     ),
+    isAgent: computed(() =>
+      authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Agente),
+    ),
 
-    // Actions
+
     login,
     checkAuthStatus,
     logout,
