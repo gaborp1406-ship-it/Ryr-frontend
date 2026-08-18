@@ -33,8 +33,7 @@
             <div v-if="cargando" class="px-6 py-8 flex items-center justify-center gap-2">
                 <svg class="animate-spin h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 <span class="text-sm text-slate-400 font-medium">Cargando acciones...</span>
             </div>
@@ -99,9 +98,9 @@
             @close="cerrarModalWhatsapp" @guardar="onGuardarWhatsapp" />
         <ModalEvidenciaGmail v-if="idEstadoContacto" :visible="modalEmailAbierto" :id-estado-contacto="idEstadoContacto"
             @close="cerrarModalEmail" @guardar="onGuardarEmail" />
-        <ModalLlamada :visible="modalLlamadaAbierto" @close="cerrarModalLlamada" @finalizada="onLlamadaFinalizada" />
-        <ModalDetails :visible="modalDetalleLlamadaAbierto" :detalle="detalleLlamadaSeleccionada"
-            @close="cerrarModalDetalleLlamada" />
+        <ModalLlamada :visible="modalLlamadaAbierto" :numero-destino="numeroDestino" :estado-llamada="estadoLlamada"
+            :duracion-segundos="duracionSegundos" :llamada-activa="llamadaActiva" @close="cerrarModalLlamada"
+            @hangup="cerrarModalLlamada" />
         <ModalMotivoDesistio :visible="modalDesistioAbierto" @close="cerrarModalDesistio"
             @confirmar="onConfirmarDesistio" />
         <ModalAgendarReu :visible="modalAgendarReunionAbierto" :id-lead="idLead" @close="cerrarModalAgendarReunion"
