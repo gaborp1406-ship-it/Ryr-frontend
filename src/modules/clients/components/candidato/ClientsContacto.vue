@@ -98,9 +98,9 @@
             @close="cerrarModalWhatsapp" @guardar="onGuardarWhatsapp" />
         <ModalEvidenciaGmail v-if="idEstadoContacto" :visible="modalEmailAbierto" :id-estado-contacto="idEstadoContacto"
             @close="cerrarModalEmail" @guardar="onGuardarEmail" />
-        <ModalLlamada :visible="modalLlamadaAbierto" :numero-destino="numeroDestino" :estado-llamada="estadoLlamada"
-            :duracion-segundos="duracionSegundos" :llamada-activa="llamadaActiva" @close="cerrarModalLlamada"
-            @hangup="cerrarModalLlamada" />
+        <ModalLlamada v-if="modalLlamadaAbierto" :visible="modalLlamadaAbierto" :numero-destino="numeroDestino"
+            :estado-llamada="estadoLlamada" :duracion-segundos="duracionSegundos" :llamada-activa="llamadaActiva"
+            @close="cerrarModalLlamada" @hangup="cerrarModalLlamada" />
         <ModalMotivoDesistio :visible="modalDesistioAbierto" @close="cerrarModalDesistio"
             @confirmar="onConfirmarDesistio" />
         <ModalAgendarReu :visible="modalAgendarReunionAbierto" :id-lead="idLead" @close="cerrarModalAgendarReunion"

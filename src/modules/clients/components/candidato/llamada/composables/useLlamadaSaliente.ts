@@ -86,8 +86,8 @@ export function useLlamadaSaliente() {
             case "calling":
             case "ringing-agent":
                 estadoLlamada.value = "calling";
-                reproducirTono("llamando");
-                console.log("📞 Llamando...");
+
+
                 break;
 
             case "ringing":
@@ -95,7 +95,7 @@ export function useLlamadaSaliente() {
                 estadoLlamada.value = "ringing";
                 reproducirTono("timbrando");
                 toast.info("📞 Timbrando...");
-                console.log("📞 Timbrando...");
+
                 break;
 
             case "call-connected":
@@ -105,7 +105,6 @@ export function useLlamadaSaliente() {
                 detenerTono();
                 iniciarContadorDuracion();
                 toast.success("✅ Llamada conectada");
-                console.log("✅ Conectado");
                 break;
 
             case "call-ended":
@@ -114,6 +113,10 @@ export function useLlamadaSaliente() {
                 reiniciarLlamada();
                 toast.info("📴 Llamada finalizada");
                 console.log("📴 Finalizada");
+                setTimeout(() => {
+                    estadoLlamada.value = "idle";
+                    numeroDestino.value = "";
+                }, 1000);
                 break;
 
             case "no-answer":
@@ -124,7 +127,6 @@ export function useLlamadaSaliente() {
                 toast.warning("🚫 No contestó");
                 console.log("🚫 No contestó");
 
-                // Auto-cierre después de 3 segundos
                 setTimeout(() => {
                     estadoLlamada.value = "idle";
                     numeroDestino.value = "";

@@ -5,11 +5,12 @@ import { obtenerCredencialesSip } from "../actions/Gestioninteraction.action.js"
 
 export interface ISipCredentials {
   agentExtension: string;
-  sipUsername: string;   // NUEVO
+  sipUsername: string;
   sipServer: string;
   sipPort: string;
   agentPassword: string;
 }
+
 // Conecta el track remoto (audio del cliente) al <audio id="remoteAudio">
 function configurarAudioRemoto(invitation: any) {
   try {
@@ -92,35 +93,72 @@ export function useSipPhone() {
       console.log("ℹ️ SIP ya inicializado");
       return;
     }
-    console.log('SIP AUTH DEBUG:', {
-      username: credentials.sipUsername,
-      password: credentials.agentPassword,
-      extension: credentials.agentExtension,
-    });
+
+    const sipUri = `sip:${credentials.agentExtension}@${credentials.sipServer}`;
+    const wsServer = `ws://${credentials.sipServer}:${credentials.sipPort}/ws`;
+
+    console.log("====================================");
+    console.log("📞 CONFIGURANDO SIP.JS");
+    console.log("👤 Usuario:", credentials.agentExtension);
+    console.log("🌐 SIP URI:", sipUri);
+    console.log("🔌 WebSocket:", wsServer);
+    console.log("====================================");
+
+    const uri = SIP.UserAgent.makeURI(sipUri);
+
+    if (!uri) {
+      throw new Error(`URI SIP inválida: ${sipUri}`);
+    }
+
     userAgent.value = new SIP.UserAgent({
-      uri: SIP.UserAgent.makeURI(`sip:${credentials.agentExtension}@${credentials.sipServer}`),
+      uri,
+
       transportOptions: {
-        server: `ws://${credentials.sipServer}:${credentials.sipPort}/ws`,
+        server: `ws://${credentials.sipServer}:8088/ws`,
         keepAliveInterval: 15,
       },
-      authorizationUsername: credentials.sipUsername,   // ← cambio clave
+
+      authorizationUsername: credentials.agentExtension,
       authorizationPassword: credentials.agentPassword,
+
       sessionDescriptionHandlerFactoryOptions: {
-        constraints: { audio: true, video: false },
+        constraints: {
+          audio: true,
+          video: false,
+        },
+      },
+
+      delegate: {
+        onInvite: manejarLlamadaEntrante,
+
+        onDisconnect: (error: any) => {
+          console.error("❌ SIP WebSocket desconectado:", error);
+          sipRegistrado.value = false;
+        },
       },
     });
-
-    userAgent.value.delegate = {
-      onInvite: manejarLlamadaEntrante,
-    };
 
     registerer.value = new SIP.Registerer(userAgent.value);
 
+    console.log("🚀 Iniciando SIP UserAgent...");
+
     await userAgent.value.start();
+
+    console.log("✅ WebSocket SIP conectado");
+
+    console.log("📝 Registrando extensión...");
+
     await registerer.value.register();
 
-    console.log(`✅ Agente ${credentials.agentExtension} registrado correctamente`);
-    toast.success(`Agente ${credentials.agentExtension} conectado`);
+    console.log(
+      `✅ Agente ${credentials.agentExtension} registrado correctamente`,
+    );
+
+    sipRegistrado.value = true;
+
+    toast.success(
+      `Agente ${credentials.agentExtension} conectado`,
+    );
   };
 
   // Obtiene las credenciales SIP y registra el softphone.
@@ -129,15 +167,15 @@ export function useSipPhone() {
     cargandoTelefono.value = true;
 
     try {
-     const credenciales = await obtenerCredencialesSip();
+      const credenciales = await obtenerCredencialesSip();
 
-sipCredentials.value = {
-  agentExtension: credenciales.agentExtension,
-  sipUsername: credenciales.sipUsername,
-  sipServer: credenciales.sipServer,
-  sipPort: credenciales.sipPort,
-  agentPassword: credenciales.sipPassword,   // ← leer sipPassword del backend
-};
+      sipCredentials.value = {
+        agentExtension: credenciales.agentExtension,
+        sipUsername: credenciales.sipUsername,
+        sipServer: credenciales.sipServer,
+        sipPort: credenciales.sipPort,
+        agentPassword: credenciales.sipPassword,
+      };
 
       await registrarUserAgent(sipCredentials.value);
       sipRegistrado.value = true;

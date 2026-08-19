@@ -2,6 +2,7 @@
     <transition name="fade">
         <div v-if="visible" class="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-4">
             <div class="bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden text-white">
+                <audio id="remoteAudio" autoplay class="hidden"></audio>
 
                 <!-- ENCABEZADO -->
                 <div class="flex flex-col items-center gap-4 px-6 pt-12 pb-8">
@@ -23,7 +24,7 @@
                             <span v-else-if="estadoLlamada === 'ringing'">Timbrando...</span>
                             <span v-else-if="estadoLlamada === 'in-call'">{{ tiempoFormato }}</span>
                             <span v-else-if="estadoLlamada === 'no-answer'">No contestó</span>
-                            <span v-else>Esperando...</span>
+                          
                         </p>
                     </div>
                 </div>
@@ -33,16 +34,12 @@
                     <!-- Botones de control durante llamada activa -->
                     <div v-if="llamadaActiva" class="flex items-center justify-center gap-4 mb-6">
                         <!-- Botón Micrófono -->
-                        <button
-                            @click="$emit('toggle-mic')"
-                            :class="[
-                                'w-12 h-12 rounded-full flex items-center justify-center transition-all',
-                                micSilenciado
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-slate-700 hover:bg-slate-600'
-                            ]"
-                            title="Silenciar micrófono"
-                        >
+                        <button @click="$emit('toggle-mic')" :class="[
+                            'w-12 h-12 rounded-full flex items-center justify-center transition-all',
+                            micSilenciado
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-slate-700 hover:bg-slate-600'
+                        ]" title="Silenciar micrófono">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 class="w-5 h-5 text-white">
                                 <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
@@ -53,16 +50,12 @@
                         </button>
 
                         <!-- Botón Altavoz -->
-                        <button
-                            @click="$emit('toggle-speaker')"
-                            :class="[
-                                'w-12 h-12 rounded-full flex items-center justify-center transition-all',
-                                altavozSilenciado
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-slate-700 hover:bg-slate-600'
-                            ]"
-                            title="Silenciar altavoz"
-                        >
+                        <button @click="$emit('toggle-speaker')" :class="[
+                            'w-12 h-12 rounded-full flex items-center justify-center transition-all',
+                            altavozSilenciado
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-slate-700 hover:bg-slate-600'
+                        ]" title="Silenciar altavoz">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 class="w-5 h-5 text-white">
                                 <path d="M11 5 6 9H2v6h4l5 4V5Z" />
@@ -74,13 +67,11 @@
                     </div>
 
                     <!-- Botón Colgar -->
-                    <button
-                        v-if="estadoLlamada !== 'no-answer' && estadoLlamada !== 'idle'"
-                        @click="$emit('hangup')"
-                        class="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors"
-                    >
+                    <button v-if="estadoLlamada !== 'no-answer' && estadoLlamada !== 'idle'" @click="$emit('hangup')"
+                        class="w-full flex items-center justify-center gap-2 py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors">
                         <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 rotate-[135deg]">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.902.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.908.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                            <path
+                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.902.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.908.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
                         </svg>
                         Colgar
                     </button>

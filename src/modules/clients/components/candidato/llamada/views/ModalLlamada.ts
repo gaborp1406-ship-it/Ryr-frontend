@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, onUnmounted, ref } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, ref } from "vue";
 import { useToast } from "vue-toastification";
 
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
@@ -35,7 +35,9 @@ export default defineComponent({
       makeCall: realizarLlamadaSaliente,
       hangup,
     } = useLlamadaSaliente();
-
+    const modalLlamadaVisible = computed(() => {
+      return estadoLlamada.value !== "idle";
+    });
     /**
      * INICIALIZAR: Conectar SIP al montar el componente
      */
@@ -122,6 +124,7 @@ export default defineComponent({
       llamadaActiva,
       numeroDestino,
       duracionSegundos,
+      modalLlamadaVisible,
 
       // Métodos
       makeCall,

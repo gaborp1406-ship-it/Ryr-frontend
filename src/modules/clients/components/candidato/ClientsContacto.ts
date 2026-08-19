@@ -1,5 +1,5 @@
 import IconWhatsapp from "@/modules/common/icons/IconWhatsapp.vue";
-import { defineComponent, ref, computed, onMounted, onUnmounted } from "vue";
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import ModalEvidenciaWs from "./contacto/ModalEvidenciaWs.vue";
@@ -72,6 +72,8 @@ export default defineComponent({
       hangup,
     } = useLlamadaSaliente();
 
+
+
     function formatFechaSimple(valor: string | null | undefined): string {
       if (!valor) return "-";
       const d = new Date(valor);
@@ -136,7 +138,11 @@ export default defineComponent({
 
     // ---------- Llamada ----------
     const modalLlamadaAbierto = ref(false);
-
+    watch(estadoLlamada, (nuevoEstado, estadoAnterior) => {
+      if (nuevoEstado === "idle" && estadoAnterior !== "idle") {
+        modalLlamadaAbierto.value = false;
+      }
+    });
     async function abrirModalLlamada() {
       modalLlamadaAbierto.value = true;
 
@@ -252,6 +258,9 @@ export default defineComponent({
     async function onReunionAgendada() {
       cerrarModalAgendarReunion();
       emit("etapa-finalizada");
+    }
+   function cerrarModalLlamadaAuto() {
+      modalLlamadaAbierto.value = false;
     }
 
     onMounted(() => {
