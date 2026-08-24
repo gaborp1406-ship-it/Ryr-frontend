@@ -139,6 +139,8 @@
             <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Cliente</th>
             <th class="rlv-mono px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">DNI</th>
             <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Fuente</th>
+                        <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Etapa</th>
+
             <th class="px-4 py-3.5 text-center text-[10px] font-medium uppercase tracking-[0.14em]">Ver</th>
           </tr>
         </thead>
@@ -193,6 +195,7 @@
               <td class="px-4 py-3 text-slate-800">{{ cliente.proyecto }}</td>
               <td class="px-4 py-3 text-slate-800">{{ cliente.cliente }}</td>
               <td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.dni_cliente }}</td>
+
               <td class="px-4 py-3">
                 <span
                   class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
@@ -200,7 +203,7 @@
                   {{ cliente.fuente }}
                 </span>
               </td>
-
+<td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.etapa_actual }}</td>
               <td class="px-4 py-3 text-center">
                 <button type="button" @click="verLead(cliente.id_lead)" title="Ver detalle del lead"
                   class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">

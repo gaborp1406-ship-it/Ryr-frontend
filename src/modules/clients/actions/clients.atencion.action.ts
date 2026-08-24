@@ -144,3 +144,71 @@ export const registrarCorreoReunion = async (
     throw error;
   }
 };
+
+
+export const obtenerTodasActividades = async (
+  id_lead: number
+) => {
+  try {
+    const { data: response } = await automatizateApiNest.get(
+      `/lead/todas-actividades/${id_lead}`
+    );
+
+    return response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        "Error al obtener las actividades."
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const finalizarEtapaAtencion = async (
+  id_lead: number
+) => {
+  try {
+    const { data: response } = await automatizateApiNest.post(
+      `/lead/finalizar-etapa-atencion/${id_lead}`
+    );
+
+    return response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        "Error al finalizar la etapa de atención."
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const finalizarEtapaOportunidadDesistio = async (
+  id_lead: number,
+  motivo?: number
+) => {
+  try {
+    const { data: response } = await automatizateApiNest.post(
+      `/lead/finalizar-etapa-oportunidad-desistio/${id_lead}`,
+      {
+        motivo,
+      }
+    );
+
+    return response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        "Error al finalizar la etapa de oportunidad como desistido."
+      );
+    }
+
+    throw error;
+  }
+};

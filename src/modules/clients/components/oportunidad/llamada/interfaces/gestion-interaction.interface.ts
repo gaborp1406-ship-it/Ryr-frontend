@@ -1,8 +1,8 @@
 
 export interface ICredencialesSipResponse {
   success: boolean;
-  sipUsername: string;
-  sipPassword: string;
+  agentExtension: string;
+  agentPassword: string;
   sipServer: string;
   sipPort: string;
   expirenIn: number;
@@ -13,8 +13,6 @@ export interface ICallRequest {
   agent: string;
   phone: string;
   idTrabajador: number;
-  id_etapa_lead: number;
-  tipo_historial: number
 }
 
 

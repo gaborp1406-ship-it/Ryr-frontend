@@ -5,7 +5,6 @@ import { obtenerCredencialesSip } from "../actions/Gestioninteraction.action.js"
 
 export interface ISipCredentials {
   agentExtension: string;
-  sipUsername: string;
   sipServer: string;
   sipPort: string;
   agentPassword: string;
@@ -14,41 +13,58 @@ export interface ISipCredentials {
 // Conecta el track remoto (audio del cliente) al <audio id="remoteAudio">
 function configurarAudioRemoto(invitation: any) {
   try {
-    const pc = invitation.sessionDescriptionHandler?.peerConnection;
     const audio = document.getElementById("remoteAudio") as HTMLAudioElement | null;
-    const remoteStream = new MediaStream();
 
     if (!audio) {
-      console.warn('⚠️ No se encontró el elemento <audio id="remoteAudio">');
-    }
-
-    if (!pc) {
-      console.warn("⚠️ No se encontró peerConnection");
+      console.warn("⚠️ No existe #remoteAudio");
       return;
     }
 
-    const reproducir = () => {
-      if (!audio) return;
-      audio.srcObject = remoteStream;
-      audio.play().catch((err) => console.warn("⚠️ Autoplay bloqueado:", err));
-    };
+    const sessionDescriptionHandler = invitation.sessionDescriptionHandler;
 
-    pc.ontrack = (event: RTCTrackEvent) => {
-      console.log("🔊 Track remoto recibido:", event.track.kind);
-      remoteStream.addTrack(event.track);
-      reproducir();
-    };
+    if (!sessionDescriptionHandler) {
+      console.warn("⚠️ No existe SessionDescriptionHandler");
+      return;
+    }
 
-    pc.getReceivers().forEach((receiver: any) => {
-      if (receiver.track) remoteStream.addTrack(receiver.track);
+    const pc = sessionDescriptionHandler.peerConnection;
+
+    if (!pc) {
+      console.warn("⚠️ No existe PeerConnection");
+      return;
+    }
+
+    const remoteStream = new MediaStream();
+
+    pc.getReceivers().forEach((receiver: RTCRtpReceiver) => {
+      if (receiver.track) {
+        console.log("🔊 Receiver encontrado:", receiver.track.kind);
+        remoteStream.addTrack(receiver.track);
+      }
     });
 
-    if (remoteStream.getTracks().length > 0) reproducir();
+    pc.ontrack = (event: RTCTrackEvent) => {
+      console.log("🔊 TRACK REMOTO:", event.track.kind);
+      remoteStream.addTrack(event.track);
+      audio.srcObject = remoteStream;
+      audio.play()
+        .then(() => console.log("🔊 Audio remoto reproduciéndose (ontrack)"))
+        .catch((error) => console.warn("⚠️ No se pudo reproducir audio (ontrack):", error));
+    };
+
+    audio.srcObject = remoteStream;
+
+    // 👇 FIX: forzar play() también acá, no solo dentro de ontrack
+    audio.play()
+      .then(() => console.log("🔊 Audio remoto reproduciéndose (inicial)"))
+      .catch((error) => console.warn("⚠️ No se pudo reproducir audio (inicial):", error));
+
+    console.log("🎧 Audio remoto configurado");
+
   } catch (error) {
-    console.warn("⚠️ No se pudo configurar el audio remoto", error);
+    console.error("❌ Error configurando audio remoto:", error);
   }
 }
-
 // Maneja el registro del softphone (SIP.js) y las llamadas entrantes (bridge del agente)
 export function useSipPhone() {
   const toast = useToast();
@@ -62,29 +78,47 @@ export function useSipPhone() {
   const sipCredentials = ref<ISipCredentials | null>(null);
 
   const manejarLlamadaEntrante = async (invitation: any) => {
-    console.log("📞 Llamada entrante");
+    console.log("=================================");
+    console.log("📞 INVITE RECIBIDO");
+    console.log("=================================");
+
     currentSession.value = invitation;
 
+    invitation.stateChange.addListener((state: any) => {
+      console.log("📡 SIP STATE:", state);
+
+      if (state === SIP.SessionState.Establishing) {
+        console.log("🔄 ESTABLISHING");
+      }
+
+      if (state === SIP.SessionState.Established) {
+        console.log("✅ ESTABLISHED");
+      }
+
+      if (state === SIP.SessionState.Terminated) {
+        console.log("❌ TERMINATED");
+        currentSession.value = null;
+      }
+    });
+
     try {
+      console.log("📞 Ejecutando invitation.accept()...");
+
       await invitation.accept({
         sessionDescriptionHandlerOptions: {
-          constraints: { audio: true, video: false },
+          constraints: {
+            audio: true,
+            video: false,
+          },
         },
       });
 
+      console.log("✅ invitation.accept() TERMINÓ");
+
       configurarAudioRemoto(invitation);
 
-      invitation.stateChange.addListener((state: any) => {
-        if (state === SIP.SessionState.Established) {
-          console.log("✅ Agente conectado al bridge");
-        }
-        if (state === SIP.SessionState.Terminated) {
-          console.log("📴 Llamada finalizada (SIP)");
-          currentSession.value = null;
-        }
-      });
     } catch (error) {
-      console.error("❌ Error aceptando llamada:", error);
+      console.error("❌ invitation.accept() FALLÓ:", error);
     }
   };
 
@@ -94,71 +128,55 @@ export function useSipPhone() {
       return;
     }
 
-    const sipUri = `sip:${credentials.agentExtension}@${credentials.sipServer}`;
-    const wsServer = `ws://${credentials.sipServer}:${credentials.sipPort}/ws`;
-
-    console.log("====================================");
-    console.log("📞 CONFIGURANDO SIP.JS");
-    console.log("👤 Usuario:", credentials.agentExtension);
-    console.log("🌐 SIP URI:", sipUri);
-    console.log("🔌 WebSocket:", wsServer);
-    console.log("====================================");
-
-    const uri = SIP.UserAgent.makeURI(sipUri);
-
-    if (!uri) {
-      throw new Error(`URI SIP inválida: ${sipUri}`);
-    }
-
     userAgent.value = new SIP.UserAgent({
-      uri,
-
+      uri: SIP.UserAgent.makeURI(`sip:${credentials.agentExtension}@${credentials.sipServer}`),
       transportOptions: {
-        server: `ws://${credentials.sipServer}:8088/ws`,
+        server: `ws://${credentials.sipServer}:${credentials.sipPort}/ws`,
         keepAliveInterval: 15,
       },
-
       authorizationUsername: credentials.agentExtension,
       authorizationPassword: credentials.agentPassword,
-
       sessionDescriptionHandlerFactoryOptions: {
-        constraints: {
-          audio: true,
-          video: false,
-        },
-      },
-
-      delegate: {
-        onInvite: manejarLlamadaEntrante,
-
-        onDisconnect: (error: any) => {
-          console.error("❌ SIP WebSocket desconectado:", error);
-          sipRegistrado.value = false;
-        },
+        constraints: { audio: true, video: false },
       },
     });
 
-    registerer.value = new SIP.Registerer(userAgent.value);
+    userAgent.value.delegate = {
+      onInvite: manejarLlamadaEntrante,
+    };
 
-    console.log("🚀 Iniciando SIP UserAgent...");
+    registerer.value = new SIP.Registerer(userAgent.value);
 
     await userAgent.value.start();
 
-    console.log("✅ WebSocket SIP conectado");
+    // 👇 FIX: esperar el estado "Registered" real, no solo el envío del REGISTER
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Timeout esperando confirmación de registro SIP"));
+      }, 10000);
 
-    console.log("📝 Registrando extensión...");
+      registerer.value.stateChange.addListener((state: SIP.RegistererState) => {
+        console.log("📋 Registerer state:", state);
 
-    await registerer.value.register();
+        if (state === SIP.RegistererState.Registered) {
+          clearTimeout(timeout);
+          resolve();
+        }
 
-    console.log(
-      `✅ Agente ${credentials.agentExtension} registrado correctamente`,
-    );
+        if (state === SIP.RegistererState.Unregistered) {
+          clearTimeout(timeout);
+          reject(new Error("El registro SIP fue rechazado"));
+        }
+      });
 
-    sipRegistrado.value = true;
+      registerer.value.register().catch((err: any) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
+    });
 
-    toast.success(
-      `Agente ${credentials.agentExtension} conectado`,
-    );
+    console.log(`✅ Agente ${credentials.agentExtension} registrado correctamente (confirmado)`);
+    toast.success(`Agente ${credentials.agentExtension} conectado`);
   };
 
   // Obtiene las credenciales SIP y registra el softphone.
@@ -170,21 +188,27 @@ export function useSipPhone() {
       const credenciales = await obtenerCredencialesSip();
 
       sipCredentials.value = {
-        agentExtension: credenciales.agentExtension,
-        sipUsername: credenciales.sipUsername,
+        agentExtension: credenciales.sipUsername,   // ✅ corregido
         sipServer: credenciales.sipServer,
         sipPort: credenciales.sipPort,
-        agentPassword: credenciales.sipPassword,
+        agentPassword: credenciales.sipPassword,     // ✅ corregido
       };
 
+
+
       await registrarUserAgent(sipCredentials.value);
+
+      // 👇 Ahora sí es seguro marcarlo true: ya llegó el 200 OK del REGISTER
       sipRegistrado.value = true;
 
       return sipCredentials.value;
     } catch (error) {
+      console.error("❌ Error conectando teléfono:", error);
+
       userAgent.value = null;
       registerer.value = null;
       currentSession.value = null;
+      sipRegistrado.value = false; // 👈 asegurate de resetear esto también
 
       toast.error("Error registrando el teléfono");
       throw error;

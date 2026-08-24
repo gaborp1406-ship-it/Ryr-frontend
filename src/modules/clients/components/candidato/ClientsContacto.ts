@@ -5,23 +5,16 @@ import { useToast } from "vue-toastification";
 import ModalEvidenciaWs from "./contacto/ModalEvidenciaWs.vue";
 import ModalEvidenciaGmail from "./contacto/ModalEvidenciaGmail.vue";
 import ModalLlamada from "@/modules/clients/components/candidato/llamada/views/ModalLlamada.vue";
-
 import ModalMotivoDesistio from "@/modules/clients/components/candidato/contacto/ModalMotivoDesistio.vue";
 import ModalAgendarReu from "@/modules/clients/components/candidato/contacto/ModalAgendarReu.vue";
 import ClientsContactoHistorial from "@/modules/clients/components/candidato/ClientsContactoHistorial.vue";
-
 import type { HistorialItem } from "@/modules/clients/components/candidato/ClientsContactoHistorial";
 import { finalizarEtapaContactoDesistio, obtenerEstadoContactoLead, registrarCorreo } from "@/modules/clients/actions/clientsContacto.action";
 import type { IListarOpcionesResponse } from "../../interfaces/clientscontacto.interface.js";
-
-// --- NUEVO: lógica de llamada ---
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
 import { useSipPhone } from "@/modules/clients/components/candidato/llamada/composables/useSipPhone.js";
 import { useLlamadaSaliente } from "@/modules/clients/components/candidato/llamada/composables/useLlamadaSaliente.js";
 import { conectarEventosLlamada } from "@/modules/clients/components/candidato/llamada/actions/Gestioninteraction.action.js";
-
-// TODO: reemplazar por el teléfono real del lead cuando esté disponible
-const NUMERO_PRUEBA = "930594414";
 
 interface HistorialRefExpuesto {
   cargarHistorial: () => Promise<void>;
@@ -53,13 +46,15 @@ export default defineComponent({
     const toast = useToast();
     const authStore = useAuthStore();
     const idEstadoContacto = ref<number | null>(null);
+    const idEtapa = ref<number | null>(null);
+    const telefonoLead = ref<string | null>(null);
 
     const cargando = ref(true);
     const historialRef = ref<HistorialRefExpuesto | null>(null);
 
     // ---------- Llamada (SIP + SSE + estado de la llamada) ----------
     const eventSource = ref<EventSource | null>(null);
-    const { sipCredentials, sipRegistrado, conectarTelefono } = useSipPhone();
+    const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono } = useSipPhone();
     const {
       currentCallId,
       isCalling,
@@ -114,8 +109,18 @@ export default defineComponent({
     async function cargarEstadoContacto() {
       try {
         const estado = await obtenerEstadoContactoLead(props.idLead);
+
         idEstadoContacto.value = estado.id_estado_contacto;
         estadoContacto.value = estado.estado;
+
+        // Guardar etapa actual del lead
+        idEtapa.value = estado.id_etapa;
+
+        // Guardar teléfono del lead
+        telefonoLead.value = estado.telefono
+          ? String(estado.telefono)
+          : null;
+
         contacto.value = {
           fecha: formatFechaSimple(estado.fecha_primer_contacto),
           hora: formatHoraSimple(estado.hora_primer_contacto),
@@ -126,6 +131,7 @@ export default defineComponent({
         cargando.value = false;
       }
     }
+
 
     const contacto = ref({
       fecha: "-",
@@ -147,11 +153,20 @@ export default defineComponent({
       modalLlamadaAbierto.value = true;
 
       try {
-        // 1. Conectar teléfono (SIP) si aún no está registrado
+        // Validar teléfono
+        if (!telefonoLead.value) {
+          throw new Error("El lead no tiene un teléfono registrado");
+        }
+
+        // Validar etapa
+        if (idEtapa.value == null) {
+          throw new Error("No se pudo obtener la etapa actual del lead");
+        }
+
+        // Conectar teléfono SIP si aún no está registrado
         if (!sipRegistrado.value) {
           const credenciales = await conectarTelefono();
 
-          // 2. Conectar a eventos SSE (solo una vez)
           if (!eventSource.value) {
             eventSource.value = conectarEventosLlamada(
               credenciales.agentExtension,
@@ -168,17 +183,34 @@ export default defineComponent({
           throw new Error("Usuario no autenticado");
         }
 
-        // 3. Realizar la llamada (por ahora, número fijo de pruebas)
-        await realizarLlamadaSaliente(NUMERO_PRUEBA, {
+        console.log("📞 Datos de llamada:", {
+          telefono: telefonoLead.value,
+          idEtapaLead: idEtapa.value,
+          idTrabajador: authStore.idEmploye,
+          agentExtension: sipCredentials.value.agentExtension,
+          idLead: props.idLead,
+        });
+
+        // Realizar llamada al teléfono REAL del lead
+        await realizarLlamadaSaliente(telefonoLead.value, {
           agentExtension: sipCredentials.value.agentExtension,
           idTrabajador: authStore.idEmploye,
+          id_etapa_lead: idEtapa.value,
         });
+
       } catch (error: any) {
         console.error("Error al iniciar la llamada", error);
-        toast.error(error.message ?? "No se pudo iniciar la llamada");
+
+        toast.error(
+          error.message ?? "No se pudo iniciar la llamada"
+        );
+
         modalLlamadaAbierto.value = false;
       }
     }
+
+
+
 
     async function cerrarModalLlamada() {
       // Si hay una llamada en curso, cuelga antes de cerrar el modal
@@ -259,7 +291,7 @@ export default defineComponent({
       cerrarModalAgendarReunion();
       emit("etapa-finalizada");
     }
-   function cerrarModalLlamadaAuto() {
+    function cerrarModalLlamadaAuto() {
       modalLlamadaAbierto.value = false;
     }
 
@@ -300,6 +332,7 @@ export default defineComponent({
       duracionSegundos,
 
       modalDesistioAbierto,
+
       estadoContacto,
       abrirModalDesistio,
       onReunionAgendada,
@@ -307,6 +340,7 @@ export default defineComponent({
       onConfirmarDesistio,
 
       idEstadoContacto,
+      cargandoTelefono,
 
       modalAgendarReunionAbierto,
       cerrarModalAgendarReunion,

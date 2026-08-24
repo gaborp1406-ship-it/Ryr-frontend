@@ -42,5 +42,6 @@ export interface IClientePotencial {
   id_asesor: number;
   nombre_asesor: string;
   fecha_asignacion: string;
+  etapa_actual:string;
 }
 

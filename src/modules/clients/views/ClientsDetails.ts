@@ -10,7 +10,6 @@ import ClientsNegociacion from "../components/oportunidad/ClientsNegociacion.vue
 import ClientsCierre from "../components/oportunidad/ClientsCierre.vue";
 import ClientsDesistioO from "../components/desistio/ClientsDesistio.vue";
 import { obtenerEtapaActualLead } from "../actions/clients.action.js";
-import type { IEtapaActualLeadResponse } from "../interfaces/clients.interface.js";
 
 const IconCandidato = () =>
   h("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2" }, [
@@ -34,6 +33,13 @@ interface EtapaConfig {
   submenu: string;
 }
 
+interface EtapaInfo {
+  id: number;
+  nombre: string;
+  menu: string;
+  realizada: boolean;
+}
+
 export default defineComponent({
   components: {
     ClientsAsignar,
@@ -48,20 +54,32 @@ export default defineComponent({
 
   setup() {
     const menus = ["Candidato", "Oportunidad"];
-
     const route = useRoute();
-    const etapaActual = ref(1);
     const idLead = Number(route.params.id);
-    function esEtapaAccesible(nombreSubmenu: string): boolean {
-      const idEtapa = obtenerIdEtapa(nombreSubmenu);
-      return idEtapa !== 0 && idEtapa <= etapaActual.value;
-    }
 
-    function irASubmenu(item: string) {
-      if (esEtapaAccesible(item)) {
-        submenuActivo.value = item;
-      }
-    }
+    // Orden global de etapas (definición única de verdad)
+    const ordenEtapas: EtapaInfo[] = [
+      { id: 1, nombre: "Asignación", menu: "Candidato", realizada: false },
+      { id: 2, nombre: "Contacto", menu: "Candidato", realizada: false },
+      { id: 3, nombre: "Desistió", menu: "Candidato", realizada: false },
+      { id: 4, nombre: "Agendar reunión", menu: "Candidato", realizada: false },
+      { id: 5, nombre: "Atención", menu: "Oportunidad", realizada: false },
+      { id: 6, nombre: "Negociación", menu: "Oportunidad", realizada: false },
+      { id: 7, nombre: "Cierre", menu: "Oportunidad", realizada: false },
+      { id: 8, nombre: "Desistió-O", menu: "Oportunidad", realizada: false },
+    ];
+
+    const submenus: Record<string, string[]> = {
+      Candidato: ["Asignación", "Contacto", "Desistió", "Agendar reunión"],
+      Oportunidad: ["Atención", "Negociación", "Cierre", "Desistió-O"],
+    };
+
+    const iconos: Record<string, any> = {
+      Candidato: IconCandidato,
+      Oportunidad: IconOportunidad,
+      Desistío: IconDesistio,
+    };
+
     const etapas: Record<number, EtapaConfig> = {
       1: { menu: "Candidato", submenu: "Asignación" },
       2: { menu: "Candidato", submenu: "Contacto" },
@@ -73,73 +91,145 @@ export default defineComponent({
       8: { menu: "Oportunidad", submenu: "Desistió-O" },
     };
 
-    const submenus: Record<string, string[]> = {
-      Candidato: ["Asignación", "Contacto", "Desistió", "Agendar reunión"],
-      Oportunidad: ["Atención", "Negociación", "Cierre", "Desistió-O"],
-     
-    };
+    const menuActivo = ref("Candidato");
+    const submenuActivo = ref("Asignación");
+    const etapaActual = ref(1);
+    const cargandoEtapa = ref(true);
 
-    const iconos: Record<string, any> = {
-      Candidato: IconCandidato,
-      Oportunidad: IconOportunidad,
-      Desistió: IconDesistio,
-    };
+    // Mapear etapas realizadas por su ID
+    const etapasRealizadas = ref<Map<number, boolean>>(new Map());
 
-    const estadoColor: Record<string, string> = {
-      Candidato: "bg-amber-50 text-amber-600",
-      Oportunidad: "bg-blue-50 text-blue-600",
-      Desistió: "bg-rose-50 text-rose-600",
-    };
-
-    // Orden global de etapas (usado para saber si un submenu ya fue pasado)
-    const ordenEtapas = [
-      { id: 1, nombre: "Asignación" },
-      { id: 2, nombre: "Contacto" },
-      { id: 3, nombre: "Desistió" },
-      { id: 4, nombre: "Agendar reunión" },
-      { id: 5, nombre: "Atención" },
-      { id: 6, nombre: "Negociación" },
-      { id: 7, nombre: "Cierre" },
-      { id: 8, nombre: "Desistió-O" },
-    ];
-
+    /**
+     * Obtiene el ID de una etapa por su nombre
+     */
     function obtenerIdEtapa(nombreSubmenu: string): number {
       const etapa = ordenEtapas.find((e) => e.nombre === nombreSubmenu);
       return etapa ? etapa.id : 0;
     }
 
-    const menuActivo = ref("Candidato");
-    const submenuActivo = ref(submenus.Candidato[0]);
-
-    // Indica si se está obteniendo la etapa actual del lead desde el backend
-    const cargandoEtapa = ref(true);
-
-    function cambiarMenu(menu: string) {
-      menuActivo.value = menu;
-      submenuActivo.value = submenus[menu][0];
+    /**
+     * Verifica si una etapa es accesible (está en rango y fue realizada, o es la actual)
+     */
+    function esEtapaAccesible(nombreSubmenu: string): boolean {
+      const idEtapa = obtenerIdEtapa(nombreSubmenu);
+      
+      if (idEtapa === 0) return false;
+      
+      // La etapa actual siempre es accesible
+      if (idEtapa === etapaActual.value) return true;
+      
+      // Las etapas pasadas solo son accesibles si fueron realizadas
+      if (idEtapa < etapaActual.value) {
+        return etapasRealizadas.value.get(idEtapa) ?? false;
+      }
+      
+      // Las etapas futuras no son accesibles
+      return false;
     }
 
+    /**
+     * Verifica si una etapa fue realizada
+     */
+    function fueEtapaRealizada(idEtapa: number): boolean {
+      return etapasRealizadas.value.get(idEtapa) ?? false;
+    }
 
+    /**
+     * Navega a un submenu si es accesible
+     */
+    function irASubmenu(item: string) {
+      if (esEtapaAccesible(item)) {
+        submenuActivo.value = item;
+      }
+    }
+
+    /**
+     * Cambia el menú principal y va al primer submenu disponible
+     */
+    function cambiarMenu(menu: string) {
+      menuActivo.value = menu;
+      // Buscar el primer submenu accesible del menú
+      const submenusDelMenu = submenus[menu];
+      for (const submenu of submenusDelMenu) {
+        if (esEtapaAccesible(submenu)) {
+          submenuActivo.value = submenu;
+          return;
+        }
+      }
+      // Si no hay ninguno accesible, ir al primero igual (será bloqueado en la UI)
+      submenuActivo.value = submenusDelMenu[0];
+    }
+
+    /**
+     * Obtiene solo los submenus visibles para el menú actual
+     */
+    function obtenerSubmenusVisibles(menu: string): string[] {
+      return submenus[menu].filter((submenu) => {
+        const idEtapa = obtenerIdEtapa(submenu);
+        // Mostrar solo si es la etapa actual o si es anterior y fue realizada
+        return idEtapa <= etapaActual.value;
+      });
+    }
+
+    /**
+     * Obtiene el nombre de una etapa por su ID
+     */
+    function obtenerNombreEtapa(idEtapa: number): string {
+      const etapa = ordenEtapas.find((e) => e.id === idEtapa);
+      return etapa ? etapa.nombre : "Desconocida";
+    }
+
+    /**
+     * Obtiene las etapas visibles hasta la etapa actual
+     */
+    function obtenerEtapasVisibles() {
+      return ordenEtapas.filter((e) => e.id <= etapaActual.value);
+    }
+
+    /**
+     * Carga la etapa actual del lead desde el backend
+     */
     const cargarEtapaActual = async () => {
       cargandoEtapa.value = true;
       try {
-        const etapa: IEtapaActualLeadResponse =
-          await obtenerEtapaActualLead(idLead);
+        const respuesta: any = await obtenerEtapaActualLead(idLead);
 
-        etapaActual.value = etapa.id_etapa;
+        // Manejo flexible de la respuesta (array o objeto)
+        let etapaActualId = 1;
+        
+        if (Array.isArray(respuesta)) {
+          // Si es un array, procesar cada etapa
+          respuesta.forEach((etapa: any) => {
+            const idEtapa = etapa.id_etapa;
+            const esRealizada = etapa.realizada === true || (etapa.fecha_fin !== null && etapa.fecha_fin !== undefined);
+            const esActual = etapa.estado_actual === true;
+            
+            etapasRealizadas.value.set(idEtapa, esRealizada || esActual);
+            
+            if (esActual) {
+              etapaActualId = idEtapa;
+            }
+          });
+        } else if (respuesta.id_etapa) {
+          // Si es un objeto simple
+          etapaActualId = respuesta.id_etapa;
+          etapasRealizadas.value.set(respuesta.id_etapa, true);
+        }
 
-        const config = etapas[etapa.id_etapa];
+        etapaActual.value = etapaActualId;
 
+        const config = etapas[etapaActualId];
         if (config) {
           menuActivo.value = config.menu;
           submenuActivo.value = config.submenu;
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error cargando etapa actual:", error);
       } finally {
         cargandoEtapa.value = false;
       }
     };
+
     onMounted(() => {
       cargarEtapaActual();
     });
@@ -147,10 +237,11 @@ export default defineComponent({
     return {
       menus,
       submenus,
+      obtenerSubmenusVisibles,
       esEtapaAccesible,
+      fueEtapaRealizada,
       irASubmenu,
       iconos,
-      estadoColor,
       menuActivo,
       submenuActivo,
       etapaActual,
@@ -159,6 +250,8 @@ export default defineComponent({
       cambiarMenu,
       cargarEtapaActual,
       obtenerIdEtapa,
+      obtenerNombreEtapa,
+      obtenerEtapasVisibles,
     };
   },
 });

@@ -52,14 +52,14 @@
                         </svg>
                         Email
                     </button>
-                    <button @click="abrirModalLlamada"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">
+                    <button :disabled="cargandoTelefono" @click="abrirModalLlamada"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
                             <path
                                 d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.08 4.18 2 2 0 0 1 5.08 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.61a2 2 0 0 1-.45 2.11L9.09 9.91a16 16 0 0 0 5 5l1.47-1.19a2 2 0 0 1 2.11-.45c.83.31 1.71.53 2.61.65A2 2 0 0 1 22 16.92z" />
                         </svg>
-                        Llamada
+                        {{ cargandoTelefono ? 'Conectando...' : 'Llamada' }}
                     </button>
                 </div>
                 <div class="flex flex-wrap gap-2 sm:justify-end">

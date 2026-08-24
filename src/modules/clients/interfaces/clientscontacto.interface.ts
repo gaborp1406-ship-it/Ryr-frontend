@@ -1,9 +1,10 @@
 export interface IEstadoContactoLeadResponse {
   id_estado_contacto: number;
-  id_lead: number;
+  id_etapa: number;
   fecha_primer_contacto: string | null;
   hora_primer_contacto: string | null;
   estado: boolean;
+  telefono: number
 }
 
 export interface IHistorialCorreoResponse {
