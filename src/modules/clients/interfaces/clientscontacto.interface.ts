@@ -24,12 +24,10 @@ export interface IHistorialWhatsappResponse {
 export interface IHistorialLlamadaResponse {
   id: number;
   fecha_creacion: string;
-  contestada: boolean;
   duracion_segundos: number;
   fecha_inicio: string;
   fecha_fin: string;
-  grabacion_url: string | null;
-  observacion: string | null;
+  grabacion_path: string | null;
 }
 
 export interface IRegistrarWhatsappRequest {

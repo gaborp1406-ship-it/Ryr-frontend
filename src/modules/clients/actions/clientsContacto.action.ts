@@ -66,12 +66,19 @@ export const obtenerHistorialWhatsapp = async (
   }
 };
 
+
+
+
+
+
+
+
 export const obtenerHistorialLlamadas = async (
-  idEstadoContacto: number
+  id_etapa_lead: number
 ): Promise<IHistorialLlamadaResponse[]> => {
   try {
     const { data } = await automatizateApiNest.get(
-      `/lead/historial-llamadas/${idEstadoContacto}/20`
+      `/lead/historial-llamadas/${id_etapa_lead}/20`
     );
 
     return data;
@@ -86,6 +93,13 @@ export const obtenerHistorialLlamadas = async (
     throw error;
   }
 };
+
+
+
+
+
+
+
 
 export const registrarWhatsapp = async (
   data: IRegistrarWhatsappRequest
@@ -242,3 +256,21 @@ export const obtenerInfoDesistioLead = async (
   }
 };
 
+export const registrarPrimerContacto = async (
+  idEstadoContacto: number
+): Promise<void> => {
+  try {
+    await automatizateApiNest.get(
+      `/lead/registrar-primer-contacto/${idEstadoContacto}`
+    );
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al registrar el primer contacto."
+      );
+    }
+
+    throw error;
+  }
+};

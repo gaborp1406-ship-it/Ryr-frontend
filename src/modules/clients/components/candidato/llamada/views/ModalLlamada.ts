@@ -70,7 +70,7 @@ export default defineComponent({
     /**
      * REALIZAR LLAMADA
      */
-    const makeCall = async (externalNumber: string) => {
+    const makeCall = async (externalNumber: string, idEtapaLead: number) => {
       // Validar SIP
       if (!sipRegistrado.value) {
         toast.error("Teléfono no conectado. Reinicia la página.");
@@ -93,6 +93,8 @@ export default defineComponent({
       await realizarLlamadaSaliente(externalNumber, {
         agentExtension: sipCredentials.value.agentExtension,
         idTrabajador: authStore.idEmploye,
+        id_etapa_lead: idEtapaLead,
+
       });
     };
 

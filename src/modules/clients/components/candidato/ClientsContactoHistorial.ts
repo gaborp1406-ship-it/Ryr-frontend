@@ -1,7 +1,7 @@
 // ClientsContactoHistorial.ts
 import IconWhatsapp from "@/modules/common/icons/IconWhatsapp.vue";
 import { defineComponent, ref, computed, watch, onMounted } from "vue";
-import type { DetalleLlamada } from "@/modules/clients/components/candidato/llamada/ModalLlamada";
+
 import type {
     IHistorialCorreoResponse,
     IHistorialLlamadaResponse,
@@ -21,8 +21,15 @@ export interface HistorialItem {
     evidencia: boolean;
     url_evidencia?: string | null;
     descripcion?: string;
-    llamada?: DetalleLlamada;
+    llamada?: {
+        fechaInicio: string;
+        horaInicio: string;
+        fechaFin: string;
+        horaFin: string;
+        duracion: string;
+    };
 }
+
 
 type TipoEvidencia = "imagen" | "pdf" | "audio" | "video";
 
@@ -39,6 +46,7 @@ export default defineComponent({
             type: Number,
             required: true,
         },
+        idEtapa: { type: Number, required: false, default: null },
     },
     emits: ["ver-detalle-llamada", "primer-contacto-cargado"],
     setup(props, { emit, expose }) {
@@ -71,10 +79,14 @@ export default defineComponent({
         }
 
         function cerrarEvidencia() {
+            if (audioRef.value) audioRef.value.pause();
+            audioPlaying.value = false;
+            audioCurrentTime.value = 0;
+            audioDuration.value = 0;
+            audioRate.value = 1;
             modalEvidenciaVisible.value = false;
             evidenciaUrlActual.value = "";
         }
-
         // ---------- Helpers de formato ----------
         function formatFechaDesdeISO(iso: string | null | undefined): string {
             if (!iso) return "-";
@@ -116,7 +128,7 @@ export default defineComponent({
                 const [correos, whatsapps, llamadas] = await Promise.all([
                     obtenerHistorialCorreo(props.idEstadoContacto),
                     obtenerHistorialWhatsapp(props.idEstadoContacto),
-                    obtenerHistorialLlamadas(props.idEstadoContacto),
+                    obtenerHistorialLlamadas(props.idEtapa),
                 ]);
 
                 const itemsConTimestamp: { timestamp: number; item: HistorialItem }[] = [];
@@ -157,11 +169,11 @@ export default defineComponent({
                         timestamp: new Date(l.fecha_creacion).getTime(),
                         item: {
                             tipo: "llamada",
-                            titulo: l.contestada ? "Llamada realizada" : "Llamada no contestada",
+                            titulo: "Llamada realizada",
                             fecha: formatFechaDesdeISO(l.fecha_creacion),
                             hora: formatHoraDesdeISO(l.fecha_creacion),
-                            evidencia: false,
-                            descripcion: l.observacion || undefined,
+                            evidencia: !!l.grabacion_path,          // <-- ahora sí hay evidencia
+                            url_evidencia: l.grabacion_path,        // <-- el audio
                             llamada: {
                                 fechaInicio: formatFechaDesdeISO(l.fecha_inicio),
                                 horaInicio: formatHoraCompletaDesdeISO(l.fecha_inicio),
@@ -186,13 +198,56 @@ export default defineComponent({
         }
 
         // ---------- Paginación ----------
-        const ITEMS_POR_PAGINA = 5;
+        const ITEMS_POR_PAGINA = 3;
         const paginaActual = ref(1);
 
         const totalPaginas = computed(() =>
             Math.max(1, Math.ceil(historial.value.length / ITEMS_POR_PAGINA))
         );
+        const audioRef = ref<HTMLAudioElement | null>(null);
+        const audioPlaying = ref(false);
+        const audioCurrentTime = ref(0);
+        const audioDuration = ref(0);
+        const audioRate = ref(1);
 
+        function toggleAudioPlay() {
+            if (!audioRef.value) return;
+            if (audioPlaying.value) {
+                audioRef.value.pause();
+            } else {
+                audioRef.value.play();
+            }
+            audioPlaying.value = !audioPlaying.value;
+        }
+
+        function onAudioLoaded() {
+            if (audioRef.value) audioDuration.value = audioRef.value.duration || 0;
+        }
+
+        function onAudioTimeUpdate() {
+            if (audioRef.value) audioCurrentTime.value = audioRef.value.currentTime;
+        }
+
+        function onAudioEnded() {
+            audioPlaying.value = false;
+            audioCurrentTime.value = 0;
+        }
+
+        function seekAudio() {
+            if (audioRef.value) audioRef.value.currentTime = audioCurrentTime.value;
+        }
+
+        function setAudioRate(rate: number) {
+            audioRate.value = rate;
+            if (audioRef.value) audioRef.value.playbackRate = rate;
+        }
+
+        function formatAudioTime(segundos: number): string {
+            if (!segundos || isNaN(segundos)) return "00:00";
+            const m = Math.floor(segundos / 60);
+            const s = Math.floor(segundos % 60);
+            return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        }
         const historialOrdenado = computed(() => [...historial.value].reverse());
 
         const itemsPaginados = computed(() => {
@@ -245,10 +300,7 @@ export default defineComponent({
             paginaActual.value = 1;
         }
 
-        function verDetalleLlamada(item: HistorialItem) {
-            if (!item.llamada) return;
-            emit("ver-detalle-llamada", item);
-        }
+
 
         onMounted(() => {
             cargarHistorial();
@@ -263,7 +315,18 @@ export default defineComponent({
             historial: itemsPaginados,
             cargando,
             error,
-            verDetalleLlamada,
+            audioRef,
+            audioPlaying,
+            audioCurrentTime,
+            audioDuration,
+            audioRate,
+            toggleAudioPlay,
+            onAudioLoaded,
+            onAudioTimeUpdate,
+            onAudioEnded,
+            seekAudio,
+            setAudioRate,
+            formatAudioTime,
             paginaActual,
             totalPaginas,
             paginasVisibles,

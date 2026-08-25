@@ -224,13 +224,12 @@ export function useReunionData(idLead: number | string) {
             });
 
             const itemsWhatsapp: HistorialItem[] = whatsapps.map((w) => {
-                const fechaObj = parseFechaFlexible(w.fecha_creacion);
                 return {
                     tipo: "whatsapp",
-                    titulo: w.mensaje?.trim() || "WhatsApp enviado",
-                    fecha: formatearFecha(fechaObj),
-                    hora: formatearHora(fechaObj),
-                    evidencia: Boolean(w.url_evidencia),
+                    titulo: "WhatsApp enviado",
+                    fecha: w.fecha ?? "",
+                    hora: w.hora ?? "",
+                    evidencia: false,
                 };
             });
 

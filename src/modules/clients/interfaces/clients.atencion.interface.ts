@@ -8,8 +8,8 @@ export interface IHistorialCorreoResponse {
 export interface IHistorialWhatsappResponse {
   id: number;
   fecha_creacion: string;
-  mensaje: string;
-  url_evidencia: string | null;
+  fecha: string;
+  hora: string | null;
 }
 
 export interface IHistorialLlamadaResponse {
@@ -30,9 +30,9 @@ export interface IInfoEstadoReunionLeadResponse {
 
 export interface IRegistrarWhatsappRequest {
   id_estado_reunion: number;
-  url_evidencia: string;
-  mensaje?: string;
-  tipo_historial: number
+  fecha: string;
+  hora: string;
+  tipo_historial: number;
 }
 
 export interface IRegistrarCorreoRequest {

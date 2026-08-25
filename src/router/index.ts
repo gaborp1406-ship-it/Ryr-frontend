@@ -5,6 +5,7 @@ import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { leadsRoutes } from '@/modules/leads/routes';
 import { clientsRoutes } from '@/modules/clients/routes';
 import { calendarRoutes } from '@/modules/calendar/routes';
+import { ConexionesRoutes } from '@/modules/estados/routes';
 
 
 const router = createRouter({
@@ -33,7 +34,8 @@ const router = createRouter({
         // usersRoutes,
         leadsRoutes,
         clientsRoutes,
-        calendarRoutes
+        calendarRoutes,
+        ConexionesRoutes
          
        
       ],

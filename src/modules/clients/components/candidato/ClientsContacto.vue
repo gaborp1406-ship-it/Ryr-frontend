@@ -26,7 +26,7 @@
 
         <!-- Card: Historial de estados (posee toda la lógica de fetch de historial) -->
         <ClientsContactoHistorial v-if="idEstadoContacto" ref="historialRef" :id-lead="idLead"
-            :id-estado-contacto="idEstadoContacto" />
+            :id-estado-contacto="idEstadoContacto" :id-etapa="idEtapa" />
         <!-- Card: Acciones -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
             <!-- Animación de carga mientras se determina el estado de contacto (responsable de ocultar botones) -->

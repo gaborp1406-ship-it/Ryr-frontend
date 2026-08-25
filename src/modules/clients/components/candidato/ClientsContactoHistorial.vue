@@ -80,14 +80,7 @@
                             </svg>
                         </button>
 
-                        <button v-if="item.tipo === 'llamada' && item.llamada" @click="verDetalleLlamada(item)"
-                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                            title="Ver detalle de la llamada">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.902.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.908.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                            </svg>
-                        </button>
+
                     </div>
                 </li>
             </ul>
@@ -134,13 +127,7 @@
                 <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
 
                     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                        <h3 class="text-sm font-semibold text-slate-900">Evidencia</h3>
-                        <button @click="cerrarEvidencia"
-                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                                <path d="M18 6 6 18M6 6l12 12" />
-                            </svg>
-                        </button>
+                
                     </div>
 
                     <div class="flex-1 overflow-auto px-5 py-5 flex items-center justify-center bg-slate-50">
@@ -150,8 +137,56 @@
                         <iframe v-else-if="tipoEvidenciaActual === 'pdf'" :src="evidenciaUrlActual"
                             class="w-full h-[65vh] rounded-lg border border-slate-200" />
 
-                        <audio v-else-if="tipoEvidenciaActual === 'audio'" :src="evidenciaUrlActual" controls
-                            class="w-full" />
+                        <div v-else-if="tipoEvidenciaActual === 'audio'"
+                            class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                            <audio ref="audioRef" :src="evidenciaUrlActual" class="hidden"
+                                @loadedmetadata="onAudioLoaded" @timeupdate="onAudioTimeUpdate"
+                                @ended="onAudioEnded"></audio>
+
+                            <div class="flex items-center gap-4">
+                                <button @click="toggleAudioPlay"
+                                    class="w-12 h-12 flex items-center justify-center rounded-full bg-[#2d8c4a] text-white hover:bg-[#256e3b] transition-colors shrink-0">
+                                    <svg v-if="!audioPlaying" viewBox="0 0 24 24" fill="currentColor"
+                                        class="w-5 h-5 ml-0.5">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                    <svg v-else viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                        <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                                    </svg>
+                                </button>
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <span class="text-[11px] font-mono text-slate-500 tabular-nums w-9">{{
+                                            formatAudioTime(audioCurrentTime) }}</span>
+                                        <input type="range" min="0" :max="audioDuration || 0" step="0.01"
+                                            v-model.number="audioCurrentTime" @input="seekAudio"
+                                            class="flex-1 accent-[#2d8c4a] h-1.5 rounded-lg cursor-pointer" />
+                                        <span
+                                            class="text-[11px] font-mono text-slate-500 tabular-nums w-9 text-right">{{
+                                            formatAudioTime(audioDuration) }}</span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                class="w-3.5 h-3.5">
+                                                <path
+                                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.11 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                                            </svg>
+                                            Grabación de llamada
+                                        </span>
+                                        <div class="flex items-center gap-1">
+                                            <button v-for="rate in [1, 1.5, 2]" :key="rate" @click="setAudioRate(rate)"
+                                                type="button" :class="['px-2 py-0.5 rounded text-[11px] font-semibold transition-colors',
+                                                    audioRate === rate ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-100']">
+                                                {{ rate }}x
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <video v-else-if="tipoEvidenciaActual === 'video'" :src="evidenciaUrlActual" controls
                             class="max-w-full max-h-[65vh] rounded-lg" />
@@ -165,16 +200,7 @@
                         <button @click="cerrarEvidencia" class="px-4 py-2 rounded bg-gray-200 text-sm">
                             Cerrar
                         </button>
-                        <a :href="evidenciaUrlActual" download target="_blank" rel="noopener"
-                            class="px-4 py-2 rounded bg-[#2d8c4a] text-white text-sm flex items-center gap-1.5">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                class="w-3.5 h-3.5">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <path d="M7 10l5 5 5-5" />
-                                <path d="M12 15V3" />
-                            </svg>
-                            Descargar
-                        </a>
+                      
                     </div>
                 </div>
             </div>

@@ -9,7 +9,7 @@ import ModalMotivoDesistio from "@/modules/clients/components/candidato/contacto
 import ModalAgendarReu from "@/modules/clients/components/candidato/contacto/ModalAgendarReu.vue";
 import ClientsContactoHistorial from "@/modules/clients/components/candidato/ClientsContactoHistorial.vue";
 import type { HistorialItem } from "@/modules/clients/components/candidato/ClientsContactoHistorial";
-import { finalizarEtapaContactoDesistio, obtenerEstadoContactoLead, registrarCorreo } from "@/modules/clients/actions/clientsContacto.action";
+import { finalizarEtapaContactoDesistio, obtenerEstadoContactoLead, registrarCorreo, registrarPrimerContacto } from "@/modules/clients/actions/clientsContacto.action";
 import type { IListarOpcionesResponse } from "../../interfaces/clientscontacto.interface.js";
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
 import { useSipPhone } from "@/modules/clients/components/candidato/llamada/composables/useSipPhone.js";
@@ -144,11 +144,34 @@ export default defineComponent({
 
     // ---------- Llamada ----------
     const modalLlamadaAbierto = ref(false);
+
     watch(estadoLlamada, (nuevoEstado, estadoAnterior) => {
       if (nuevoEstado === "idle" && estadoAnterior !== "idle") {
         modalLlamadaAbierto.value = false;
+        recargarDespuesDeLlamada();
       }
     });
+
+    async function recargarDespuesDeLlamada() {
+ 
+      const esPrimerContacto = contacto.value.fecha === "-";
+
+      if (esPrimerContacto && idEstadoContacto.value != null) {
+        try {
+          await registrarPrimerContacto(idEstadoContacto.value);
+        } catch (error) {
+      
+        }
+      }
+
+      await historialRef.value?.cargarHistorial();
+      await cargarEstadoContacto();
+      setTimeout(() => {
+        historialRef.value?.cargarHistorial();
+      }, 4000);
+    }
+
+
     async function abrirModalLlamada() {
       modalLlamadaAbierto.value = true;
 
@@ -321,7 +344,7 @@ export default defineComponent({
       abrirModalEmail,
       cerrarModalEmail,
       onGuardarEmail,
-
+      idEtapa,
       // Llamada
       modalLlamadaAbierto,
       abrirModalLlamada,

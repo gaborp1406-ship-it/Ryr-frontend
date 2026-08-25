@@ -10,11 +10,13 @@ export interface IAgendarReunionRequest {
 
   descripcion?: string;
 
+
   fecha: string;
 
   hora: string;
 
   idUsuarioCreacion: number;
+  lugar_plataforma: string;
 
 }
 

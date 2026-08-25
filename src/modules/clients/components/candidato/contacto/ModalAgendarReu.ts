@@ -7,6 +7,7 @@ import type { IListarOpcionesResponse } from '@/modules/leads/interfaces/lead.in
 import { agendarReunion } from '@/modules/clients/actions/clientsReunion.action';
 
 const ID_LISTADO_TIPO_ACTIVIDAD = 4;
+const ID_LISTADO_PLATAFORMAS = 9;
 
 export default defineComponent({
 
@@ -24,15 +25,19 @@ export default defineComponent({
   setup(props, { emit }) {
     const toast = useToast();
     const authStore = useAuthStore();
+    const OTROS_VALUE = "__otros__";
 
     const cargandoOpciones = ref(false);
     const guardando = ref(false);
     const opcionesTipoActividad = ref<IListarOpcionesResponse[]>([]);
+    const opcionesTipoPla = ref<IListarOpcionesResponse[]>([]);
+    const plataformaSeleccionada = ref<string | null>(null);
 
     const form = reactive({
       idTipoActividad: null as number | null,
       titulo: "",
       descripcion: "",
+      lugar_plataforma: "",
       fecha: "",
       hora: "",
     });
@@ -48,12 +53,31 @@ export default defineComponent({
       }
     };
 
+    const cargarPlataformas = async () => {
+      cargandoOpciones.value = true;
+      try {
+        opcionesTipoPla.value = await listarOpciones(ID_LISTADO_PLATAFORMAS);
+      } catch (error: any) {
+        toast.error(error.message ?? "Error al listar tipos de actividad.");
+      } finally {
+        cargandoOpciones.value = false;
+      }
+    };
+    const onCambioPlataforma = () => {
+      if (plataformaSeleccionada.value === OTROS_VALUE) {
+        form.lugar_plataforma = ""; // limpiamos para que el usuario escriba
+      } else {
+        form.lugar_plataforma = plataformaSeleccionada.value ?? "";
+      }
+    };
     const limpiarFormulario = () => {
       form.idTipoActividad = null;
       form.titulo = "";
       form.descripcion = "";
+      form.lugar_plataforma = "";
       form.fecha = "";
       form.hora = "";
+      plataformaSeleccionada.value = null; // 👈 agregar
     };
 
     const cerrar = () => {
@@ -82,6 +106,10 @@ export default defineComponent({
         toast.warning("Selecciona una hora.");
         return;
       }
+      if (!form.lugar_plataforma) {
+        toast.warning("Selecciona un lugar o plataforma.");
+        return;
+      }
 
       const idEmpleado = authStore.idEmploye;
 
@@ -93,6 +121,7 @@ export default defineComponent({
           idTipoActividad: form.idTipoActividad,
           titulo: form.titulo.trim(),
           descripcion: form.descripcion.trim() || undefined,
+          lugar_plataforma: form.lugar_plataforma,
           fecha: form.fecha,
           hora: form.hora,
           idUsuarioCreacion: idEmpleado,
@@ -112,6 +141,7 @@ export default defineComponent({
     onMounted(() => {
       console.log("ModalAgendarReu idLead:", props.idLead);
       cargarOpciones();
+      cargarPlataformas();
     });
 
     return {
@@ -120,9 +150,13 @@ export default defineComponent({
       cargandoOpciones,
       guardando,
       opcionesTipoActividad,
+      opcionesTipoPla,
       form,
       cerrar,
       confirmar,
+      plataformaSeleccionada, // 👈 nuevo
+      onCambioPlataforma,     // 👈 nuevo
+      OTROS_VALUE,
     };
   },
 });
