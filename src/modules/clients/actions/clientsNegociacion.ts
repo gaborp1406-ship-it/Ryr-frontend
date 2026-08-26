@@ -1,0 +1,46 @@
+import { automatizateApiNest } from "@/api/automatizateApiNest";
+import { isAxiosError } from "axios";
+import type { IActualizarChecklistNegociacionRequest, IActualizarChecklistNegociacionResponse, IChecklistNegociacion } from "../interfaces/clients.negociacion.interface";
+
+export const actualizarChecklistNegociacion = async (
+  payload: IActualizarChecklistNegociacionRequest
+): Promise<IActualizarChecklistNegociacionResponse> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      "/lead/etapa-negociacion/checklist",
+      payload
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al actualizar checklist de negociación."
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const obtenerChecklistNegociacion = async (
+  id_lead: number
+): Promise<IChecklistNegociacion[]> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      `/lead/etapa-negociacion/checklist/${id_lead}`
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al obtener checklist de negociación."
+      );
+    }
+
+    throw error;
+  }
+};
