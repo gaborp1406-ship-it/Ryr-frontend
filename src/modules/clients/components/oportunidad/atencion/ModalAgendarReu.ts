@@ -77,7 +77,7 @@ export default defineComponent({
       form.lugar_plataforma = "";
       form.fecha = "";
       form.hora = "";
-      plataformaSeleccionada.value = null; // 👈 agregar
+      plataformaSeleccionada.value = null; 
     };
 
     const cerrar = () => {
@@ -154,8 +154,8 @@ export default defineComponent({
       form,
       cerrar,
       confirmar,
-      plataformaSeleccionada, // 👈 nuevo
-      onCambioPlataforma,     // 👈 nuevo
+      plataformaSeleccionada, 
+      onCambioPlataforma,     
       OTROS_VALUE,
     };
   },

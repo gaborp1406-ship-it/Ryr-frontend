@@ -10,6 +10,27 @@
             Visita del Cliente
           </h2>
         </div>
+<div class="flex items-center gap-2">
+  <button 
+    @click="marcarComoRealizada" 
+    :disabled="!puedeMarcarRealizada || finalizarActividadState.guardando.value"
+    :title="!puedeMarcarRealizada ? 'No disponible en esta etapa' : ''"
+    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm">
+    
+    <svg v-if="finalizarActividadState.guardando.value" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+    
+    <svg v-else viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+    </svg>
+    
+    <span>{{ finalizarActividadState.guardando.value ? "Guardando..." : "Realizada" }}</span>
+  </button>
+
+
+</div>
       </div>
 
       <!-- Contenido -->
@@ -120,6 +141,16 @@
                 </svg>
                 <span class="hidden sm:inline">Desistir</span>
               </button>
+
+              <button @click="puedeCrearReunion ? abrirModalReunion() : null" :disabled="!puedeCrearReunion"
+                :title="!puedeCrearReunion ? 'Solo disponible cuando la actividad está en estado 14' : ''"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                  <path d="M12 9v6m4-10H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />
+                </svg>
+                <span class="hidden sm:inline">Crear Reunión</span>
+              </button>
+
 
               <button @click="pasarANegociacion" :disabled="pasandoNegociacion"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">
@@ -296,6 +327,10 @@
 
   <ModalEvidenciaGmail :visible="modalEmailAbierto" :id-estado-reunion="idEstadoReunion" @close="cerrarModalEmail"
     @guardar="onGuardarEmail" />
+  <ModalAgendarReu :visible="modalReunionAbierto" :id-lead="Number(idLead)" @close="cerrarModalReunion"
+    @reunion-agendada="onReunionAgendada" />
+  <ModalLlamada :visible="modalLlamadaAbierto" :estado-llamada="estadoLlamada" :llamada-activa="llamadaActiva"
+    :numero-destino="numeroDestino" :duracion-segundos="duracionSegundos" @close="cerrarModalLlamada" />
 </template>
 
 <script src="./ClientsAtencion.ts" lang="ts"></script>

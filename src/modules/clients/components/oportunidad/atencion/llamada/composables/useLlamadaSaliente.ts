@@ -1,10 +1,11 @@
 import { onUnmounted, ref } from "vue";
 import { useToast } from "vue-toastification";
 import {
-    realizarLlamada,
+    
     colgarLlamadaActiva,
 } from "../actions/Gestioninteraction.action.js";
 import { useTonoLlamada } from "./useTonoLlamada.js";
+import { realizarLlamadaopo } from '../actions/Gestioninteraction.action';
 
 export type SipStatus = "connected" | "calling" | "ringing" | "in-call" | "no-answer";
 export type EstadoLlamada = SipStatus | "idle";
@@ -12,6 +13,7 @@ export type EstadoLlamada = SipStatus | "idle";
 interface IParametrosLlamada {
     agentExtension: string;
     idTrabajador: number;
+    id_etapa_lead: number;
 }
 
 // Actualiza el indicador visual de estado SIP en el DOM (si existe; si no, no hace nada)
@@ -129,7 +131,7 @@ export function useLlamadaSaliente() {
                 currentCallId.value = null;
                 break;
 
-            // ...resto igual...
+
         }
     };
 
@@ -155,13 +157,15 @@ export function useLlamadaSaliente() {
         setSipStatus("calling");
 
         try {
-         
-           
-            const response = await realizarLlamada({
+
+
+            const response = await realizarLlamadaopo({
                 agent: params.agentExtension,
                 phone: numero,
                 idTrabajador: params.idTrabajador,
-             
+                tipo_historial: 21,
+                id_etapa_lead: params.id_etapa_lead
+
             });
 
             currentCallId.value = response.channelId;

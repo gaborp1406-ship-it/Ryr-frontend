@@ -4,7 +4,7 @@ import {
     listarActividadesPorLead,
 } from '../../../actions/clientsReunion.action';
 import {
-    finalizarEtapaAtencion,
+    finalizarActividad,
     obtenerHistorialCorreoReunion,
     obtenerHistorialLlamadasReunion,
     obtenerHistorialWhatsappReunion,
@@ -14,7 +14,6 @@ import {
 import { listarOpciones } from "@/modules/clients/actions/clientsContacto.action";
 import { finalizarEtapaOportunidadDesistio } from "../../../actions/clients.atencion.action";
 import type {
-
     IInfoEstadoReunionLeadResponse
 } from '../../../interfaces/clients.atencion.interface';
 import type { IActualizarFechaHoraActividadRequest, IActualizarFechaHoraActividadResponse, IListarActividadLeadResponse } from "@/modules/clients/interfaces/clientsreunion.interface";
@@ -93,9 +92,13 @@ export function useReunionData(idLead: number | string) {
     const historialReuniones = ref<any[]>([]);
     const historialContacto = ref<HistorialItem[]>([]);
     const idEstadoReunion = ref<number | null>(null);
-    const nombreEstadoReunion = ref<string | null>(null);
+    const idLeadEtapa = ref<number | null>(null);
 
+    const nombreEstadoReunion = ref<string | null>(null);
+    const telefonoLead = ref<string | null>(null); // NUEVO
     const proyecto = computed(() => nombreEstadoReunion.value ?? "Sin información");
+
+
     const actividadTitulo = computed(
         () => (reunion.value as any)?.titulo ?? (reunion.value as any)?.tipo_actividad ?? "Sin información"
     );
@@ -118,6 +121,7 @@ export function useReunionData(idLead: number | string) {
     async function cargarInfoEstadoReunion() {
         const numIdLead = Number(idLead);
         if (!numIdLead) {
+            idLeadEtapa.value = null;
             idEstadoReunion.value = null;
             nombreEstadoReunion.value = null;
             return;
@@ -126,11 +130,14 @@ export function useReunionData(idLead: number | string) {
         try {
             const info: IInfoEstadoReunionLeadResponse =
                 await obtenerInfoEstadoReunionLead(numIdLead);
-            idEstadoReunion.value = info?.id_etapa_reunion ?? null;
+
+            idEstadoReunion.value = info?.id_etapa_reunion ?? null; // ✅ Sin tocar
+            idLeadEtapa.value = info?.id_lead_etapa ?? null; // ✅ Este va al modal
             nombreEstadoReunion.value = info?.nombre ?? null;
         } catch (e) {
             console.error("Error cargando el estado de la reunión", e);
             idEstadoReunion.value = null;
+            idLeadEtapa.value = null;
             nombreEstadoReunion.value = null;
         }
     }
@@ -166,6 +173,13 @@ export function useReunionData(idLead: number | string) {
                 error.value = "No se encontró información de la reunión.";
             }
 
+            // NUEVO: teléfono viene en la respuesta de listarActividadesPorLead
+            telefonoLead.value = (reunion.value as any)?.telefono
+                ? String((reunion.value as any).telefono)
+                : (actividades[0] as any)?.telefono
+                    ? String((actividades[0] as any).telefono)
+                    : null;
+
             historialContacto.value = actividades
                 .filter((a) =>
                     ["whatsapp", "wsp", "correo", "email", "llamada", "call"].some((k) =>
@@ -200,16 +214,17 @@ export function useReunionData(idLead: number | string) {
 
     async function cargarHistorialContacto() {
         const idEC = idEstadoReunion.value;
-        if (!idEC) {
-            historialContacto.value = [];
-            return;
-        }
 
+        const idET = idLeadEtapa.value;
+         if (!idEC || !idET) {
+        historialContacto.value = [];
+        return;
+    }
         try {
             const [correos, whatsapps, llamadas] = await Promise.all([
                 obtenerHistorialCorreoReunion(idEC),
                 obtenerHistorialWhatsappReunion(idEC),
-                obtenerHistorialLlamadasReunion(idEC),
+                obtenerHistorialLlamadasReunion(idET),
             ]);
 
             const itemsCorreo: HistorialItem[] = correos.map((c) => {
@@ -296,7 +311,10 @@ export function useReunionData(idLead: number | string) {
         historialReuniones,
         historialContacto,
         idEstadoReunion,
+        idLeadEtapa,
+
         nombreEstadoReunion,
+        telefonoLead,
 
         // Computados
         proyecto,
@@ -315,6 +333,39 @@ export function useReunionData(idLead: number | string) {
     };
 }
 
+
+
+export function useFinalizarActividad(idLead: number | string) {
+    const guardando = ref(false);
+    const error = ref<string | null>(null);
+
+    async function confirmar(reunion: any, callbacks: { onSuccess?: () => void } = {}) {
+        if (!reunion) {
+            error.value = "No se encontró una reunión activa para finalizar.";
+            return;
+        }
+
+        const idActividad = reunion.id_actividad;
+        if (!idActividad) {
+            error.value = "No se encontró el ID de la actividad.";
+            return;
+        }
+
+        guardando.value = true;
+        error.value = null;
+
+        try {
+            await finalizarActividad(idActividad);
+            callbacks.onSuccess?.();
+        } catch (e) {
+            error.value = e instanceof Error ? e.message : "Error al finalizar la actividad.";
+        } finally {
+            guardando.value = false;
+        }
+    }
+
+    return { guardando, error, confirmar };
+}
 export function useReprogramacion(idLead: number | string) {
     const modalAbierto = ref(false);
     const nuevaFecha = ref("");

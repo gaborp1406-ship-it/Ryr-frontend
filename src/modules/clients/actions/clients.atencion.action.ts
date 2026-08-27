@@ -213,3 +213,25 @@ export const finalizarEtapaOportunidadDesistio = async (
     throw error;
   }
 };
+
+
+export const finalizarActividad = async (
+  id_actividad: number
+) => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      `/lead/finalizar-actividad/${id_actividad}`
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al finalizar la etapa de negociación."
+      );
+    }
+
+    throw error;
+  }
+};

@@ -25,7 +25,7 @@ export const obtenerCredencialesSip =
   };
 
 
-export const realizarLlamada = async (
+export const realizarLlamadaopo = async (
   payload: ICallRequest
 ): Promise<ICallResponse> => {
 

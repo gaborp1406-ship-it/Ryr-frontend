@@ -26,6 +26,7 @@ export interface IHistorialLlamadaResponse {
 export interface IInfoEstadoReunionLeadResponse {
   nombre: string;
   id_etapa_reunion: number;
+  id_lead_etapa: number;
 }
 
 export interface IRegistrarWhatsappRequest {

@@ -44,3 +44,53 @@ export const obtenerChecklistCierre = async (
     throw error;
   }
 };
+
+
+export const finalizarEtapaCierre = async (
+  id_lead: number
+) => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      `/lead/finalizar-etapa-cierre/${id_lead}`
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al finalizar la etapa de negociación."
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+
+export const finalizarEtapaCierreDesistio = async (
+  id_lead: number,
+  motivo?: number
+) => {
+  try {
+    const { data: response } = await automatizateApiNest.post(
+      `/lead/finalizar-etapa-cierre-desistio`,
+      {
+        id_lead,
+        motivo,
+      }
+    );
+
+    return response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al finalizar la etapa de oportunidad como desistido."
+      );
+    }
+
+    throw error;
+  }
+};

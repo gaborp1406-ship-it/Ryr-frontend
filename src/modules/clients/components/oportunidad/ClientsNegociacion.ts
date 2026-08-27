@@ -3,11 +3,11 @@ import type { IChecklistNegociacion } from "../../interfaces/clients.negociacion
 import {
   actualizarChecklistNegociacion,
   finalizarEtapaNegociacion,
+  finalizarEtapaNegociacionDesistio,
   obtenerChecklistNegociacion,
 } from "../../actions/clientsNegociacion";
 import type { IListarOpcionesResponse } from "../../interfaces/clients.interface";
 import { listarOpciones } from "../../actions/clients.action";
-import { finalizarEtapaOportunidadDesistio } from "../../actions/clients.atencion.action";
 import Swal from "sweetalert2";
 
 type Decision = "Aprobación" | "Denegación" | null;
@@ -160,7 +160,7 @@ export default defineComponent({
         enviandoDesistio.value = true;
         errores.value = null;
 
-        await finalizarEtapaOportunidadDesistio(
+        await finalizarEtapaNegociacionDesistio(
           props.idLead,
           motivoSeleccionado.value
         );

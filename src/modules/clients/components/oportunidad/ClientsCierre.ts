@@ -1,15 +1,13 @@
 import { defineComponent, ref, computed, onMounted } from "vue";
 import Swal from "sweetalert2";
 import type { IChecklistCierre } from "../../interfaces/clients.cierre.interface";
-
 import type { IListarOpcionesResponse } from "../../interfaces/clients.interface";
 import { listarOpciones } from "../../actions/clients.action";
-import { finalizarEtapaOportunidadDesistio } from "../../actions/clients.atencion.action";
-import { actualizarChecklistNegociacion, obtenerChecklistCierre } from "../../actions/clientsCierre";
+import { actualizarChecklistNegociacion, finalizarEtapaCierre, finalizarEtapaCierreDesistio, obtenerChecklistCierre } from "../../actions/clientsCierre";
 
 interface Paso {
   id: string;
-  campo: string; // nombre del campo en backend
+  campo: string; 
   titulo: string;
   completado: boolean;
   bloqueado: boolean;
@@ -84,7 +82,7 @@ export default defineComponent({
       Math.round((completados.value / pasos.value.length) * 100)
     );
 
-    // Oculta Desistió / Realizado si la etapa ya está cerrada
+
     const mostrarAcciones = computed(() => {
       return checklistData.value?.estado !== true;
     });
@@ -105,9 +103,6 @@ export default defineComponent({
       );
     }
 
-    // ============================================================
-    // CARGA / SINCRONIZACIÓN
-    // ============================================================
     async function cargarChecklist() {
       try {
         cargando.value = true;
@@ -134,17 +129,12 @@ export default defineComponent({
       const firmaMinuta = pasos.value[1];
       const sperant = pasos.value[2];
 
-      // Paso 1: cuota inicial (siempre desbloqueado)
       cuotaInicial.completado = data.abono_inicial;
       cuotaInicial.fecha = data.abono_inicial ? formatearFecha() : null;
-
-      // Paso 2: firma de minuta (se desbloquea si paso 1 completo)
       firmaMinuta.bloqueado = !data.abono_inicial;
       firmaMinuta.completado = data.firma_minuta;
       firmaMinuta.fecha = data.firma_minuta ? formatearFecha() : null;
 
-      // Paso 3: sperant (se desbloquea si paso 2 completo)
-      // Solo se sincroniza visualmente, no se conecta a backend todavía
       sperant.bloqueado = !data.firma_minuta;
       sperant.completado = data.subida_documentos;
       sperant.fecha = data.subida_documentos ? formatearFecha() : null;
@@ -173,9 +163,7 @@ export default defineComponent({
       }
     }
 
-    // ============================================================
-    // TOGGLE DE PASOS
-    // ============================================================
+
     function onArchivoSeleccionado(e: Event, paso: Paso) {
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
@@ -189,7 +177,6 @@ export default defineComponent({
     async function toggle(paso: Paso) {
       if (paso.bloqueado || actualizando.value) return;
 
-      // Paso de Sperant: aún no conectado al backend, se maneja 100% local
       if (paso.requiereEvidencia) {
         if (!paso.completado && !paso.archivo) return;
 
@@ -202,15 +189,12 @@ export default defineComponent({
       await actualizarCampo(paso.campo, nuevoValor);
     }
 
-    // ============================================================
-    // MODAL DESISTIO
-    // ============================================================
     const mostrarModalDesistio = ref(false);
     const opcionesDesistio = ref<IListarOpcionesResponse[]>([]);
     const motivoSeleccionado = ref<number | null>(null);
     const cargandoOpciones = ref(false);
     const enviandoDesistio = ref(false);
-
+    const finalizandoRealizado = ref(false);
     const ID_LISTADO_MOTIVOS_DESISTIO = 8;
 
     async function abrirModalDesistio() {
@@ -241,46 +225,73 @@ export default defineComponent({
       opcionesDesistio.value = [];
     }
 
-    async function confirmarDesistio() {
-      if (!motivoSeleccionado.value) return;
+  async function confirmarDesistio() {
+  if (!motivoSeleccionado.value) return;
 
-      try {
-        enviandoDesistio.value = true;
-        errores.value = null;
+  try {
+    enviandoDesistio.value = true;
+    errores.value = null;
 
-        await finalizarEtapaOportunidadDesistio(
-          props.idLead,
-          motivoSeleccionado.value
-        );
+    await finalizarEtapaCierreDesistio(
+      props.idLead,
+      motivoSeleccionado.value
+    );
 
-        mostrarModalDesistio.value = false;
-        motivoSeleccionado.value = null;
-        opcionesDesistio.value = [];
+    mostrarModalDesistio.value = false;
+    motivoSeleccionado.value = null;
+    opcionesDesistio.value = [];
 
-        emit("etapa-finalizada");
-      } catch (error) {
-        errores.value =
-          error instanceof Error
-            ? error.message
-            : "Error al registrar el desistimiento";
-        console.error("Error registrando desistimiento:", error);
-      } finally {
-        enviandoDesistio.value = false;
-      }
-    }
+    await cargarChecklist(); // refresca checklistData.estado
 
-    // ============================================================
-    // REALIZADO (sin llamada a API, solo UI por ahora)
-    // ============================================================
-    async function marcarRealizado() {
-      await Swal.fire({
-        title: "Venta marcada como realizada",
-        text: "Este proceso aún no está conectado a un endpoint.",
-        icon: "success",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#2d8c4a",
-      });
-    }
+    emit("etapa-finalizada");
+  } catch (error) {
+    errores.value =
+      error instanceof Error
+        ? error.message
+        : "Error al registrar el desistimiento";
+    console.error("Error registrando desistimiento:", error);
+  } finally {
+    enviandoDesistio.value = false;
+  }
+}
+
+
+  async function marcarRealizado() {
+  try {
+    finalizandoRealizado.value = true;
+    errores.value = null;
+
+    await finalizarEtapaCierre(props.idLead);
+
+    await cargarChecklist(); 
+
+    await Swal.fire({
+      title: "Venta marcada como realizada",
+      text: "La etapa de cierre se finalizó correctamente.",
+      icon: "success",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#2d8c4a",
+    });
+
+    emit("etapa-finalizada");
+  } catch (error) {
+    errores.value =
+      error instanceof Error
+        ? error.message
+        : "Error al finalizar la etapa de cierre";
+    console.error("Error finalizando etapa de cierre:", error);
+
+    await Swal.fire({
+      title: "No se pudo finalizar",
+      text: errores.value,
+      icon: "error",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#2d8c4a",
+    });
+  } finally {
+    finalizandoRealizado.value = false;
+  }
+}
 
     onMounted(() => {
       cargarChecklist();
@@ -296,7 +307,6 @@ export default defineComponent({
       mostrarAcciones,
       toggle,
       onArchivoSeleccionado,
-      // desistio
       mostrarModalDesistio,
       opcionesDesistio,
       motivoSeleccionado,
@@ -305,8 +315,8 @@ export default defineComponent({
       abrirModalDesistio,
       cerrarModalDesistio,
       confirmarDesistio,
-      // realizado
       marcarRealizado,
+      finalizandoRealizado,
     };
   },
 });
