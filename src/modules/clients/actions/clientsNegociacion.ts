@@ -44,3 +44,24 @@ export const obtenerChecklistNegociacion = async (
     throw error;
   }
 };
+
+export const finalizarEtapaNegociacion = async (
+  id_lead: number
+) => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      `/lead/finalizar-etapa-negociacion/${id_lead}`
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al finalizar la etapa de negociación."
+      );
+    }
+
+    throw error;
+  }
+};

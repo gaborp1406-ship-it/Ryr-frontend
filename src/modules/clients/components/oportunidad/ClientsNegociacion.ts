@@ -1,7 +1,14 @@
 import { defineComponent, ref, computed, onMounted } from "vue";
 import type { IChecklistNegociacion } from "../../interfaces/clients.negociacion.interface";
-import { actualizarChecklistNegociacion, obtenerChecklistNegociacion } from "../../actions/clientsNegociacion";
-
+import {
+  actualizarChecklistNegociacion,
+  finalizarEtapaNegociacion,
+  obtenerChecklistNegociacion,
+} from "../../actions/clientsNegociacion";
+import type { IListarOpcionesResponse } from "../../interfaces/clients.interface";
+import { listarOpciones } from "../../actions/clients.action";
+import { finalizarEtapaOportunidadDesistio } from "../../actions/clients.atencion.action";
+import Swal from "sweetalert2";
 
 type Decision = "Aprobación" | "Denegación" | null;
 
@@ -73,13 +80,16 @@ export default defineComponent({
     ]);
 
     const decision = ref<Decision>(null);
-    const desistio = ref(false);
-    const cierre = ref(false);
 
     const proforma = computed(() =>
       pasos.value.find((p) => p.id === "proforma")
     );
 
+
+
+    const mostrarAcciones = computed(() => {
+  return checklistData.value?.estado !== true;
+});
     const aprobacionBancaria = computed(() =>
       pasos.value.find((p) => p.id === "aprobacion_bancaria")
     );
@@ -104,6 +114,75 @@ export default defineComponent({
       fecha: null,
     });
 
+    // ============================================================
+    // MODAL DESISTIO
+    // ============================================================
+    const mostrarModalDesistio = ref(false);
+    const opcionesDesistio = ref<IListarOpcionesResponse[]>([]);
+    const motivoSeleccionado = ref<number | null>(null);
+    const cargandoOpciones = ref(false);
+    const enviandoDesistio = ref(false);
+
+    const ID_LISTADO_MOTIVOS_DESISTIO = 8;
+
+    async function abrirModalDesistio() {
+      mostrarModalDesistio.value = true;
+      motivoSeleccionado.value = null;
+      errores.value = null;
+
+      try {
+        cargandoOpciones.value = true;
+        opcionesDesistio.value = await listarOpciones(
+          ID_LISTADO_MOTIVOS_DESISTIO
+        );
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al cargar los motivos de desistimiento";
+        console.error("Error cargando opciones de desistimiento:", error);
+      } finally {
+        cargandoOpciones.value = false;
+      }
+    }
+
+    function cerrarModalDesistio() {
+      if (enviandoDesistio.value) return;
+      mostrarModalDesistio.value = false;
+      motivoSeleccionado.value = null;
+      opcionesDesistio.value = [];
+    }
+
+    async function confirmarDesistio() {
+      if (!motivoSeleccionado.value) return;
+
+      try {
+        enviandoDesistio.value = true;
+        errores.value = null;
+
+        await finalizarEtapaOportunidadDesistio(
+          props.idLead,
+          motivoSeleccionado.value
+        );
+
+        mostrarModalDesistio.value = false;
+        motivoSeleccionado.value = null;
+        opcionesDesistio.value = [];
+
+        emit("etapa-finalizada");
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al registrar el desistimiento";
+        console.error("Error registrando desistimiento:", error);
+      } finally {
+        enviandoDesistio.value = false;
+      }
+    }
+
+    // ============================================================
+
     const completados = computed(() => {
       let total = 0;
       let completado = 0;
@@ -126,9 +205,7 @@ export default defineComponent({
     const totalPasos = computed(() => 4);
 
     const progreso = computed(() => {
-      return Math.round(
-        (completados.value / totalPasos.value) * 100
-      );
+      return Math.round((completados.value / totalPasos.value) * 100);
     });
 
     const procesoFinalizado = computed(() => {
@@ -165,7 +242,8 @@ export default defineComponent({
           sincronizarDatos(data[0]);
         }
       } catch (error) {
-        errores.value = error instanceof Error ? error.message : "Error al cargar el checklist";
+        errores.value =
+          error instanceof Error ? error.message : "Error al cargar el checklist";
         console.error("Error cargando checklist:", error);
       } finally {
         cargando.value = false;
@@ -195,17 +273,24 @@ export default defineComponent({
       // Sincronizar precalificación
       if (precalificacion.value) {
         precalificacion.value.completado = data.aprobacion_bancaria_precalififacion;
-        precalificacion.value.fecha = data.aprobacion_bancaria_precalififacion ? formatearFecha() : null;
+        precalificacion.value.fecha = data.aprobacion_bancaria_precalififacion
+          ? formatearFecha()
+          : null;
       }
 
       // Sincronizar documentos al banco
       docsBanco.value.completado = data.aprobacion_bancaria_carta_aprobacion;
-      docsBanco.value.fecha = data.aprobacion_bancaria_carta_aprobacion ? formatearFecha() : null;
+      docsBanco.value.fecha = data.aprobacion_bancaria_carta_aprobacion
+        ? formatearFecha()
+        : null;
 
       // Sincronizar carta de aprobación
       if (cartaAprobacion.value) {
-        cartaAprobacion.value.completado = data.carta_aprobacion_aprobado || data.carta_aprobacion_denegado;
-        cartaAprobacion.value.fecha = cartaAprobacion.value.completado ? formatearFecha() : null;
+        cartaAprobacion.value.completado =
+          data.carta_aprobacion_aprobado || data.carta_aprobacion_denegado;
+        cartaAprobacion.value.fecha = cartaAprobacion.value.completado
+          ? formatearFecha()
+          : null;
       }
 
       // Sincronizar decisión
@@ -218,9 +303,21 @@ export default defineComponent({
       }
 
       // Sincronizar aprobación bancaria (parent)
+      // Regla: se marca como completada (check verde) si se cumple AL MENOS UNA:
+      //  - precalificación completada
+      //  - decisión de carta = Aprobación
+      //  - decisión de carta = Denegación
+      // Si no se cumple ninguna, se mantiene sin check.
       if (aprobacionBancaria.value) {
-        aprobacionBancaria.value.completado = data.aprobacion_bancaria;
-        aprobacionBancaria.value.fecha = data.aprobacion_bancaria ? formatearFecha() : null;
+        const bancariaCompletada =
+          Boolean(precalificacion.value?.completado) ||
+          decision.value === "Aprobación" ||
+          decision.value === "Denegación";
+
+        aprobacionBancaria.value.completado = bancariaCompletada;
+        aprobacionBancaria.value.fecha = bancariaCompletada
+          ? formatearFecha()
+          : null;
       }
     }
 
@@ -295,7 +392,10 @@ export default defineComponent({
         }
 
         // Registrar nueva decisión
-        const campo = valor === "Aprobación" ? "carta_aprobacion_aprobado" : "carta_aprobacion_denegado";
+        const campo =
+          valor === "Aprobación"
+            ? "carta_aprobacion_aprobado"
+            : "carta_aprobacion_denegado";
         await actualizarChecklistNegociacion({
           id_lead_etapa: idLeadEtapa.value!,
           campo,
@@ -304,56 +404,63 @@ export default defineComponent({
 
         await cargarChecklist();
       } catch (error) {
-        errores.value = error instanceof Error ? error.message : "Error al registrar decisión";
+        errores.value =
+          error instanceof Error ? error.message : "Error al registrar decisión";
         console.error("Error registrando decisión:", error);
       } finally {
         actualizando.value = false;
       }
     }
 
-    function resetearCarta() {
-      if (cartaAprobacion.value) {
-        cartaAprobacion.value.completado = false;
-        cartaAprobacion.value.bloqueado = true;
-        cartaAprobacion.value.fecha = null;
-      }
+async function pasarACierre() {
+  const confirmacion = await Swal.fire({
+    title: "¿Pasar a cierre?",
+    text: "Esta acción finalizará la etapa de negociación y avanzará el proceso a cierre.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, pasar a cierre",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#0f172a",
+    cancelButtonColor: "#94a3b8",
+    reverseButtons: true,
+  });
 
-      docsBanco.value.completado = false;
-      docsBanco.value.bloqueado = true;
-      docsBanco.value.fecha = null;
+  if (!confirmacion.isConfirmed) return;
 
-      decision.value = null;
-    }
+  try {
+    actualizando.value = true;
+    errores.value = null;
 
-    function resetearAprobacionBancaria() {
-      if (aprobacionBancaria.value) {
-        aprobacionBancaria.value.completado = false;
-        aprobacionBancaria.value.bloqueado = true;
-        aprobacionBancaria.value.fecha = null;
-      }
+    await finalizarEtapaNegociacion(props.idLead);
 
-      if (precalificacion.value) {
-        precalificacion.value.completado = false;
-        precalificacion.value.bloqueado = true;
-        precalificacion.value.fecha = null;
-      }
+    await Swal.fire({
+      title: "Listo",
+      text: "El proceso avanzó a la etapa de cierre.",
+      icon: "success",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#2d8c4a",
+    });
 
-      resetearCarta();
-    }
+    emit("etapa-finalizada");
+  } catch (error) {
+    errores.value =
+      error instanceof Error
+        ? error.message
+        : "Error al finalizar la etapa de negociación";
+    console.error("Error finalizando etapa de negociación:", error);
 
-    async function marcarDesistio() {
-      desistio.value = true;
-      cierre.value = false;
+    Swal.fire({
+      title: "Error",
+      text: errores.value,
+      icon: "error",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#e11d48",
+    });
+  } finally {
+    actualizando.value = false;
+  }
+}
 
-      emit("etapa-finalizada");
-    }
-
-    async function pasarACierre() {
-      cierre.value = true;
-      desistio.value = false;
-
-      emit("etapa-finalizada");
-    }
 
     onMounted(() => {
       cargarChecklist();
@@ -370,8 +477,6 @@ export default defineComponent({
       cartaAprobacion,
       docsBanco,
       decision,
-      desistio,
-      cierre,
       completados,
       totalPasos,
       progreso,
@@ -380,8 +485,17 @@ export default defineComponent({
       completarPrecalificacion,
       completarDocsBanco,
       registrarDecision,
-      marcarDesistio,
       pasarACierre,
+      mostrarAcciones,
+      // modal desistio
+      mostrarModalDesistio,
+      opcionesDesistio,
+      motivoSeleccionado,
+      cargandoOpciones,
+      enviandoDesistio,
+      abrirModalDesistio,
+      cerrarModalDesistio,
+      confirmarDesistio,
     };
   },
 });
