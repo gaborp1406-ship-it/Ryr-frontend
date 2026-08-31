@@ -17,9 +17,9 @@ import ModalDesistir from "@/modules/clients/components/oportunidad/atencion/Mod
 import ModalAgendarReu from "@/modules/clients/components/oportunidad/atencion/ModalAgendarReu.vue";
 import ModalLlamada from "@/modules/clients/components/oportunidad/atencion/llamada/views/ModalLlamada.vue";
 import { finalizarEtapaAtencion } from "../../actions/clients.atencion.action";
-import { useSipPhone } from "@/modules/clients/components/candidato/llamada/composables/useSipPhone.js";
-import { useLlamadaSaliente } from "@/modules/clients/components/candidato/llamada/composables/useLlamadaSaliente.js";
-import { conectarEventosLlamada } from "@/modules/clients/components/candidato/llamada/actions/Gestioninteraction.action.js";
+import { useSipPhone } from "./atencion/llamada/composables/useSipPhone";
+import { useLlamadaSaliente } from "./atencion/llamada/composables/useLlamadaSaliente";
+import { conectarEventosLlamada } from "./atencion/llamada/actions/Gestioninteraction.action";
 
 const ITEMS_POR_PAGINA = 3;
 
@@ -100,7 +100,7 @@ export default defineComponent({
           throw new Error("No se pudo obtener la etapa actual del lead");
         }
 
-        if (reunion.idLeadEtapa.value == null) { // ✅ Validar
+        if (reunion.idLeadEtapa.value == null) { 
           throw new Error("No se pudo obtener la etapa del lead");
         }
         if (!sipRegistrado.value) {

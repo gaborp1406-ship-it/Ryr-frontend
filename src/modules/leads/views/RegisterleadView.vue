@@ -113,7 +113,7 @@
         </template>
 
         <template v-else>
-          <tr v-for="lead in leadsPaginados" :key="lead.id" @dblclick="editarLead(lead)"
+          <tr v-for="lead in leadsPaginados" :key="lead.id"
             class="group cursor-pointer border-l-2 border-l-transparent odd:bg-white even:bg-slate-50/50 transition-colors hover:border-l-[#2d8c4a] hover:bg-[#2d8c4a]/[0.05]">
             <td class="rlv-mono px-4 py-3 whitespace-nowrap text-slate-0">{{ lead.fecha }}</td>
 
@@ -185,14 +185,13 @@
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.nombre" @input="onNombreInput"
-              :disabled="guardando" placeholder="Nombre completo"
+            <input v-model="nuevoLead.nombre" @input="onNombreInput" :disabled="guardando" placeholder="Nombre completo"
               class="w-full rounded-xl border text-xs  border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.dni" @input="onDniInput" 
-              :disabled="guardando" maxlength="10" inputmode="numeric" placeholder="87654321"
+            <input v-model="nuevoLead.dni" @input="onDniInput" :disabled="guardando" maxlength="10" inputmode="numeric"
+              placeholder="87654321"
               class="rlv-mono w-full rounded-xl text-xs border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
