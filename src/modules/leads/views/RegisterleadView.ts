@@ -2,7 +2,7 @@ import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import type { IAsesor, ILeadDiario, IListarOpcionesResponse, IListarProyectoResponse } from '../interfaces/lead.interface';
-import { crearLead, listarAsesores, listarLeadsDiarios, listarOpciones, listarProyectos } from '../actions/lead.action';
+import { crearLead, listarAsesores, listarLeadsDiarios, listarOpciones, listarProyectos, validarLeadDuplicado } from '../actions/lead.action';
 
 export default defineComponent({
   setup() {
@@ -194,108 +194,138 @@ export default defineComponent({
     });
 
 
-    const guardarLead = async () => {
+ const guardarLead = async () => {
 
-      if (guardando.value) {
-        return;
-      }
+  if (guardando.value) {
+    return;
+  }
 
-      try {
+  try {
 
+    if (!asesorSeleccionado.value) {
+      toast.warning('No hay asesor disponible');
+      return;
+    }
 
-        if (!asesorSeleccionado.value) {
-          toast.warning('No hay asesor disponible');
-          return;
-        }
+    if (!nuevoLead.proyecto) {
+      toast.warning('Seleccione un proyecto');
+      return;
+    }
 
+    if (!nuevoLead.nombre) {
+      toast.warning('Ingrese nombre del cliente');
+      return;
+    }
 
-        if (!nuevoLead.proyecto) {
-          toast.warning('Seleccione un proyecto');
-          return;
-        }
+    if (!nuevoLead.telefono) {
+      toast.warning('Ingrese teléfono');
+      return;
+    }
 
+    if (!authStore.idEmploye) {
+      toast.error('No se encontró el usuario de sesión');
+      return;
+    }
 
-        if (!nuevoLead.nombre) {
-          toast.warning('Ingrese nombre del cliente');
-          return;
-        }
+    guardando.value = true;
 
+    // ========================================
+    // 1. VALIDAR SI EL LEAD YA EXISTE
+    // ========================================
 
-        if (!nuevoLead.telefono) {
-          toast.warning('Ingrese teléfono');
-          return;
-        }
-        if (!authStore.idEmploye) {
-          toast.error('No se encontró el usuario de sesión');
-          return;
-        }
+    const validacion = await validarLeadDuplicado({
+      dni: nuevoLead.dni,
+      telefono: nuevoLead.telefono
+    });
 
-        guardando.value = true;
+    console.log(
+      'Respuesta validar duplicado:',
+      validacion
+    );
 
-        const payload = {
+    // ========================================
+    // 2. SI EXISTE, MOSTRAR MENSAJE Y DETENER
+    // ========================================
 
-          id_asesor: asesorSeleccionado.value,
+    if (validacion.bloqueado) {
 
-          id_proyecto: Number(nuevoLead.proyecto),
+      toast.warning(
+        validacion.mensaje ??
+        'Este cliente ya tiene un lead registrado.'
+      );
 
-          nombre_cliente: nuevoLead.nombre,
+      return;
+    }
 
-          dni_cliente: nuevoLead.dni,
+    // ========================================
+    // 3. SI NO EXISTE, CREAR EL LEAD
+    // ========================================
 
-          telefono_cliente: nuevoLead.telefono,
+    const payload = {
 
-          id_fuente: Number(nuevoLead.fuente),
+      id_asesor: asesorSeleccionado.value,
 
-          usuario_creacion: authStore.idEmploye,
+      id_proyecto: Number(nuevoLead.proyecto),
 
-        };
+      nombre_cliente: nuevoLead.nombre,
 
+      dni_cliente: nuevoLead.dni,
 
-        console.log('Payload crear lead:', payload);
+      telefono_cliente: nuevoLead.telefono,
 
+      id_fuente: Number(nuevoLead.fuente),
 
-        const response = await crearLead(payload);
-
-
-
-        toast.success(
-          'Lead creado correctamente'
-        );
-
-
-        console.log(
-          'Respuesta:',
-          response
-        );
-
-
-
-        nuevoLead.proyecto = '';
-        nuevoLead.nombre = '';
-        nuevoLead.dni = '';
-        nuevoLead.telefono = '';
-        nuevoLead.fuente = '';
-
-
-
-        await cargarLeads();
-        await cargarAsesores();
-
-
-
-      } catch (error: any) {
-
-        toast.error(
-          error.message ?? 'Error al crear lead'
-        );
-
-      } finally {
-
-        guardando.value = false;
-
-      }
+      usuario_creacion: authStore.idEmploye,
 
     };
+
+    console.log(
+      'Payload crear lead:',
+      payload
+    );
+
+    const response = await crearLead(payload);
+
+    toast.success(
+      'Lead creado correctamente'
+    );
+
+    console.log(
+      'Respuesta crear lead:',
+      response
+    );
+
+    // ========================================
+    // 4. LIMPIAR FORMULARIO
+    // ========================================
+
+    nuevoLead.proyecto = '';
+    nuevoLead.nombre = '';
+    nuevoLead.dni = '';
+    nuevoLead.telefono = '';
+    nuevoLead.fuente = '';
+
+    // ========================================
+    // 5. ACTUALIZAR LISTADOS
+    // ========================================
+
+    await cargarLeads();
+    await cargarAsesores();
+
+  } catch (error: any) {
+
+    toast.error(
+      error.message ??
+      'Error al procesar el lead'
+    );
+
+  } finally {
+
+    guardando.value = false;
+
+  }
+
+};
 
 
     const editarLead = (lead: ILeadDiario) => {

@@ -11,31 +11,23 @@
     <div class="profile-menu">
       <!-- Selector de estado (solo agentes) -->
       <div v-if="authStore.isAgent" class="status-selector" ref="statusRef">
-        <button
-          type="button"
-          class="status-selector__trigger"
-          :class="`is-${currentStatusSlug}`"
-          :disabled="isLoadingStatus || isUpdatingStatus"
-          @click="isStatusOpen = !isStatusOpen"
-        >
+        <button type="button" class="status-selector__trigger" :class="`is-${currentStatusSlug}`"
+          :disabled="isLoadingStatus || isUpdatingStatus" @click="isStatusOpen = !isStatusOpen">
           <span class="status-dot" :class="`is-${currentStatusSlug}`"></span>
           <span class="status-selector__label">
             {{ isLoadingStatus ? 'Cargando...' : currentStatus?.estado_conexion ?? 'Sin estado' }}
           </span>
-          <svg class="status-selector__chevron" :class="{ 'is-open': isStatusOpen }" width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          <svg class="status-selector__chevron" :class="{ 'is-open': isStatusOpen }" width="12" height="12"
+            viewBox="0 0 12 12" fill="none">
+            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
         </button>
 
         <transition name="status-fade">
           <ul v-if="isStatusOpen" class="status-selector__menu">
-            <li
-              v-for="opt in estadosDisponibles"
-              :key="opt.id"
-              class="status-selector__item"
-              :class="{ 'is-selected': opt.id === currentStatus?.id_estado }"
-              @click="selectStatus(opt)"
-            >
+            <li v-for="opt in estadosDisponibles" :key="opt.id" class="status-selector__item"
+              :class="{ 'is-selected': opt.id === currentStatus?.id_estado }" @click="selectStatus(opt)">
               <span class="status-dot" :class="`is-${slugify(opt.nombre)}`"></span>
               <span>{{ opt.nombre }}</span>
             </li>
@@ -51,6 +43,15 @@
         </span>
         <span class="profile-menu__name">{{ authStore.username }}</span>
       </a>
+
+      <button type="button" class="notif-bell__trigger" @click="" aria-label="Notificaciones de leads">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+
+      </button>
     </div>
   </header>
 </template>
@@ -358,9 +359,17 @@ onBeforeUnmount(() => {
 }
 
 @keyframes pulse-activo {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, .35); }
-  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, .35);
+  }
+
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 .status-selector__menu {

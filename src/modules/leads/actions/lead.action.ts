@@ -8,6 +8,8 @@ import type {
   ILeadDiario,
   IListarOpcionesResponse,
   IListarProyectoResponse,
+  IValidarLeadDuplicadoRequest,
+  IValidarLeadDuplicadoResponse,
 } from '../interfaces/lead.interface';
 
 export const listarOpciones = async (
@@ -112,6 +114,32 @@ export const crearLead = async (
       throw new Error(
         error.response?.data?.message ??
         'Error al crear lead.'
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const validarLeadDuplicado = async (
+  payload: IValidarLeadDuplicadoRequest
+): Promise<IValidarLeadDuplicadoResponse> => {
+
+  try {
+
+    const { data } = await automatizateApiNest.post(
+      '/lead/validar-duplicado',
+      payload
+    );
+
+    return data;
+
+  } catch (error) {
+
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al validar lead duplicado.'
       );
     }
 

@@ -46,3 +46,19 @@ export interface ICrearLeadResponse {
   id_asesor: number;
   fecha_creacion: string;
 }
+
+export interface IValidarLeadDuplicadoRequest {
+  dni: string;
+  telefono: string;
+}
+
+export interface IValidarLeadDuplicadoResponse {
+  bloqueado: boolean;
+  mensaje: string | null;
+  id_cliente_existente: number | null;
+  id_lead_existente: number | null;
+  id_asesor_existente: number | null;
+  id_proyecto_existente: number | null;
+  id_etapa_actual: number | null;
+}
+
