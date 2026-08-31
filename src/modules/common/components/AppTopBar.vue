@@ -45,7 +45,7 @@
         <span class="profile-menu__name">{{ authStore.username }}</span>
       </a>
 
-      <div class="notif-bell" ref="notifRef "v-if="authStore.isAgent"><
+      <div class="notif-bell" ref="notifRef "v-if="authStore.isAgent">
         <button type="button" class="notif-bell__trigger" @click="toggleNotificaciones"
           aria-label="Notificaciones de leads">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
