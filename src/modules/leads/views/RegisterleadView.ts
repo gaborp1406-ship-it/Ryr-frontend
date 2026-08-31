@@ -145,7 +145,52 @@ export default defineComponent({
         toast.error(error.message);
       }
     };
+    // ================= VALIDACIONES =================
 
+    // Filtra el nombre: solo letras y espacios (nada de números)
+    const onNombreInput = (event: Event) => {
+      const input = event.target as HTMLInputElement;
+      const valorLimpio = input.value.replace(/[0-9]/g, '');
+      nuevoLead.nombre = valorLimpio;
+    };
+
+    // Filtra el DNI: solo dígitos, máximo 10
+    const onDniInput = (event: Event) => {
+      const input = event.target as HTMLInputElement;
+      const valorLimpio = input.value.replace(/\D/g, '').slice(0, 10);
+      nuevoLead.dni = valorLimpio;
+    };
+
+    // Filtra el teléfono: solo dígitos, máximo 9, sin espacios
+    const onTelefonoInput = (event: Event) => {
+      const input = event.target as HTMLInputElement;
+      const valorLimpio = input.value.replace(/\D/g, '').slice(0, 9);
+      nuevoLead.telefono = valorLimpio;
+    };
+
+    // Validación final antes de guardar
+    const validarFormulario = (): boolean => {
+      const nombreRegex = /^[A-Za-zÁÉÍÓÚÑáéíóúñ\s]+$/;
+      const dniRegex = /^\d{8,10}$/;
+      const telefonoRegex = /^\d{9}$/;
+
+      if (!nombreRegex.test(nuevoLead.nombre.trim())) {
+        toast.warning('El nombre no debe contener números');
+        return false;
+      }
+
+      if (!dniRegex.test(nuevoLead.dni)) {
+        toast.warning('El DNI debe tener entre 8 y 10 dígitos, sin letras ni espacios');
+        return false;
+      }
+
+      if (!telefonoRegex.test(nuevoLead.telefono)) {
+        toast.warning('El teléfono debe tener exactamente 9 dígitos, sin espacios');
+        return false;
+      }
+
+      return true;
+    };
     const nuevoLead = reactive({
       proyecto: '',
       nombre: '',
@@ -195,47 +240,62 @@ export default defineComponent({
 
 
     const guardarLead = async () => {
-
+      // Evitar doble clic / doble ejecución
       if (guardando.value) {
         return;
       }
 
+  
+
+      if (!authStore.idEmploye) {
+        toast.error('No se encontró el usuario de sesión');
+        return;
+      }
+
+      if (!asesorSeleccionado.value) {
+        toast.warning('No hay asesor disponible');
+        return;
+      }
+
+      if (!nuevoLead.proyecto) {
+        toast.warning('Seleccione un proyecto');
+        return;
+      }
+
+      if (!nuevoLead.nombre) {
+        toast.warning('Ingrese nombre del cliente');
+        return;
+      }
+
+      if (!nuevoLead.dni) {
+        toast.warning('Ingrese DNI');
+        return;
+      }
+
+      if (!nuevoLead.telefono) {
+        toast.warning('Ingrese teléfono');
+        return;
+      }
+
+      // Validación de formato
+      if (!validarFormulario()) {
+        return;
+      }
+
+      // =========================
+      // INICIAR GUARDADO
+      // =========================
+
+      guardando.value = true;
+
       try {
-
-        if (!asesorSeleccionado.value) {
-          toast.warning('No hay asesor disponible');
-          return;
-        }
-
-        if (!nuevoLead.proyecto) {
-          toast.warning('Seleccione un proyecto');
-          return;
-        }
-
-        if (!nuevoLead.nombre) {
-          toast.warning('Ingrese nombre del cliente');
-          return;
-        }
-
-        if (!nuevoLead.telefono) {
-          toast.warning('Ingrese teléfono');
-          return;
-        }
-
-        if (!authStore.idEmploye) {
-          toast.error('No se encontró el usuario de sesión');
-          return;
-        }
-
-        guardando.value = true;
-
-        // ========================================
-        // 1. VALIDAR SI EL LEAD YA EXISTE
-        // ========================================
+        // =========================
+        // 1. VALIDAR DUPLICADO
+        // =========================
 
         const validacion = await validarLeadDuplicado({
           dni: nuevoLead.dni,
-          telefono: nuevoLead.telefono
+          telefono: nuevoLead.telefono,
         });
 
         console.log(
@@ -243,12 +303,11 @@ export default defineComponent({
           validacion
         );
 
-        // ========================================
-        // 2. SI EXISTE, MOSTRAR MENSAJE Y DETENER
-        // ========================================
+        // =========================
+        // 2. SI EXISTE, DETENER
+        // =========================
 
         if (validacion.bloqueado) {
-
           toast.warning(
             validacion.mensaje ??
             'Este cliente ya tiene un lead registrado.'
@@ -257,26 +316,18 @@ export default defineComponent({
           return;
         }
 
-        // ========================================
-        // 3. SI NO EXISTE, CREAR EL LEAD
-        // ========================================
+        // =========================
+        // 3. CREAR LEAD
+        // =========================
 
         const payload = {
-
           id_asesor: asesorSeleccionado.value,
-
           id_proyecto: Number(nuevoLead.proyecto),
-
           nombre_cliente: nuevoLead.nombre,
-
           dni_cliente: nuevoLead.dni,
-
           telefono_cliente: nuevoLead.telefono,
-
           id_fuente: Number(nuevoLead.fuente),
-
           usuario_creacion: authStore.idEmploye,
-
         };
 
         console.log(
@@ -286,18 +337,18 @@ export default defineComponent({
 
         const response = await crearLead(payload);
 
-        toast.success(
-          'Lead creado correctamente'
-        );
-
         console.log(
           'Respuesta crear lead:',
           response
         );
 
-        // ========================================
+        toast.success(
+          'Lead creado correctamente'
+        );
+
+        // =========================
         // 4. LIMPIAR FORMULARIO
-        // ========================================
+        // =========================
 
         nuevoLead.proyecto = '';
         nuevoLead.nombre = '';
@@ -305,17 +356,22 @@ export default defineComponent({
         nuevoLead.telefono = '';
         nuevoLead.fuente = '';
 
-        // ========================================
+        // =========================
         // 5. ACTUALIZAR LISTADOS
-        // ========================================
+        // =========================
 
         await cargarLeads();
         await cargarAsesores();
 
       } catch (error: any) {
 
+        console.error(
+          'Error al guardar lead:',
+          error
+        );
+
         toast.error(
-          error.message ??
+          error?.message ??
           'Error al procesar el lead'
         );
 
@@ -324,9 +380,7 @@ export default defineComponent({
         guardando.value = false;
 
       }
-
     };
-
 
     const editarLead = (lead: ILeadDiario) => {
       console.log('Editar lead:', lead);
@@ -344,7 +398,9 @@ export default defineComponent({
       totalHoy,
 
       asesorActual,
-
+      onNombreInput,
+      onDniInput,
+      onTelefonoInput,
       leads,
       cargando,
       guardando,

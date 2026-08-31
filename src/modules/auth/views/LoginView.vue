@@ -68,8 +68,8 @@
           <div class="brand-divider"></div>
 
           <p class="panel-brand__text">
-            El arte de vivir <br />
-            con <span class="accent-text">elegancia</span>.
+            +15 años contruyenddo confianza <br />
+
           </p>
         </div>
       </div>

@@ -149,8 +149,7 @@
         </template>
 
         <!-- Ticket nuevo -->
-        <tr @keyup.enter="!guardando && guardarLead()" tabindex="0"
-          class="relative bg-[#2d8c4a]/[0.045] transition-opacity"
+        <tr tabindex="0" class="relative bg-[#2d8c4a]/[0.045] transition-opacity"
           :class="{ 'opacity-60 pointer-events-none': guardando }">
           <td
             class="px-4 py-3.5 border-t-2  text-xs border-dashed border-[#2d8c4a]/30 text-slate-500 whitespace-nowrap">
@@ -186,20 +185,20 @@
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.nombre" @keyup.enter="!guardando && guardarLead()" :disabled="guardando"
-              placeholder="Nombre completo"
+            <input v-model="nuevoLead.nombre" @input="onNombreInput"
+              :disabled="guardando" placeholder="Nombre completo"
               class="w-full rounded-xl border text-xs  border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.dni" @keyup.enter="!guardando && guardarLead()" :disabled="guardando"
-              maxlength="8" placeholder="87654321"
+            <input v-model="nuevoLead.dni" @input="onDniInput" 
+              :disabled="guardando" maxlength="10" inputmode="numeric" placeholder="87654321"
               class="rlv-mono w-full rounded-xl text-xs border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.telefono" @keyup.enter="!guardando && guardarLead()" :disabled="guardando"
-              placeholder="987654321"
+            <input v-model="nuevoLead.telefono" @input="onTelefonoInput" @keyup.enter="!guardando && guardarLead()"
+              :disabled="guardando" maxlength="9" inputmode="numeric" placeholder="987654321"
               class="rlv-mono  text-xs w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 

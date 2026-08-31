@@ -45,14 +45,52 @@
         <span class="profile-menu__name">{{ authStore.username }}</span>
       </a>
 
-      <button type="button" class="notif-bell__trigger" @click="" aria-label="Notificaciones de leads">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
+      <div class="notif-bell" ref="notifRef">
+        <button type="button" class="notif-bell__trigger" @click="toggleNotificaciones"
+          aria-label="Notificaciones de leads">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span v-if="contadorNoLeidas > 0" class="notif-bell__badge">{{ contadorNoLeidas }}</span>
+        </button>
 
-      </button>
+        <transition name="status-fade">
+          <div v-if="isNotifOpen" class="notif-bell__panel">
+            <div class="notif-bell__header">
+              <span>Notificaciones</span>
+              <button v-if="notificaciones.some(n => n.leida)" type="button" class="notif-bell__clear"
+                @click="limpiarLeidas" :disabled="isLimpiarLoading">
+                {{ isLimpiarLoading ? 'Limpiando...' : 'Limpiar leídas' }}
+              </button>
+            </div>
+
+            <div v-if="notificaciones.length === 0" class="notif-bell__empty">
+              No tienes notificaciones aún
+            </div>
+
+            <ul v-else class="notif-bell__list">
+              <li v-for="notif in notificaciones" :key="notif.id" class="notif-bell__item"
+                :class="{ 'is-unread': !notif.leida }" @click="abrirNotificacion(notif)">
+                <span class="notif-bell__dot"></span>
+                <div class="notif-bell__content">
+                  <p class="notif-bell__title">{{ notif.titulo }}</p>
+                  <p class="notif-bell__msg">{{ notif.mensaje }}</p>
+                </div>
+
+                <button type="button" class="notif-bell__delete" @click="borrarNotificacion(notif, $event)"
+                  aria-label="Eliminar notificación" :disabled="isDeletingNotif">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </transition>
+      </div>
     </div>
   </header>
 </template>
@@ -69,38 +107,177 @@ import type {
   IEstadoConexion,
   IEstadoActualTrabajador,
 } from '@/modules/estados/interfaces/estados.interface';
+import { useRouter } from 'vue-router';
+import { conectarSocket, desconectarSocket } from '@/modules/leads/actions/socket.service';
+import { eventBus } from '../utils/eventBus';
+import {
+  eliminarNotificacion,
+  eliminarTodasNotificacion,
+  listarNotificaciones,
+  marcarNotificacionLeida,
+  
+} from '@/modules/leads/actions/notificaciones.action';
 
 interface Parametros {
   title: string;
 }
 
+interface INotificacion {
+  id: number;
+  tipo: string;
+  titulo: string;
+  mensaje: string;
+  id_lead: number;
+  fecha_creacion: string;
+  leida: boolean;
+}
+
 const props = defineProps<Parametros>();
+const router = useRouter();
+const authStore = useAuthStore();
+
+// ========== NOTIFICACIONES ==========
+const notificaciones = ref<INotificacion[]>([]);
+const contadorNoLeidas = ref(0);
+const isNotifOpen = ref(false);
+const isLimpiarLoading = ref(false);
+const isDeletingNotif = ref(false);
+const notifRef = ref<HTMLElement | null>(null);
+
+// ========== ESTADO ==========
+const isStatusOpen = ref(false);
+const statusRef = ref<HTMLElement | null>(null);
+const estadosDisponibles = ref<IEstadoConexion[]>([]);
+const currentStatus = ref<IEstadoActualTrabajador | null>(null);
+const isLoadingStatus = ref(false);
+const isUpdatingStatus = ref(false);
 
 const emit = defineEmits<{
   (e: 'toggle-menu'): void;
   (e: 'status-change', status: IEstadoActualTrabajador): void;
 }>();
 
-const authStore = useAuthStore();
+// ========== UTILIDADES ==========
 
-const isStatusOpen = ref(false);
-const statusRef = ref<HTMLElement | null>(null);
-
-const estadosDisponibles = ref<IEstadoConexion[]>([]);
-const currentStatus = ref<IEstadoActualTrabajador | null>(null);
-
-const isLoadingStatus = ref(false);
-const isUpdatingStatus = ref(false);
-
-// Convierte "En break" -> "en-break" para usarlo en las clases CSS is-xxx
+/**
+ * Convierte "En break" -> "en-break" para usarlo en las clases CSS is-xxx
+ */
 function slugify(nombre: string): string {
   return nombre
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // quita tildes
+    .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .replace(/\s+/g, '-');
 }
+
+/**
+ * Reproduce sonido de notificación
+ */
+function reproducirSonido() {
+  const audio = new Audio('/sounds/notificacion.mp3');
+  audio.volume = 0.6;
+  audio.play().catch((err) => {
+    console.warn('No se pudo reproducir el sonido:', err);
+  });
+}
+
+/**
+ * Cierra el panel de notificaciones si haces clic afuera
+ */
+function handleClickOutsideNotif(e: MouseEvent) {
+  if (notifRef.value && !notifRef.value.contains(e.target as Node)) {
+    isNotifOpen.value = false;
+  }
+}
+
+/**
+ * Cierra el selector de estado si haces clic afuera
+ */
+function handleClickOutside(e: MouseEvent) {
+  if (statusRef.value && !statusRef.value.contains(e.target as Node)) {
+    isStatusOpen.value = false;
+  }
+}
+
+// ========== NOTIFICACIONES - FUNCIONES ==========
+
+function toggleNotificaciones() {
+  isNotifOpen.value = !isNotifOpen.value;
+}
+
+async function cargarNotificaciones() {
+  if (!authStore.idEmploye) return;
+
+  try {
+    const data = await listarNotificaciones(authStore.idEmploye);
+    notificaciones.value = data;
+    contadorNoLeidas.value = data.filter((n) => !n.leida).length;
+  } catch (error) {
+    console.error('Error al cargar notificaciones:', error);
+  }
+}
+
+async function abrirNotificacion(notif: INotificacion) {
+  if (!notif.leida) {
+    notif.leida = true;
+    contadorNoLeidas.value = Math.max(0, contadorNoLeidas.value - 1);
+
+    try {
+      await marcarNotificacionLeida(notif.id);
+    } catch (error) {
+      console.error('Error al marcar como leída:', error);
+    }
+  }
+
+  isNotifOpen.value = false;
+
+  if (router.currentRoute.value.path === '/clients') {
+    eventBus.emit('refrescar-leads', notif.id_lead);
+  } else {
+    router.push('/clients');
+  }
+}
+
+async function borrarNotificacion(notif: INotificacion, event: MouseEvent) {
+  event.stopPropagation();
+
+  isDeletingNotif.value = true;
+  const eraNoLeida = !notif.leida;
+
+  try {
+    notificaciones.value = notificaciones.value.filter((n) => n.id !== notif.id);
+
+    if (eraNoLeida) {
+      contadorNoLeidas.value = Math.max(0, contadorNoLeidas.value - 1);
+    }
+
+    await eliminarNotificacion(notif.id);
+  } catch (error) {
+    console.error('Error al eliminar notificación:', error);
+    cargarNotificaciones();
+  } finally {
+    isDeletingNotif.value = false;
+  }
+}
+
+async function limpiarLeidas() {
+  if (!authStore.idEmploye) return;
+
+  isLimpiarLoading.value = true;
+
+  try {
+    notificaciones.value = notificaciones.value.filter((n) => !n.leida);
+    await eliminarTodasNotificacion(authStore.idEmploye);
+  } catch (error) {
+    console.error('Error al limpiar notificaciones leídas:', error);
+    cargarNotificaciones();
+  } finally {
+    isLimpiarLoading.value = false;
+  }
+}
+
+// ========== ESTADO - FUNCIONES ==========
 
 const currentStatusSlug = computed(() =>
   currentStatus.value ? slugify(currentStatus.value.estado_conexion) : 'desconectado'
@@ -143,10 +320,7 @@ async function selectStatus(opt: IEstadoConexion) {
       id_estado: opt.id,
     });
 
-    // El backend devuelve la fila del historial recién creada (id, id_estado, fecha_inicio, etc.)
-    // así que recargamos el estado actual completo para tener nombre/color listos
     await cargarEstadoActual();
-
     emit('status-change', currentStatus.value ?? nuevoEstado);
   } catch (error) {
     console.error('Error al cambiar el estado:', error);
@@ -155,23 +329,34 @@ async function selectStatus(opt: IEstadoConexion) {
   }
 }
 
-function handleClickOutside(e: MouseEvent) {
-  if (statusRef.value && !statusRef.value.contains(e.target as Node)) {
-    isStatusOpen.value = false;
-  }
-}
+// ========== LIFECYCLE ==========
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('click', handleClickOutsideNotif);
 
   if (authStore.isAgent) {
     cargarEstadosDisponibles();
     cargarEstadoActual();
   }
+
+  if (authStore.idEmploye) {
+    cargarNotificaciones();
+
+    const socket = conectarSocket(authStore.idEmploye);
+
+    socket.on('nueva-notificacion', (notif: INotificacion) => {
+      notificaciones.value.unshift(notif);
+      contadorNoLeidas.value++;
+      reproducirSonido();
+    });
+  }
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('click', handleClickOutsideNotif);
+  desconectarSocket();
 });
 </script>
 
@@ -188,6 +373,177 @@ onBeforeUnmount(() => {
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 2px 8px rgb(74, 73, 73);
+}
+
+.notif-bell {
+  position: relative;
+}
+
+.notif-bell__trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+
+.notif-bell__trigger:hover {
+  background: #f3f4f6;
+}
+
+.notif-bell__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-bell__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 300px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  z-index: 50;
+}
+
+.notif-bell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: .85rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.notif-bell__clear {
+  border: none;
+  background: transparent;
+  color: #2d8c4a;
+  font-size: .72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.notif-bell__clear:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.notif-bell__clear:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notif-bell__empty {
+  padding: 20px 14px;
+  font-size: .8rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.notif-bell__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.notif-bell__item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.notif-bell__item:hover {
+  background: #f9fafb;
+}
+
+.notif-bell__item.is-unread {
+  background: #eefdf3;
+}
+
+.notif-bell__dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #2d8c4a;
+  flex-shrink: 0;
+}
+
+.notif-bell__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-bell__title {
+  margin: 0;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notif-bell__msg {
+  margin: 2px 0 0;
+  font-size: .78rem;
+  color: #6b7280;
+}
+
+.notif-bell__delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  opacity: 0;
+  transition: all .15s ease;
+}
+
+.notif-bell__item:hover .notif-bell__delete {
+  opacity: 1;
+}
+
+.notif-bell__delete:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.notif-bell__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .menu-toggle {

@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import type {
@@ -14,6 +14,7 @@ import {
   listarProyectos,
 } from '../actions/clients.action';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
+import { eventBus } from '@/modules/common/utils/eventBus';
 interface IComboOption {
   id: number;
   label: string;
@@ -229,14 +230,14 @@ export default defineComponent({
       cargarClientes();
     };
     const hayFiltrosActivos = computed(
-  () =>
-    !!search.value ||
-    (!authStore.isAgent && !!filtroAsesor.value) ||
-    !!filtroProyecto.value ||
-    !!filtroFuente.value ||
-    !!filtroFechaInicio.value ||
-    !!filtroFechaFin.value
-);
+      () =>
+        !!search.value ||
+        (!authStore.isAgent && !!filtroAsesor.value) ||
+        !!filtroProyecto.value ||
+        !!filtroFuente.value ||
+        !!filtroFechaInicio.value ||
+        !!filtroFechaFin.value
+    );
 
     const verLead = (idLead: number) => {
       router.push({
@@ -244,8 +245,11 @@ export default defineComponent({
         params: { id: idLead },
       });
     };
-
+    const refrescarPorNotificacion = () => {
+      cargarClientes(); // o la función que ya tengas para recargar el listado
+    };
     onMounted(async () => {
+      eventBus.on('refrescar-leads', refrescarPorNotificacion);
       try {
         const [opciones, proyectosData, asesoresData] = await Promise.all([
           listarOpciones(1),
@@ -269,7 +273,9 @@ export default defineComponent({
         toast.error(error.message);
       }
     });
-
+    onUnmounted(() => {
+      eventBus.off('refrescar-leads', refrescarPorNotificacion);
+    });
     return {
       authStore,
       cargando,
