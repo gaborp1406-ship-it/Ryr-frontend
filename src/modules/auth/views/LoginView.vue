@@ -68,7 +68,7 @@
           <div class="brand-divider"></div>
 
           <p class="panel-brand__text">
-            +15 años contruyenddo confianza <br />
+            +15 años construyendo confianza <br />
 
           </p>
         </div>
