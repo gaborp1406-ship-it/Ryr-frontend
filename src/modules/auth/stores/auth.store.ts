@@ -142,6 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
     permissions: computed(() => authCheckStatus.value?.permisos),
     idUser: computed(() => authCheckStatus.value?.idusuario),
     idEmploye: computed(() => authCheckStatus.value?.id_trabajador),
+    url_foto: computed(() => authCheckStatus.value?.foto),
     nameEmploye: computed(
       () => `${authCheckStatus.value?.nombre_trabajador ?? ''} ${authCheckStatus.value?.apellido_trabajador ?? ''}`.trim(),
     ),

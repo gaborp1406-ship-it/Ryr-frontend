@@ -39,7 +39,8 @@
 
       <a href="#" type="button" class="profile-menu__link">
         <span class="profile-menu__avatar-ring">
-          <img src="/assets/images/users/TIGRE-CUADRADO-02.jpg" alt="user-image" class="profile-menu__avatar" />
+          <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
+            class="profile-menu__avatar" />
         </span>
         <span class="profile-menu__name">{{ authStore.username }}</span>
       </a>

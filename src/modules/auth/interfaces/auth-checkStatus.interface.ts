@@ -10,6 +10,7 @@ export interface AuthCheckStatus {
   apellido_trabajador: string;
   celular: string;
   correo: string;
+  foto:string;
   token: string;
 }
 

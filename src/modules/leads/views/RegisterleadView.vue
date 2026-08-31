@@ -85,18 +85,30 @@
         <!-- Skeleton mientras carga la lista de leads -->
         <template v-if="cargando">
           <tr v-for="n in 5" :key="'skeleton-' + n" class="animate-pulse odd:bg-white even:bg-slate-50/50">
-            <td class="px-4 py-3.5"><div class="h-3 w-16 rounded bg-slate-200"></div></td>
+            <td class="px-4 py-3.5">
+              <div class="h-3 w-16 rounded bg-slate-200"></div>
+            </td>
             <td class="px-4 py-3.5">
               <div class="flex items-center gap-2.5">
                 <div class="h-7 w-7 shrink-0 rounded-full bg-slate-200"></div>
                 <div class="h-3 w-24 rounded bg-slate-200"></div>
               </div>
             </td>
-            <td class="px-4 py-3.5"><div class="h-3 w-20 rounded bg-slate-200"></div></td>
-            <td class="px-4 py-3.5"><div class="h-3 w-28 rounded bg-slate-200"></div></td>
-            <td class="px-4 py-3.5"><div class="h-3 w-16 rounded bg-slate-200"></div></td>
-            <td class="px-4 py-3.5"><div class="h-3 w-20 rounded bg-slate-200"></div></td>
-            <td class="px-4 py-3.5"><div class="h-3 w-16 rounded bg-slate-200"></div></td>
+            <td class="px-4 py-3.5">
+              <div class="h-3 w-20 rounded bg-slate-200"></div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="h-3 w-28 rounded bg-slate-200"></div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="h-3 w-16 rounded bg-slate-200"></div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="h-3 w-20 rounded bg-slate-200"></div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="h-3 w-16 rounded bg-slate-200"></div>
+            </td>
           </tr>
         </template>
 
@@ -140,7 +152,8 @@
         <tr @keyup.enter="!guardando && guardarLead()" tabindex="0"
           class="relative bg-[#2d8c4a]/[0.045] transition-opacity"
           :class="{ 'opacity-60 pointer-events-none': guardando }">
-          <td class="px-4 py-3.5 border-t-2  text-xs border-dashed border-[#2d8c4a]/30 text-slate-500 whitespace-nowrap">
+          <td
+            class="px-4 py-3.5 border-t-2  text-xs border-dashed border-[#2d8c4a]/30 text-slate-500 whitespace-nowrap">
             <span v-if="guardando" class="flex items-center gap-1.5 rlv-mono">
               <svg class="h-3.5 w-3.5 animate-spin text-[#2d8c4a]" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -173,17 +186,20 @@
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.nombre" @keyup.enter="!guardando && guardarLead()" :disabled="guardando" placeholder="Nombre completo"
+            <input v-model="nuevoLead.nombre" @keyup.enter="!guardando && guardarLead()" :disabled="guardando"
+              placeholder="Nombre completo"
               class="w-full rounded-xl border text-xs  border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.dni" @keyup.enter="!guardando && guardarLead()" :disabled="guardando" maxlength="8" placeholder="12345678"
+            <input v-model="nuevoLead.dni" @keyup.enter="!guardando && guardarLead()" :disabled="guardando"
+              maxlength="8" placeholder="87654321"
               class="rlv-mono w-full rounded-xl text-xs border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
           <td class="px-3 py-2.5 border-t-2 border-dashed border-[#2d8c4a]/30">
-            <input v-model="nuevoLead.telefono" @keyup.enter="!guardando && guardarLead()" :disabled="guardando" placeholder="987654321"
+            <input v-model="nuevoLead.telefono" @keyup.enter="!guardando && guardarLead()" :disabled="guardando"
+              placeholder="987654321"
               class="rlv-mono  text-xs w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60 disabled:cursor-not-allowed">
           </td>
 
@@ -222,11 +238,9 @@
       <template v-for="(pagina, idx) in paginasVisibles" :key="idx">
         <span v-if="pagina === '...'" class="text-slate-300">…</span>
 
-        <button v-else type="button" @click="irAPagina(pagina)"
-          class="transition-colors"
-          :class="pagina === paginaActual
-            ? 'font-semibold text-slate-900'
-            : 'text-[#2d8c4a] hover:text-[#1e6236]'">
+        <button v-else type="button" @click="irAPagina(pagina)" class="transition-colors" :class="pagina === paginaActual
+          ? 'font-semibold text-slate-900'
+          : 'text-[#2d8c4a] hover:text-[#1e6236]'">
           {{ pagina }}
         </button>
       </template>

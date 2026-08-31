@@ -139,7 +139,7 @@ export default defineComponent({
           asesorDisponible?.id_asesor ?? null;
 
         asesorActual.value =
-          asesorDisponible?.nombre ?? 'Sin asesor asignado';
+          asesorDisponible?.nombre ?? 'Sin asesor disponible';
 
       } catch (error: any) {
         toast.error(error.message);
@@ -194,138 +194,138 @@ export default defineComponent({
     });
 
 
- const guardarLead = async () => {
+    const guardarLead = async () => {
 
-  if (guardando.value) {
-    return;
-  }
+      if (guardando.value) {
+        return;
+      }
 
-  try {
+      try {
 
-    if (!asesorSeleccionado.value) {
-      toast.warning('No hay asesor disponible');
-      return;
-    }
+        if (!asesorSeleccionado.value) {
+          toast.warning('No hay asesor disponible');
+          return;
+        }
 
-    if (!nuevoLead.proyecto) {
-      toast.warning('Seleccione un proyecto');
-      return;
-    }
+        if (!nuevoLead.proyecto) {
+          toast.warning('Seleccione un proyecto');
+          return;
+        }
 
-    if (!nuevoLead.nombre) {
-      toast.warning('Ingrese nombre del cliente');
-      return;
-    }
+        if (!nuevoLead.nombre) {
+          toast.warning('Ingrese nombre del cliente');
+          return;
+        }
 
-    if (!nuevoLead.telefono) {
-      toast.warning('Ingrese teléfono');
-      return;
-    }
+        if (!nuevoLead.telefono) {
+          toast.warning('Ingrese teléfono');
+          return;
+        }
 
-    if (!authStore.idEmploye) {
-      toast.error('No se encontró el usuario de sesión');
-      return;
-    }
+        if (!authStore.idEmploye) {
+          toast.error('No se encontró el usuario de sesión');
+          return;
+        }
 
-    guardando.value = true;
+        guardando.value = true;
 
-    // ========================================
-    // 1. VALIDAR SI EL LEAD YA EXISTE
-    // ========================================
+        // ========================================
+        // 1. VALIDAR SI EL LEAD YA EXISTE
+        // ========================================
 
-    const validacion = await validarLeadDuplicado({
-      dni: nuevoLead.dni,
-      telefono: nuevoLead.telefono
-    });
+        const validacion = await validarLeadDuplicado({
+          dni: nuevoLead.dni,
+          telefono: nuevoLead.telefono
+        });
 
-    console.log(
-      'Respuesta validar duplicado:',
-      validacion
-    );
+        console.log(
+          'Respuesta validar duplicado:',
+          validacion
+        );
 
-    // ========================================
-    // 2. SI EXISTE, MOSTRAR MENSAJE Y DETENER
-    // ========================================
+        // ========================================
+        // 2. SI EXISTE, MOSTRAR MENSAJE Y DETENER
+        // ========================================
 
-    if (validacion.bloqueado) {
+        if (validacion.bloqueado) {
 
-      toast.warning(
-        validacion.mensaje ??
-        'Este cliente ya tiene un lead registrado.'
-      );
+          toast.warning(
+            validacion.mensaje ??
+            'Este cliente ya tiene un lead registrado.'
+          );
 
-      return;
-    }
+          return;
+        }
 
-    // ========================================
-    // 3. SI NO EXISTE, CREAR EL LEAD
-    // ========================================
+        // ========================================
+        // 3. SI NO EXISTE, CREAR EL LEAD
+        // ========================================
 
-    const payload = {
+        const payload = {
 
-      id_asesor: asesorSeleccionado.value,
+          id_asesor: asesorSeleccionado.value,
 
-      id_proyecto: Number(nuevoLead.proyecto),
+          id_proyecto: Number(nuevoLead.proyecto),
 
-      nombre_cliente: nuevoLead.nombre,
+          nombre_cliente: nuevoLead.nombre,
 
-      dni_cliente: nuevoLead.dni,
+          dni_cliente: nuevoLead.dni,
 
-      telefono_cliente: nuevoLead.telefono,
+          telefono_cliente: nuevoLead.telefono,
 
-      id_fuente: Number(nuevoLead.fuente),
+          id_fuente: Number(nuevoLead.fuente),
 
-      usuario_creacion: authStore.idEmploye,
+          usuario_creacion: authStore.idEmploye,
+
+        };
+
+        console.log(
+          'Payload crear lead:',
+          payload
+        );
+
+        const response = await crearLead(payload);
+
+        toast.success(
+          'Lead creado correctamente'
+        );
+
+        console.log(
+          'Respuesta crear lead:',
+          response
+        );
+
+        // ========================================
+        // 4. LIMPIAR FORMULARIO
+        // ========================================
+
+        nuevoLead.proyecto = '';
+        nuevoLead.nombre = '';
+        nuevoLead.dni = '';
+        nuevoLead.telefono = '';
+        nuevoLead.fuente = '';
+
+        // ========================================
+        // 5. ACTUALIZAR LISTADOS
+        // ========================================
+
+        await cargarLeads();
+        await cargarAsesores();
+
+      } catch (error: any) {
+
+        toast.error(
+          error.message ??
+          'Error al procesar el lead'
+        );
+
+      } finally {
+
+        guardando.value = false;
+
+      }
 
     };
-
-    console.log(
-      'Payload crear lead:',
-      payload
-    );
-
-    const response = await crearLead(payload);
-
-    toast.success(
-      'Lead creado correctamente'
-    );
-
-    console.log(
-      'Respuesta crear lead:',
-      response
-    );
-
-    // ========================================
-    // 4. LIMPIAR FORMULARIO
-    // ========================================
-
-    nuevoLead.proyecto = '';
-    nuevoLead.nombre = '';
-    nuevoLead.dni = '';
-    nuevoLead.telefono = '';
-    nuevoLead.fuente = '';
-
-    // ========================================
-    // 5. ACTUALIZAR LISTADOS
-    // ========================================
-
-    await cargarLeads();
-    await cargarAsesores();
-
-  } catch (error: any) {
-
-    toast.error(
-      error.message ??
-      'Error al procesar el lead'
-    );
-
-  } finally {
-
-    guardando.value = false;
-
-  }
-
-};
 
 
     const editarLead = (lead: ILeadDiario) => {

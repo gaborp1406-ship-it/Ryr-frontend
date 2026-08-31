@@ -30,22 +30,12 @@
                 (submenu.id === 21 && resetCountNotifySubmenu()) ||
                 (submenu.id === 31 && resetCountNotifySaleOp())
                 ">
-            <span class="submenu-arrow">
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-  >
-    <path
-      d="M5 8L12 15L19 8"
-      stroke="white"
-      stroke-width="3.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </svg>
-</span>
+                <span class="submenu-arrow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 8L12 15L19 8" stroke="white" stroke-width="3.8" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </span>
                 <span class="menu-text">{{ submenu.nombre }}</span>
                 <span v-if="submenu.id === 21 && count > 0" class="badge badge--danger" :class="{ hide: collapsed }">
                   {{ count }}
@@ -169,9 +159,9 @@ const resetCountNotifySaleOp = () => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 30px;
   width: 100%;
-  padding: 11px 12px 11px 16px;
+  padding: 15px 13px 11px 16px;
   border-radius: 12px;
   color: #ffffff;
   font-size: 0.98rem;
@@ -180,6 +170,7 @@ const resetCountNotifySaleOp = () => {
   background: transparent;
   border: none;
   cursor: pointer;
+  text-align: left; /* 👈 fix: resetea el centrado por defecto del <button> */
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -292,7 +283,7 @@ const resetCountNotifySaleOp = () => {
 
 .sidebar__footer {
   padding-top: 10px;
-  border-top: 1px solid rgba(255,255,255,.12);
+  border-top: 1px solid rgba(255, 255, 255, .12);
 }
 
 .menu-link--logout {
@@ -317,6 +308,7 @@ const resetCountNotifySaleOp = () => {
   margin: 0;
   overflow: hidden;
 }
+
 .submenu-arrow {
   width: 16px;
   display: flex;
