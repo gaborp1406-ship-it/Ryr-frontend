@@ -146,19 +146,19 @@ export default defineComponent({
     /**
      * Cambia el menú principal y va al primer submenu disponible
      */
-    function cambiarMenu(menu: string) {
-      menuActivo.value = menu;
-      // Buscar el primer submenu accesible del menú
-      const submenusDelMenu = submenus[menu];
-      for (const submenu of submenusDelMenu) {
-        if (esEtapaAccesible(submenu)) {
-          submenuActivo.value = submenu;
-          return;
-        }
-      }
-      // Si no hay ninguno accesible, ir al primero igual (será bloqueado en la UI)
-      submenuActivo.value = submenusDelMenu[0];
+   function cambiarMenu(menu: string) {
+  if (!esMenuAccesible(menu)) return;
+
+  menuActivo.value = menu;
+  const submenusDelMenu = submenus[menu];
+  for (const submenu of submenusDelMenu) {
+    if (esEtapaAccesible(submenu)) {
+      submenuActivo.value = submenu;
+      return;
     }
+  }
+  submenuActivo.value = submenusDelMenu[0];
+}
 
     /**
      * Obtiene solo los submenus visibles para el menú actual
@@ -197,20 +197,21 @@ export default defineComponent({
         // Manejo flexible de la respuesta (array o objeto)
         let etapaActualId = 1;
         
-        if (Array.isArray(respuesta)) {
-          // Si es un array, procesar cada etapa
-          respuesta.forEach((etapa: any) => {
-            const idEtapa = etapa.id_etapa;
-            const esRealizada = etapa.realizada === true || (etapa.fecha_fin !== null && etapa.fecha_fin !== undefined);
-            const esActual = etapa.estado_actual === true;
-            
-            etapasRealizadas.value.set(idEtapa, esRealizada || esActual);
-            
-            if (esActual) {
-              etapaActualId = idEtapa;
-            }
-          });
-        } else if (respuesta.id_etapa) {
+       if (Array.isArray(respuesta)) {
+  respuesta.forEach((etapa: any) => {
+    const idEtapa = etapa.id_etapa;
+    const esRealizada = etapa.realizada === true || (etapa.fecha_fin !== null && etapa.fecha_fin !== undefined);
+    const esActual = etapa.estado_actual === true;
+
+    // Fusionar en vez de sobrescribir: si ya estaba marcada como realizada, se mantiene
+    const yaRealizada = etapasRealizadas.value.get(idEtapa) ?? false;
+    etapasRealizadas.value.set(idEtapa, yaRealizada || esRealizada || esActual);
+
+    if (esActual) {
+      etapaActualId = idEtapa;
+    }
+  });
+} else if (respuesta.id_etapa) {
           // Si es un objeto simple
           etapaActualId = respuesta.id_etapa;
           etapasRealizadas.value.set(respuesta.id_etapa, true);
@@ -229,7 +230,11 @@ export default defineComponent({
         cargandoEtapa.value = false;
       }
     };
-
+function esMenuAccesible(menu: string): boolean {
+  const idsDelMenu = submenus[menu].map((s) => obtenerIdEtapa(s));
+  const primeraEtapaId = Math.min(...idsDelMenu);
+  return etapaActual.value >= primeraEtapaId;
+}
     onMounted(() => {
       cargarEtapaActual();
     });
@@ -248,6 +253,7 @@ export default defineComponent({
       idLead,
       cargandoEtapa,
       cambiarMenu,
+      esMenuAccesible,
       cargarEtapaActual,
       obtenerIdEtapa,
       obtenerNombreEtapa,

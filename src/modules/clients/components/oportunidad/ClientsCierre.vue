@@ -229,6 +229,89 @@
 
     </div>
   </div>
+
+  <!-- CELEBRACION VENTA REALIZADA -->
+<Transition name="celebracion-fade">
+  <div v-if="mostrarCelebracion"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+
+    <!-- Confetti -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <span v-for="c in confetti" :key="c.id" class="confetti-pieza"
+        :style="{
+          left: c.left + '%',
+          backgroundColor: c.color,
+          animationDuration: c.duration + 's',
+          animationDelay: c.delay + 's',
+          width: c.size + 'px',
+          height: (c.size * 0.4) + 'px'
+        }">
+      </span>
+    </div>
+
+    <!-- Card -->
+    <div class="relative bg-white rounded-3xl shadow-2xl px-10 py-10 max-w-sm w-full mx-4 text-center celebracion-card">
+      <div class="mx-auto w-20 h-20 rounded-full bg-[#2d8c4a]/10 flex items-center justify-center mb-5 celebracion-icono">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2d8c4a" stroke-width="2" class="w-10 h-10">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 mb-1">¡Venta realizada! 🎉</h2>
+      <p class="text-sm text-slate-500 mb-6">
+        Excelente trabajo, la etapa de cierre se finalizó con éxito.
+      </p>
+      <button @click="cerrarCelebracion"
+        class="w-full px-5 py-3 rounded-xl bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-colors duration-200">
+        Continuar
+      </button>
+    </div>
+  </div>
+</Transition>
 </template>
 
 <script src="./ClientsCierre.ts" lang="ts"></script>
+
+<style scoped>
+.confetti-pieza {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation-name: caer-confetti;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  animation-fill-mode: forwards;
+  opacity: 0.9;
+}
+
+@keyframes caer-confetti {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.celebracion-icono {
+  animation: rebote-icono 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rebote-icono {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.celebracion-card {
+  animation: aparecer-card 0.4s ease-out;
+}
+
+@keyframes aparecer-card {
+  0% { transform: scale(0.85) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.celebracion-fade-enter-active,
+.celebracion-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.celebracion-fade-enter-from,
+.celebracion-fade-leave-to {
+  opacity: 0;
+}
+</style>

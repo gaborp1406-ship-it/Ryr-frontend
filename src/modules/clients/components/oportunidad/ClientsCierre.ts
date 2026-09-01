@@ -188,7 +188,35 @@ export default defineComponent({
       const nuevoValor = !paso.completado;
       await actualizarCampo(paso.campo, nuevoValor);
     }
+interface ConfettiPieza {
+  id: number;
+  left: number;
+  color: string;
+  duration: number;
+  delay: number;
+  size: number;
+}
 
+const mostrarCelebracion = ref(false);
+const confetti = ref<ConfettiPieza[]>([]);
+const COLORES_CONFETTI = ["#2d8c4a", "#f4b400", "#4285f4", "#ea4335", "#a259ff", "#ff7a59"];
+
+function generarConfetti(cantidad = 70) {
+  confetti.value = Array.from({ length: cantidad }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    color: COLORES_CONFETTI[Math.floor(Math.random() * COLORES_CONFETTI.length)],
+    duration: 2.5 + Math.random() * 2,
+    delay: Math.random() * 1.5,
+    size: 6 + Math.random() * 6,
+  }));
+}
+
+function cerrarCelebracion() {
+  mostrarCelebracion.value = false;
+  confetti.value = [];
+  emit("etapa-finalizada");
+}
     const mostrarModalDesistio = ref(false);
     const opcionesDesistio = ref<IListarOpcionesResponse[]>([]);
     const motivoSeleccionado = ref<number | null>(null);
@@ -256,24 +284,16 @@ export default defineComponent({
 }
 
 
-  async function marcarRealizado() {
+async function marcarRealizado() {
   try {
     finalizandoRealizado.value = true;
     errores.value = null;
 
     await finalizarEtapaCierre(props.idLead);
+    await cargarChecklist();
 
-    await cargarChecklist(); 
-
-    await Swal.fire({
-      title: "Venta marcada como realizada",
-      text: "La etapa de cierre se finalizó correctamente.",
-      icon: "success",
-      confirmButtonText: "Aceptar",
-      confirmButtonColor: "#2d8c4a",
-    });
-
-    emit("etapa-finalizada");
+    generarConfetti();
+    mostrarCelebracion.value = true;
   } catch (error) {
     errores.value =
       error instanceof Error
@@ -311,6 +331,9 @@ export default defineComponent({
       opcionesDesistio,
       motivoSeleccionado,
       cargandoOpciones,
+        mostrarCelebracion,
+  confetti,
+  cerrarCelebracion,
       enviandoDesistio,
       abrirModalDesistio,
       cerrarModalDesistio,

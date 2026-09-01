@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import type { IEstadoContactoLeadResponse, IFinalizarEtapaContactoDesistioRequest, IInfoDesistioLeadResponse, IListarOpcionesResponse, IRegistrarCorreoRequest, IRegistrarLlamadaRequest, IRegistrarWhatsappRequest } from "../interfaces/clientscontacto.interface";
+import type { IEditarMensajeLeadEtapaContactoRequest, IEstadoContactoLeadResponse, IFinalizarEtapaContactoDesistioRequest, IInfoDesistioLeadResponse, IListarOpcionesResponse, IRegistrarCorreoRequest, IRegistrarLlamadaRequest, IRegistrarWhatsappRequest } from "../interfaces/clientscontacto.interface";
 import { automatizateApiNest } from "@/api/automatizateApiNest";
 import type { IHistorialCorreoResponse, IHistorialLlamadaResponse, IHistorialWhatsappResponse } from "../interfaces/clientscontacto.interface";
 
@@ -268,6 +268,28 @@ export const registrarPrimerContacto = async (
       throw new Error(
         error.response?.data?.message ??
           "Error al registrar el primer contacto."
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const editarMensajeLeadEtapaContacto = async (
+  data: IEditarMensajeLeadEtapaContactoRequest
+) => {
+  try {
+    const { data: response } = await automatizateApiNest.post(
+      "/lead/editar-mensaje-lead-etapa-contacto",
+      data
+    );
+
+    return response;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al editar el mensaje del contacto."
       );
     }
 

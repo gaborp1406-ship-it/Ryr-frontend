@@ -7,16 +7,17 @@
 
             <!-- Menú principal -->
             <div class="inline-flex p-1.5 bg-white border border-slate-200 rounded-2xl mb-6 gap-1 shadow-sm">
-                <button v-for="menu in menus" :key="menu" @click="cambiarMenu(menu)" :disabled="cargandoEtapa" :class="[
-                    'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300',
-                    cargandoEtapa ? 'opacity-60 cursor-not-allowed' : '',
-                    menuActivo === menu
-                        ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                ]">
-                    <component :is="iconos[menu]" class="w-4 h-4" />
-                    {{ menu }}
-                </button>
+               <button v-for="menu in menus" :key="menu" @click="cambiarMenu(menu)"
+    :disabled="cargandoEtapa || !esMenuAccesible(menu)" :class="[
+        'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300',
+        (cargandoEtapa || !esMenuAccesible(menu)) ? 'opacity-60 cursor-not-allowed' : '',
+        menuActivo === menu
+            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+]">
+    <component :is="iconos[menu]" class="w-4 h-4" />
+    {{ menu }}
+</button>
             </div>
 
             <!-- Card contenedora principal -->

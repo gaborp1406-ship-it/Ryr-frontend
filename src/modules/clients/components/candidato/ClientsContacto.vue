@@ -27,7 +27,26 @@
         <!-- Card: Historial de estados (posee toda la lógica de fetch de historial) -->
         <ClientsContactoHistorial v-if="idEstadoContacto" ref="historialRef" :id-lead="idLead"
             :id-estado-contacto="idEstadoContacto" :id-etapa="idEtapa" />
-        <!-- Card: Acciones -->
+        <!-- Card: Mensaje -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-2 px-6 py-5 border-b border-slate-100">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#2d8c4a]"></span>
+                <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wide">
+                    Comentario
+                </h2>
+            </div>
+            <div class="px-6 py-6 space-y-3">
+                <textarea v-model="mensaje" @input="onMensajeEditado" rows="4" placeholder="Escribe un mensaje..."
+                    :disabled="guardandoMensaje"
+                    class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none disabled:opacity-60"></textarea>
+                <div class="flex justify-end">
+                    <button @click="guardarMensaje" :disabled="guardandoMensaje || !mensaje.trim()"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {{ guardandoMensaje ? 'Guardando...' : (mensajeGuardado ? 'Actualizar' : 'Guardar') }}
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
             <!-- Animación de carga mientras se determina el estado de contacto (responsable de ocultar botones) -->
             <div v-if="cargando" class="px-6 py-8 flex items-center justify-center gap-2">
@@ -77,9 +96,8 @@
 
 
                     <!-- Solo aparece si estado es FALSE -->
-                    <button v-if="!estadoContacto" @click="agendarReunion"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200">
-
+                    <button v-if="!estadoContacto" @click="agendarReunion" :disabled="!mensajeGuardado"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <rect x="3" y="4" width="18" height="18" rx="2" />
                             <path d="M16 2v4M8 2v4M3 10h18" />

@@ -9,7 +9,7 @@ import ModalMotivoDesistio from "@/modules/clients/components/candidato/contacto
 import ModalAgendarReu from "@/modules/clients/components/candidato/contacto/ModalAgendarReu.vue";
 import ClientsContactoHistorial from "@/modules/clients/components/candidato/ClientsContactoHistorial.vue";
 import type { HistorialItem } from "@/modules/clients/components/candidato/ClientsContactoHistorial";
-import { finalizarEtapaContactoDesistio, obtenerEstadoContactoLead, registrarCorreo, registrarPrimerContacto } from "@/modules/clients/actions/clientsContacto.action";
+import { editarMensajeLeadEtapaContacto, finalizarEtapaContactoDesistio, obtenerEstadoContactoLead, registrarCorreo, registrarPrimerContacto } from "@/modules/clients/actions/clientsContacto.action";
 import type { IListarOpcionesResponse } from "../../interfaces/clientscontacto.interface.js";
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
 import { useSipPhone } from "@/modules/clients/components/candidato/llamada/composables/useSipPhone.js";
@@ -51,7 +51,37 @@ export default defineComponent({
 
     const cargando = ref(true);
     const historialRef = ref<HistorialRefExpuesto | null>(null);
+const mensaje = ref("");
+const mensajeGuardado = ref(false);
+const guardandoMensaje = ref(false);
 
+function onMensajeEditado() {
+  mensajeGuardado.value = false;
+}
+
+async function guardarMensaje() {
+  if (!idEstadoContacto.value) return;
+
+  if (!mensaje.value.trim()) {
+    toast.error("El mensaje no puede estar vacío");
+    return;
+  }
+
+  guardandoMensaje.value = true;
+  try {
+    await editarMensajeLeadEtapaContacto({
+      id: idEstadoContacto.value,
+      mensaje: mensaje.value,
+    });
+    mensajeGuardado.value = true;
+    toast.success("Mensaje guardado correctamente");
+  } catch (error: any) {
+    console.error("Error guardando mensaje", error);
+    toast.error(error.message ?? "No se pudo guardar el mensaje");
+  } finally {
+    guardandoMensaje.value = false;
+  }
+}
     // ---------- Llamada (SIP + SSE + estado de la llamada) ----------
     const eventSource = ref<EventSource | null>(null);
     const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono } = useSipPhone();
@@ -106,31 +136,33 @@ export default defineComponent({
       return valor;
     }
 
-    async function cargarEstadoContacto() {
-      try {
-        const estado = await obtenerEstadoContactoLead(props.idLead);
+ async function cargarEstadoContacto() {
+  try {
+    const estado = await obtenerEstadoContactoLead(props.idLead);
 
-        idEstadoContacto.value = estado.id_estado_contacto;
-        estadoContacto.value = estado.estado;
+    idEstadoContacto.value = estado.id_estado_contacto;
+    estadoContacto.value = estado.estado;
 
-        // Guardar etapa actual del lead
-        idEtapa.value = estado.id_etapa;
+    idEtapa.value = estado.id_etapa;
 
-        // Guardar teléfono del lead
-        telefonoLead.value = estado.telefono
-          ? String(estado.telefono)
-          : null;
+    telefonoLead.value = estado.telefono
+      ? String(estado.telefono)
+      : null;
 
-        contacto.value = {
-          fecha: formatFechaSimple(estado.fecha_primer_contacto),
-          hora: formatHoraSimple(estado.hora_primer_contacto),
-        };
-      } catch (error) {
-        console.error("Error cargando estado contacto", error);
-      } finally {
-        cargando.value = false;
-      }
-    }
+    contacto.value = {
+      fecha: formatFechaSimple(estado.fecha_primer_contacto),
+      hora: formatHoraSimple(estado.hora_primer_contacto),
+    };
+
+    // Mensaje existente del lead
+    mensaje.value = estado.mensaje ?? "";
+    mensajeGuardado.value = !!estado.mensaje?.trim();
+  } catch (error) {
+    console.error("Error cargando estado contacto", error);
+  } finally {
+    cargando.value = false;
+  }
+}
 
 
     const contacto = ref({
@@ -153,14 +185,14 @@ export default defineComponent({
     });
 
     async function recargarDespuesDeLlamada() {
- 
+
       const esPrimerContacto = contacto.value.fecha === "-";
 
       if (esPrimerContacto && idEstadoContacto.value != null) {
         try {
           await registrarPrimerContacto(idEstadoContacto.value);
         } catch (error) {
-      
+
         }
       }
 
@@ -361,7 +393,11 @@ export default defineComponent({
       onReunionAgendada,
       cerrarModalDesistio,
       onConfirmarDesistio,
-
+      mensaje,
+      mensajeGuardado,
+      onMensajeEditado,
+      guardarMensaje,
+      guardandoMensaje,
       idEstadoContacto,
       cargandoTelefono,
 

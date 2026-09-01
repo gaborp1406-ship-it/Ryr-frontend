@@ -5,6 +5,7 @@ export interface IEstadoContactoLeadResponse {
   hora_primer_contacto: string | null;
   estado: boolean;
   telefono: number
+  mensaje: string;
 }
 
 export interface IHistorialCorreoResponse {
@@ -69,4 +70,9 @@ export interface IInfoDesistioLeadResponse {
   id_lead_etapa: number;
   motivo: number;
   motivo_nombre: string;
+}
+
+export interface IEditarMensajeLeadEtapaContactoRequest {
+  id: number;
+  mensaje: string;
 }
