@@ -2,12 +2,11 @@ import { computed, defineComponent, onMounted, onUnmounted, ref } from "vue";
 import { useToast } from "vue-toastification";
 
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
-import { conectarEventosLlamada } from "../actions/Gestioninteraction.action.js";
+import { conectarEventosLlamada } from "../actions/Gestioninteraction.action";
 
-import { useSipPhone } from "../composables/useSipPhone.js";
-import { useLlamadaSaliente } from "../composables/useLlamadaSaliente.js";
-
-import ModalLlamada from "../views/ModalLlamada.vue";
+import ModalLlamada from "./ModalLlamada.vue";
+import { useLlamadaSaliente } from '@/modules/clients/components/oportunidad/atencion/llamada/composables/useLlamadaSaliente';
+import { useSipPhone } from '@/modules/clients/components/oportunidad/atencion/llamada/composables/useSipPhone';
 
 
 export default defineComponent({
@@ -20,8 +19,6 @@ export default defineComponent({
     const authStore = useAuthStore();
 
     const eventSource = ref<EventSource | null>(null);
-
-    // Composables
     const { sipCredentials, sipRegistrado, conectarTelefono } = useSipPhone();
 
     const {

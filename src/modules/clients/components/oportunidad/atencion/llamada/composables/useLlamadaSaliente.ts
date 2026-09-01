@@ -1,11 +1,10 @@
 import { onUnmounted, ref } from "vue";
 import { useToast } from "vue-toastification";
 import {
-    
     colgarLlamadaActiva,
 } from "../actions/Gestioninteraction.action.js";
 import { useTonoLlamada } from "./useTonoLlamada.js";
-import { realizarLlamadaopo } from '../actions/Gestioninteraction.action';
+import { realizarLlamadaopo } from "../actions/Gestioninteraction.action";
 
 export type SipStatus = "connected" | "calling" | "ringing" | "in-call" | "no-answer";
 export type EstadoLlamada = SipStatus | "idle";

@@ -18,12 +18,8 @@ export default defineComponent({
     const leads = ref<ILeadDiario[]>([]);
     const cargando = ref(true);
     const guardando = ref(false);
-
-    // ================= PAGINACIÓN =================
     const itemsPorPagina = 7;
     const paginaActual = ref(1);
-
-    // leads filtrados por búsqueda (si el usuario escribe en el buscador)
     const leadsFiltrados = computed(() => {
       const termino = search.value.trim().toLowerCase();
 
@@ -240,7 +236,6 @@ export default defineComponent({
 
 
     const guardarLead = async () => {
-      // Evitar doble clic / doble ejecución
       if (guardando.value) {
         return;
       }
@@ -277,35 +272,18 @@ export default defineComponent({
         return;
       }
 
-      // Validación de formato
       if (!validarFormulario()) {
         return;
       }
 
-      // =========================
-      // INICIAR GUARDADO
-      // =========================
-
       guardando.value = true;
 
       try {
-        // =========================
-        // 1. VALIDAR DUPLICADO
-        // =========================
-
         const validacion = await validarLeadDuplicado({
           dni: nuevoLead.dni,
           telefono: nuevoLead.telefono,
         });
 
-        console.log(
-          'Respuesta validar duplicado:',
-          validacion
-        );
-
-        // =========================
-        // 2. SI EXISTE, DETENER
-        // =========================
 
         if (validacion.bloqueado) {
           toast.warning(
@@ -315,10 +293,6 @@ export default defineComponent({
 
           return;
         }
-
-        // =========================
-        // 3. CREAR LEAD
-        // =========================
 
         const payload = {
           id_asesor: asesorSeleccionado.value,
@@ -346,9 +320,6 @@ export default defineComponent({
           'Lead creado correctamente'
         );
 
-        // =========================
-        // 4. LIMPIAR FORMULARIO
-        // =========================
 
         nuevoLead.proyecto = '';
         nuevoLead.nombre = '';
@@ -356,9 +327,6 @@ export default defineComponent({
         nuevoLead.telefono = '';
         nuevoLead.fuente = '';
 
-        // =========================
-        // 5. ACTUALIZAR LISTADOS
-        // =========================
 
         await cargarLeads();
         await cargarAsesores();
@@ -382,21 +350,13 @@ export default defineComponent({
       }
     };
 
-    const editarLead = (lead: ILeadDiario) => {
-      console.log('Editar lead:', lead);
-
-      // aquí luego abrirás modal o modo edición
-    };
-
 
     return {
       toast,
       authStore,
       asesorSeleccionado,
       search,
-
       totalHoy,
-
       asesorActual,
       onNombreInput,
       onDniInput,
@@ -404,19 +364,13 @@ export default defineComponent({
       leads,
       cargando,
       guardando,
-
       nuevoLead,
       opcionesFuente,
       proyectos,
-
       fechaHoy,
-
       fechaActual,
-
       guardarLead,
-      editarLead,
-
-      // paginación
+    
       leadsPaginados,
       paginaActual,
       totalPaginas,
