@@ -131,7 +131,7 @@ export function useSipPhone() {
     userAgent.value = new SIP.UserAgent({
       uri: SIP.UserAgent.makeURI(`sip:${credentials.agentExtension}@${credentials.sipServer}`),
       transportOptions: {
-        server: `ws://${credentials.sipServer}:${credentials.sipPort}/ws`,
+        server: `wss://${credentials.sipServer}:${credentials.sipPort}/ws`,
         keepAliveInterval: 15,
       },
       authorizationUsername: credentials.agentExtension,
