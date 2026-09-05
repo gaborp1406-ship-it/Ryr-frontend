@@ -1,6 +1,11 @@
+
 <template>
   <IconFullScreenLoader v-if="authStore.isChecking" />
-  <RouterView v-else />
+
+  <div v-else class="app-container">
+    <RouterView />
+  </div>
+
   <VueQueryDevtools />
 </template>
 
@@ -23,14 +28,20 @@ authStore.$subscribe(
       return;
     }
 
-    console.log('Estado de autenticación actualizado:', state.authStatus, 'Ruta actual:', route.path);
+    console.log(
+      'Estado de autenticación actualizado:',
+      state.authStatus,
+      'Ruta actual:',
+      route.path
+    );
 
     // Si el usuario se autenticó y está en una ruta de login
     if (state.authStatus === AuthStatus.Authenticated) {
       const intendedPath = localStorage.getItem('intendedPath');
       localStorage.removeItem('intendedPath');
+
       if (route.path.includes('/auth')) {
-        router.replace(intendedPath || '/'); //  fallback a '/' si no hay intendedPath
+        router.replace(intendedPath || '/');
       }
     }
 
@@ -48,11 +59,14 @@ authStore.$subscribe(
   }
 );
 
-
 // Helper para obtener la ruta absoluta
 const getAbsolutePath = (relativePath: string) => {
   return new URL(relativePath, import.meta.url).href;
 };
-
-
 </script>
+
+<style>
+.app-container {
+  zoom: 0.8;
+}
+</style>

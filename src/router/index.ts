@@ -6,7 +6,8 @@ import { leadsRoutes } from '@/modules/leads/routes';
 import { clientsRoutes } from '@/modules/clients/routes';
 import { calendarRoutes } from '@/modules/calendar/routes';
 import { ConexionesRoutes } from '@/modules/estados/routes';
-
+import { closingRoutes } from '@/modules/leads/routes/closing.routes';
+import { desistedRoutes } from '@/modules/leads/routes/desisted.routes';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,35 +28,37 @@ const router = createRouter({
               path: '',
               name: 'homeDashboardAll',
               component: () => import('@/modules/home/views/DashboardAllView.vue'),
-              meta: { requiresAuth: true,  title: 'Dashboard', },
+              meta: { requiresAuth: true, title: 'Dashboard', alwaysAllowed: true },
             },
           ],
         },
-        // usersRoutes,
         leadsRoutes,
         clientsRoutes,
         calendarRoutes,
-        ConexionesRoutes
-         
-       
+        ConexionesRoutes,
+        closingRoutes,
+        desistedRoutes
       ],
     },
-  
+
+    // ✅ NUEVO: fuera de HomeLayout, vista completa sin sidebar
+    {
+      path: '/forbidden',
+      name: 'forbidden',
+      component: () => import('@/modules/error/error-not-permition.vue'),
+      meta: { requiresAuth: true, alwaysAllowed: true },
+    },
+
     authRoutes,
-   
-    
   ],
 });
 
 // Interceptor de navegación
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-
   const isInitialPageLoad = from.name === undefined;
 
-  // Si la ruta requiere autenticación
   if (to.meta.requiresAuth) {
-    // Esperar verificación si es carga inicial
     if (isInitialPageLoad && authStore.isChecking) {
       try {
         await new Promise((resolve) => {
@@ -71,20 +74,24 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
-    //if (!authStore.isAuthenticated)
     if (!authStore.isLoggedIn()) {
-      // Solo actualizar intendedPath si es carga inicial
       if (isInitialPageLoad && to.name !== 'login') {
         localStorage.setItem('intendedPath', to.fullPath);
       }
       return next({ name: 'login' });
-    } else {
-      localStorage.setItem('lastPath', to.fullPath);
-      return next();
     }
+
+    const rutaSiempreLibre = !!to.meta.alwaysAllowed;
+    const tienePermiso = authStore.isAdmin || rutaSiempreLibre || authStore.isValidPermission(to.path);
+
+    if (!tienePermiso) {
+      return next({ name: 'forbidden' });
+    }
+
+    localStorage.setItem('lastPath', to.fullPath);
+    return next();
+
   } else {
-    // Ruta pública
-    /* if (to.name === 'login' && authStore.isAuthenticated) */
     if (to.name === 'login' && authStore.isLoggedIn()) {
       const intendedPath = localStorage.getItem('intendedPath') || '/';
       localStorage.removeItem('intendedPath');

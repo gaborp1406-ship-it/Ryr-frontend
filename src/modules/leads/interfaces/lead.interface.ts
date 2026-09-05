@@ -45,7 +45,14 @@ export interface ICrearLeadResponse {
   id_cliente: number;
   id_asesor: number;
   fecha_creacion: string;
+   accion: 'ALERTA' | 'CREADO_NUEVO_PROYECTO' | 'CREADO';
+  debe_notificar: boolean;
+  id_lead_anterior: number | null;
+  id_asesor_anterior: number | null;
+  mensaje: string;
 }
+
+
 
 export interface IValidarLeadDuplicadoRequest {
   dni: string;
@@ -62,3 +69,28 @@ export interface IValidarLeadDuplicadoResponse {
   id_etapa_actual: number | null;
 }
 
+
+export interface ILeadPorEtapaActual {
+  id_lead: number;
+  id_cliente: number;
+  nombre_clientes: string;
+  id_proyecto: number;
+  nombre_proyecto: string;
+  id_fuente: number;
+  nombre_fuente: string;
+  id_asesor: number;
+  nombre_asesor: string;
+  id_lead_etapa: number;
+  id_etapa: number;
+  nombre_etapa: string;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  estado_actual: boolean;
+  fecha_creacion: string;
+}
+
+export interface IListarEtapaResponse {
+  id: number;
+  nombre: string;
+  orden: number;
+}

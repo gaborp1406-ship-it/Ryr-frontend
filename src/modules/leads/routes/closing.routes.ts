@@ -1,22 +1,17 @@
 import type { RouteRecordRaw } from "vue-router";
 
-export const leadsRoutes: RouteRecordRaw = {
-  path: "leads",
+export const closingRoutes: RouteRecordRaw = {
+  path: "closing",
   component: () => import("@/modules/leads/layouts/ListLayout.vue"),
   children: [
     {
       path: "",
-      name: "leads",
-      component: () => import("@/modules/leads/views/RegisterleadView.vue"),
+      name: "closing",
+      component: () => import("@/modules/leads/views/historyLeads.vue"),
       meta: {
         requiresAuth: true,
-        title: "Registrar Lead",
+        title: "Cierres",
       },
     },
-
-    
-    
-    
   ],
-  
 };

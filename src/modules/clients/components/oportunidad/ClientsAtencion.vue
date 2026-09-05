@@ -98,7 +98,7 @@
             <div class="flex flex-wrap items-center gap-2">
               <button @click="abrirModalWhatsapp"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 text-sm font-semibold transition-all duration-200">
-                <IconWhatsapp class="w-4 h-4" />
+                <IconWhatsapp class="w-6 h-5" />
                 <span class="hidden sm:inline">WhatsApp</span>
               </button>
 
@@ -152,7 +152,7 @@
               </button>
 
 
-              <button @click="pasarANegociacion" :disabled="pasandoNegociacion"
+              <button v-if="puedeNegociar" @click="pasarANegociacion" :disabled="pasandoNegociacion"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">
                 <svg v-if="!pasandoNegociacion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                   class="w-4 h-4">
@@ -190,7 +190,8 @@
 
       <ul v-else class="divide-y divide-slate-100">
         <li v-for="(item, idx) in historialContacto" :key="idx" class="flex items-center justify-between px-6 py-3.5"
-          :class="item.tipo === 'llamada' ? 'cursor-pointer hover:bg-slate-50' : ''">
+          :class="item.evidenciaUrl ? 'cursor-pointer hover:bg-slate-50' : ''"
+          @click="item.evidenciaUrl && abrirEvidencia(item)">
           <div class="flex items-center gap-3">
             <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="{
               'bg-emerald-50 text-emerald-600': item.tipo === 'whatsapp',
@@ -213,10 +214,15 @@
               <p class="text-xs text-slate-400">{{ item.fecha }} · {{ item.hora }}</p>
             </div>
           </div>
-          <span v-if="item.evidencia"
-            class="text-[11px] font-semibold text-[#2d8c4a] bg-[#2d8c4a]/10 px-2 py-1 rounded-full">
-            Con evidencia
-          </span>
+
+          <button v-if="item.evidenciaUrl" @click.stop="abrirEvidencia(item)" type="button"
+            class="flex items-center gap-1.5 text-[11px] font-semibold text-[#2d8c4a] bg-[#2d8c4a]/10 hover:bg-[#2d8c4a]/20 px-2.5 py-1 rounded-full transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+        
+          </button>
         </li>
       </ul>
     </div>
@@ -332,6 +338,85 @@
   <ModalLlamada :visible="modalLlamadaAbierto" :estado-llamada="estadoLlamada" :llamada-activa="llamadaActiva"
     :numero-destino="numeroDestino" :duracion-segundos="duracionSegundos" @close="cerrarModalLlamada"
     @hangup="cerrarModalLlamada" />
+
+  <transition>
+    <div v-if="modalEvidenciaVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      @click.self="cerrarEvidencia">
+      <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <span class="text-sm font-semibold text-slate-800">Evidencia</span>
+        </div>
+
+        <div class="flex-1 overflow-auto px-5 py-5 flex items-center justify-center bg-slate-50">
+          <img v-if="tipoEvidenciaActual === 'imagen'" :src="evidenciaUrlActual" alt="Evidencia"
+            class="max-w-full max-h-[65vh] object-contain rounded-lg" />
+
+          <iframe v-else-if="tipoEvidenciaActual === 'pdf'" :src="evidenciaUrlActual"
+            class="w-full h-[65vh] rounded-lg border border-slate-200" />
+
+          <div v-else-if="tipoEvidenciaActual === 'audio'"
+            class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <audio ref="audioRef" :src="evidenciaUrlActual" class="hidden" @loadedmetadata="onAudioLoaded"
+              @timeupdate="onAudioTimeUpdate" @ended="onAudioEnded"></audio>
+
+            <div class="flex items-center gap-4">
+              <button @click="toggleAudioPlay"
+                class="w-12 h-12 flex items-center justify-center rounded-full bg-[#2d8c4a] text-white hover:bg-[#256e3b] transition-colors shrink-0">
+                <svg v-if="!audioPlaying" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 ml-0.5">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                </svg>
+              </button>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="text-[11px] font-mono text-slate-500 tabular-nums w-9">{{
+                    formatAudioTime(audioCurrentTime)
+                    }}</span>
+                  <input type="range" min="0" :max="audioDuration || 0" step="0.01" v-model.number="audioCurrentTime"
+                    @input="seekAudio" class="flex-1 accent-[#2d8c4a] h-1.5 rounded-lg cursor-pointer" />
+                  <span class="text-[11px] font-mono text-slate-500 tabular-nums w-9 text-right">{{
+                    formatAudioTime(audioDuration) }}</span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+                      <path
+                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.11 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                    Grabación de llamada
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <button v-for="rate in [1, 1.5, 2]" :key="rate" @click="setAudioRate(rate)" type="button" :class="['px-2 py-0.5 rounded text-[11px] font-semibold transition-colors',
+                      audioRate === rate ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-100']">
+                      {{ rate }}x
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <video v-else-if="tipoEvidenciaActual === 'video'" :src="evidenciaUrlActual" controls
+            class="max-w-full max-h-[65vh] rounded-lg" />
+
+          <div v-else class="text-sm text-slate-400 py-10 text-center">
+            No se puede previsualizar este archivo.
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 px-5 py-4 border-t border-slate-100">
+          <button @click="cerrarEvidencia" class="px-4 py-2 rounded bg-gray-200 text-sm">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script src="./ClientsAtencion.ts" lang="ts"></script>

@@ -41,6 +41,7 @@ export interface HistorialItem {
     fecha: string;
     hora: string;
     evidencia: boolean;
+    evidenciaUrl?: string; // ✅ NUEVO: guarda la URL real para poder abrirla
     llamada?: DetalleLlamada;
 }
 
@@ -93,7 +94,7 @@ export function useReunionData(idLead: number | string) {
     const historialContacto = ref<HistorialItem[]>([]);
     const idEstadoReunion = ref<number | null>(null);
     const idLeadEtapa = ref<number | null>(null);
-
+    const estado = ref<boolean | null>(null); // ✅
     const nombreEstadoReunion = ref<string | null>(null);
     const telefonoLead = ref<string | null>(null); // NUEVO
     const proyecto = computed(() => nombreEstadoReunion.value ?? "Sin información");
@@ -124,6 +125,7 @@ export function useReunionData(idLead: number | string) {
             idLeadEtapa.value = null;
             idEstadoReunion.value = null;
             nombreEstadoReunion.value = null;
+            estado.value = null;
             return;
         }
 
@@ -134,11 +136,13 @@ export function useReunionData(idLead: number | string) {
             idEstadoReunion.value = info?.id_etapa_reunion ?? null; // ✅ Sin tocar
             idLeadEtapa.value = info?.id_lead_etapa ?? null; // ✅ Este va al modal
             nombreEstadoReunion.value = info?.nombre ?? null;
+            estado.value = info?.estado ?? null;
         } catch (e) {
             console.error("Error cargando el estado de la reunión", e);
             idEstadoReunion.value = null;
             idLeadEtapa.value = null;
             nombreEstadoReunion.value = null;
+            estado.value = null;
         }
     }
 
@@ -216,10 +220,10 @@ export function useReunionData(idLead: number | string) {
         const idEC = idEstadoReunion.value;
 
         const idET = idLeadEtapa.value;
-         if (!idEC || !idET) {
-        historialContacto.value = [];
-        return;
-    }
+        if (!idEC || !idET) {
+            historialContacto.value = [];
+            return;
+        }
         try {
             const [correos, whatsapps, llamadas] = await Promise.all([
                 obtenerHistorialCorreoReunion(idEC),
@@ -235,6 +239,7 @@ export function useReunionData(idLead: number | string) {
                     fecha: formatearFecha(fechaObj),
                     hora: formatearHora(fechaObj),
                     evidencia: Boolean(c.url_evidencia),
+                    evidenciaUrl: c.url_evidencia ?? undefined, // ✅
                 };
             });
 
@@ -244,24 +249,30 @@ export function useReunionData(idLead: number | string) {
                     titulo: "WhatsApp enviado",
                     fecha: w.fecha ?? "",
                     hora: w.hora ?? "",
-                    evidencia: false,
+                    evidencia: false, // WhatsApp no tiene visor de evidencia
                 };
             });
 
             const itemsLlamada: HistorialItem[] = llamadas.map((l) => {
                 const fechaObj = parseFechaFlexible(l.fecha_creacion ?? l.fecha_inicio);
+
+                // ⚠️ Ya no viene "contestada" del backend. Se infiere por duración > 0.
+                // Confírmame si este criterio es correcto para tu caso.
+                const contestada = (l.duracion_segundos ?? 0) > 0;
+
                 return {
                     tipo: "llamada",
-                    titulo: l.contestada ? "Llamada contestada" : "Llamada no contestada",
+                    titulo: "Llamada registrada",
                     fecha: formatearFecha(fechaObj),
                     hora: formatearHora(fechaObj),
-                    evidencia: Boolean(l.grabacion_url),
+                    evidencia: Boolean(l.grabacion_path),
+                    evidenciaUrl: l.grabacion_path ?? undefined, 
                     llamada: {
                         duracion: l.duracion_segundos
                             ? `${Math.round(l.duracion_segundos / 60)} min`
                             : undefined,
-                        resultado: l.contestada ? "Contestada" : "No contestada",
-                        observacion: l.observacion ?? undefined,
+                        resultado: contestada ? "1" : "1",
+                        // observacion eliminado: ya no existe en la nueva estructura
                     },
                 };
             });
@@ -315,6 +326,7 @@ export function useReunionData(idLead: number | string) {
 
         nombreEstadoReunion,
         telefonoLead,
+        estado,
 
         // Computados
         proyecto,

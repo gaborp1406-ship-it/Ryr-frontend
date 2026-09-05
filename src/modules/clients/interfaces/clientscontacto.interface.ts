@@ -76,3 +76,10 @@ export interface IEditarMensajeLeadEtapaContactoRequest {
   id: number;
   mensaje: string;
 }
+
+export interface IHistorialMensajeLeadEtapaContactoResponse {
+  id: number;
+  id_lead_etapa_contacto: number;
+  mensaje: string;
+  fecha_creacion: string;
+}

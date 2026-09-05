@@ -70,8 +70,7 @@
         <ul class="space-y-2">
           <li v-for="(paso, i) in pasos" :key="paso.id">
 
-            <button @click="toggle(paso)"
-              :disabled="actualizando || paso.bloqueado || (paso.requiereEvidencia && !paso.completado && !paso.archivo)"
+            <button @click="toggle(paso)" :disabled="actualizando || paso.bloqueado || paso.requiereEvidencia"
               class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-colors duration-200 text-left disabled:opacity-40 disabled:cursor-not-allowed"
               :class="paso.completado
                 ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
@@ -102,14 +101,58 @@
               </span>
             </button>
 
-            <!-- Subir evidencia (solo para el paso de Sperant, aún sin API) -->
-            <div v-if="paso.requiereEvidencia && !paso.completado && !paso.bloqueado"
-              class="mt-2 ml-4 pl-4 border-l-2 border-slate-100">
-              <label
-                class="flex items-center gap-3 border-2 border-dashed border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:border-[#2d8c4a] hover:bg-[#2d8c4a]/5 transition-colors">
-                <input type="file" accept="image/*,.pdf" class="hidden" @change="e => onArchivoSeleccionado(e, paso)" />
+            <!-- Bloque de documentos: solo para el paso de Sperant -->
+            <div v-if="paso.requiereEvidencia && !paso.bloqueado"
+              class="mt-2 ml-4 pl-4 border-l-2 border-slate-100 space-y-3">
 
-                <template v-if="!paso.evidenciaPreview">
+              <!-- Documentos ya registrados -->
+              <div v-if="cargandoDocumentos" class="flex items-center gap-2 py-2">
+                <div class="relative w-4 h-4">
+                  <div class="absolute inset-0 rounded-full border-2 border-slate-200"></div>
+                  <div
+                    class="absolute inset-0 rounded-full border-2 border-transparent border-t-[#2d8c4a] animate-spin">
+                  </div>
+                </div>
+                <span class="text-xs text-slate-400">Cargando documentos...</span>
+              </div>
+
+              <ul v-else-if="documentos.length > 0" class="space-y-1.5">
+                <li v-for="doc in documentos" :key="doc.id"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    class="w-4 h-4 text-[#2d8c4a] shrink-0">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                  </svg>
+                  <a :href="doc.url_documento" target="_blank" rel="noopener noreferrer"
+                    class="flex-1 text-xs font-medium text-slate-600 hover:text-[#2d8c4a] truncate">
+                    {{ doc.nombre_documento }}
+                  </a>
+                  <button v-if="puedeEliminarDocumento" @click="eliminarDocumento(doc)"
+                    :disabled="eliminandoDocumentoId === doc.id"
+                    class="text-slate-300 hover:text-rose-500 disabled:opacity-50 shrink-0">
+                    <svg v-if="eliminandoDocumentoId !== doc.id" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" class="w-4 h-4">
+                      <path
+                        d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+                    </svg>
+                    <div v-else class="relative w-4 h-4">
+                      <div class="absolute inset-0 rounded-full border-2 border-slate-200"></div>
+                      <div
+                        class="absolute inset-0 rounded-full border-2 border-transparent border-t-rose-500 animate-spin">
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              </ul>
+
+              <!-- Selector de archivo (siempre disponible, permite subir varios) -->
+              <div>
+                <label
+                  class="flex items-center gap-3 border-2 border-dashed border-slate-200 rounded-xl px-4 py-3 cursor-pointer hover:border-[#2d8c4a] hover:bg-[#2d8c4a]/5 transition-colors">
+                  <input type="file" accept="image/*,.pdf" class="hidden" :disabled="subiendoDocumento"
+                    @change="e => onArchivoSeleccionado(e, paso)" />
+
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     class="w-5 h-5 text-slate-300 shrink-0">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -119,23 +162,34 @@
                   <span class="text-sm text-slate-500 font-medium">
                     Subir evidencia (imagen o PDF)
                   </span>
-                </template>
+                </label>
+              </div>
+
+              <!-- Archivo pendiente de confirmar -->
+              <div v-if="paso.evidenciaNombre"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#2d8c4a]/5 border border-[#2d8c4a]/20">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#2d8c4a" stroke-width="2" class="w-5 h-5 shrink-0">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                <span class="flex-1 text-sm text-[#2d8c4a] font-medium truncate">
+                  {{ paso.evidenciaNombre }}
+                </span>
+
+                <button v-if="!paso.evidenciaPreview" disabled class="text-xs text-slate-400 font-medium">
+                  Leyendo...
+                </button>
 
                 <template v-else>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    class="w-5 h-5 text-[#2d8c4a] shrink-0">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                  <span class="text-sm text-[#2d8c4a] font-medium truncate">
-                    {{ paso.evidenciaNombre }}
-                  </span>
+                  <button @click="cancelarArchivoSeleccionado(paso)" :disabled="subiendoDocumento"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 disabled:opacity-50">
+                    Cancelar
+                  </button>
+                  <button @click="confirmarSubidaDocumento(paso)" :disabled="subiendoDocumento"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-xs font-semibold transition-colors duration-200 disabled:opacity-50">
+                    {{ subiendoDocumento ? 'Subiendo...' : 'Confirmar subida' }}
+                  </button>
                 </template>
-              </label>
-
-              <button v-if="paso.evidenciaPreview" @click="toggle(paso)"
-                class="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-colors duration-200">
-                Confirmar subida
-              </button>
+              </div>
             </div>
 
           </li>
@@ -231,14 +285,13 @@
   </div>
 
   <!-- CELEBRACION VENTA REALIZADA -->
-<Transition name="celebracion-fade">
-  <div v-if="mostrarCelebracion"
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+  <Transition name="celebracion-fade">
+    <div v-if="mostrarCelebracion"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm overflow-hidden">
 
-    <!-- Confetti -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <span v-for="c in confetti" :key="c.id" class="confetti-pieza"
-        :style="{
+      <!-- Confetti -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <span v-for="c in confetti" :key="c.id" class="confetti-pieza" :style="{
           left: c.left + '%',
           backgroundColor: c.color,
           animationDuration: c.duration + 's',
@@ -246,27 +299,29 @@
           width: c.size + 'px',
           height: (c.size * 0.4) + 'px'
         }">
-      </span>
-    </div>
-
-    <!-- Card -->
-    <div class="relative bg-white rounded-3xl shadow-2xl px-10 py-10 max-w-sm w-full mx-4 text-center celebracion-card">
-      <div class="mx-auto w-20 h-20 rounded-full bg-[#2d8c4a]/10 flex items-center justify-center mb-5 celebracion-icono">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#2d8c4a" stroke-width="2" class="w-10 h-10">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
+        </span>
       </div>
-      <h2 class="text-xl font-bold text-slate-900 mb-1">¡Venta realizada! 🎉</h2>
-      <p class="text-sm text-slate-500 mb-6">
-        Excelente trabajo, la etapa de cierre se finalizó con éxito.
-      </p>
-      <button @click="cerrarCelebracion"
-        class="w-full px-5 py-3 rounded-xl bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-colors duration-200">
-        Continuar
-      </button>
+
+      <!-- Card -->
+      <div
+        class="relative bg-white rounded-3xl shadow-2xl px-10 py-10 max-w-sm w-full mx-4 text-center celebracion-card">
+        <div
+          class="mx-auto w-20 h-20 rounded-full bg-[#2d8c4a]/10 flex items-center justify-center mb-5 celebracion-icono">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2d8c4a" stroke-width="2" class="w-10 h-10">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900 mb-1">¡Venta realizada! 🎉</h2>
+        <p class="text-sm text-slate-500 mb-6">
+          Excelente trabajo, la etapa de cierre se finalizó con éxito.
+        </p>
+        <button @click="cerrarCelebracion"
+          class="w-full px-5 py-3 rounded-xl bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-colors duration-200">
+          Continuar
+        </button>
+      </div>
     </div>
-  </div>
-</Transition>
+  </Transition>
 </template>
 
 <script src="./ClientsCierre.ts" lang="ts"></script>
@@ -283,8 +338,15 @@
 }
 
 @keyframes caer-confetti {
-  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 .celebracion-icono {
@@ -292,9 +354,19 @@
 }
 
 @keyframes rebote-icono {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .celebracion-card {
@@ -302,14 +374,22 @@
 }
 
 @keyframes aparecer-card {
-  0% { transform: scale(0.85) translateY(20px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+  0% {
+    transform: scale(0.85) translateY(20px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 .celebracion-fade-enter-active,
 .celebracion-fade-leave-active {
   transition: opacity 0.25s ease;
 }
+
 .celebracion-fade-enter-from,
 .celebracion-fade-leave-to {
   opacity: 0;

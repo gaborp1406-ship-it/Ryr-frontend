@@ -45,15 +45,19 @@
         </span>
 
 
-        <div>
-          <div class="text-[10px] uppercase tracking-[0.18em] text-[#2d8c4a]">
-            Le toca ahora
-          </div>
+        <!-- antes: mostraba "le toca ahora" con rotación -->
+     
+      
 
-          <div class="rlv-mono font-semibold text-[15px] text-slate-800 leading-snug mt-0.5">
-            {{ asesorActual }}
+          <!-- ✅ envuelve label + nombre en un mismo div -->
+          <div>
+            <div class="text-[10px] uppercase tracking-[0.18em] text-[#2d8c4a]">
+              Registrando como
+            </div>
+            <div class="rlv-mono font-semibold text-[15px] text-slate-800 leading-snug mt-0.5">
+              {{ nombreUsuarioActual }}
+            </div>
           </div>
-        </div>
 
       </div>
 
@@ -167,10 +171,10 @@
             <div class="flex items-center gap-2.5">
               <span
                 class="flex h-7 w-7 shrink-0 items-center text-xs justify-center rounded-full bg-[#2d8c4a] text-[11px] font-semibold text-white rlv-mono">
-                {{asesorActual ? asesorActual.trim().split(' ').filter(Boolean).map(w =>
-                  w[0]).slice(0, 2).join('').toUpperCase() : '—'}}
+                {{nombreUsuarioActual ? nombreUsuarioActual.trim().split(' ').filter(Boolean).map(w => w[0]).slice(0,
+                  2).join('').toUpperCase() : '—' }}
               </span>
-              <span class="font-semibold text-xs text-slate-800">{{ asesorActual }}</span>
+              <span class="font-semibold text-xs text-slate-800">{{ nombreUsuarioActual }}</span>
             </div>
           </td>
 

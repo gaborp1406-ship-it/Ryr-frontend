@@ -15,6 +15,7 @@ export const ConexionesRoutes: RouteRecordRaw = {
       meta: {
         requiresAuth: true,
         title: "Historial de conexiones",
+       
       },
     },
   ],

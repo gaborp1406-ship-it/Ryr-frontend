@@ -6,6 +6,8 @@ import type {
   ICrearLead,
   ICrearLeadResponse,
   ILeadDiario,
+  ILeadPorEtapaActual,
+  IListarEtapaResponse,
   IListarOpcionesResponse,
   IListarProyectoResponse,
   IValidarLeadDuplicadoRequest,
@@ -140,6 +142,78 @@ export const validarLeadDuplicado = async (
       throw new Error(
         error.response?.data?.message ??
         'Error al validar lead duplicado.'
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const obtenerLeadsPorEtapaActual = async (
+  idEtapa?: number,
+  idAgente?: number
+): Promise<ILeadPorEtapaActual[]> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      '/lead/leads-por-etapa-actual',
+      {
+        params: {
+          ...(idEtapa !== undefined && { idEtapa }),
+          ...(idAgente !== undefined && { idAgente }),
+        },
+      }
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al obtener leads por etapa actual.'
+      );
+    }
+
+    throw error;
+  }
+};
+export const listarEtapas = async (
+): Promise<IListarEtapaResponse[]> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      '/lead/listar-etapas'
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al listar etapas.'
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+export const reabrirLeadEtapa = async (
+  idLeadEtapa: number
+) => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/reabrir-lead-etapa',
+      {
+        idLeadEtapa,
+      }
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al reabrir el lead.'
       );
     }
 

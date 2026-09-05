@@ -8,11 +8,10 @@ export default defineComponent({
   setup() {
     const toast = useToast();
     const authStore = useAuthStore();
-
+    const nombreUsuarioActual = computed(() => authStore.username ?? 'Tú');
     const search = ref('');
     const opcionesFuente = ref<IListarOpcionesResponse[]>([]);
     const proyectos = ref<IListarProyectoResponse[]>([]);
-    const asesores = ref<IAsesor[]>([]);
     const totalHoy = ref(0);
     const asesorSeleccionado = ref<number | null>(null);
     const leads = ref<ILeadDiario[]>([]);
@@ -118,30 +117,7 @@ export default defineComponent({
       }
     };
 
-    const asesorActual = ref('');
 
-    const cargarAsesores = async () => {
-      if (!authStore.idEmploye) {
-        toast.error('No se encontró el trabajador de la sesión');
-        return;
-      }
-
-      try {
-        asesores.value = await listarAsesores(authStore.idEmploye);
-
-        const asesorDisponible = asesores.value[0];
-
-        asesorSeleccionado.value =
-          asesorDisponible?.id_asesor ?? null;
-
-        asesorActual.value =
-          asesorDisponible?.nombre ?? 'Sin asesor disponible';
-
-      } catch (error: any) {
-        toast.error(error.message);
-      }
-    };
-    // ================= VALIDACIONES =================
 
     // Filtra el nombre: solo letras y espacios (nada de números)
     const onNombreInput = (event: Event) => {
@@ -209,146 +185,98 @@ export default defineComponent({
 
     onMounted(async () => {
       try {
-
-        const [
-          opciones,
-          proyectosData
-        ] = await Promise.all([
+        const [opciones, proyectosData] = await Promise.all([
           listarOpciones(1),
           listarProyectos(1),
         ]);
 
-
         opcionesFuente.value = opciones;
         proyectos.value = proyectosData;
 
-
-        await cargarAsesores();
-        await cargarLeads();
-
-
+        await cargarLeads(); // ya no llamamos cargarAsesores()
       } catch (error: any) {
-
         toast.error(error.message);
-
       }
     });
 
 
-    const guardarLead = async () => {
-      if (guardando.value) {
-        return;
-      }
 
-  
+   const guardarLead = async () => {
+  if (guardando.value) return;
 
-      if (!authStore.idEmploye) {
-        toast.error('No se encontró el usuario de sesión');
-        return;
-      }
+  if (!authStore.idEmploye) {
+    toast.error('No se encontró el usuario de sesión');
+    return;
+  }
 
-      if (!asesorSeleccionado.value) {
-        toast.warning('No hay asesor disponible');
-        return;
-      }
+  if (!nuevoLead.proyecto) {
+    toast.warning('Seleccione un proyecto');
+    return;
+  }
+  if (!nuevoLead.nombre) {
+    toast.warning('Ingrese nombre del cliente');
+    return;
+  }
+  if (!nuevoLead.dni) {
+    toast.warning('Ingrese DNI');
+    return;
+  }
+  if (!nuevoLead.telefono) {
+    toast.warning('Ingrese teléfono');
+    return;
+  }
+  if (!validarFormulario()) return;
 
-      if (!nuevoLead.proyecto) {
-        toast.warning('Seleccione un proyecto');
-        return;
-      }
+  guardando.value = true;
 
-      if (!nuevoLead.nombre) {
-        toast.warning('Ingrese nombre del cliente');
-        return;
-      }
-
-      if (!nuevoLead.dni) {
-        toast.warning('Ingrese DNI');
-        return;
-      }
-
-      if (!nuevoLead.telefono) {
-        toast.warning('Ingrese teléfono');
-        return;
-      }
-
-      if (!validarFormulario()) {
-        return;
-      }
-
-      guardando.value = true;
-
-      try {
-        const validacion = await validarLeadDuplicado({
-          dni: nuevoLead.dni,
-          telefono: nuevoLead.telefono,
-        });
-
-
-        if (validacion.bloqueado) {
-          toast.warning(
-            validacion.mensaje ??
-            'Este cliente ya tiene un lead registrado.'
-          );
-
-          return;
-        }
-
-        const payload = {
-          id_asesor: asesorSeleccionado.value,
-          id_proyecto: Number(nuevoLead.proyecto),
-          nombre_cliente: nuevoLead.nombre,
-          dni_cliente: nuevoLead.dni,
-          telefono_cliente: nuevoLead.telefono,
-          id_fuente: Number(nuevoLead.fuente),
-          usuario_creacion: authStore.idEmploye,
-        };
-
-        console.log(
-          'Payload crear lead:',
-          payload
-        );
-
-        const response = await crearLead(payload);
-
-        console.log(
-          'Respuesta crear lead:',
-          response
-        );
-
-        toast.success(
-          'Lead creado correctamente'
-        );
-
-
-        nuevoLead.proyecto = '';
-        nuevoLead.nombre = '';
-        nuevoLead.dni = '';
-        nuevoLead.telefono = '';
-        nuevoLead.fuente = '';
-
-
-        await cargarLeads();
-        await cargarAsesores();
-
-      } catch (error: any) {
-
-        console.error(
-          'Error al guardar lead:',
-          error
-        );
-
-        toast.error(
-          error?.message ??
-          'Error al procesar el lead'
-        );
-
-      } finally {
-
-        guardando.value = false;
-
-      }
+  try {
+    const payload = {
+      id_asesor: authStore.idEmploye, // quien registra, NO un asesor "seleccionado"
+      id_proyecto: Number(nuevoLead.proyecto),
+      nombre_cliente: nuevoLead.nombre,
+      dni_cliente: nuevoLead.dni,
+      telefono_cliente: nuevoLead.telefono,
+      id_fuente: Number(nuevoLead.fuente),
+      usuario_creacion: authStore.idEmploye,
     };
+
+    const result = await crearLead(payload);
+
+    switch (result.accion) {
+      case 'ALERTA':
+        // El cliente ya tiene un lead activo en ESTE proyecto -> no se creó nada
+        toast.warning(result.mensaje ?? 'Este cliente ya tiene un lead activo para este proyecto.');
+        break;
+
+      case 'CREADO_NUEVO_PROYECTO':
+        // Se creó, pero el cliente ya tenía actividad en otro proyecto
+        toast.info(result.mensaje ?? 'Lead creado. El cliente ya tenía otra oportunidad activa.');
+        break;
+
+      case 'CREADO':
+      default:
+        toast.success('Lead creado correctamente');
+        break;
+    }
+
+    // Solo limpiamos el formulario y recargamos si realmente se creó algo
+    if (result.accion !== 'ALERTA') {
+      nuevoLead.proyecto = '';
+      nuevoLead.nombre = '';
+      nuevoLead.dni = '';
+      nuevoLead.telefono = '';
+      nuevoLead.fuente = '';
+
+      await cargarLeads();
+    }
+
+  } catch (error: any) {
+    console.error('Error al guardar lead:', error);
+    toast.error(error?.message ?? 'Error al procesar el lead');
+  } finally {
+    guardando.value = false;
+  }
+};
 
 
     return {
@@ -357,7 +285,7 @@ export default defineComponent({
       asesorSeleccionado,
       search,
       totalHoy,
-      asesorActual,
+
       onNombreInput,
       onDniInput,
       onTelefonoInput,
@@ -370,12 +298,13 @@ export default defineComponent({
       fechaHoy,
       fechaActual,
       guardarLead,
-    
+
       leadsPaginados,
       paginaActual,
       totalPaginas,
       paginasVisibles,
       irAPagina,
+      nombreUsuarioActual,
       irPaginaAnterior,
       irPaginaSiguiente,
     };

@@ -174,12 +174,17 @@ const onLogin = async () => {
   isPending.value = false;
 
   if (resp.status) {
-    router.push({ name: 'homeDashboardAll' });
+    if (authStore.isAgent) {
+      router.push({ name: 'clients' }); // o router.push('/clients') si no usas name en esa ruta
+    } else {
+      router.push({ name: 'homeDashboardAll' });
+    }
     return;
   }
 
   toast.error(resp.message);
 };
+
 </script>
 
 <style scoped>

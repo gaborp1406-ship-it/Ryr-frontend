@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import type { IEditarMensajeLeadEtapaContactoRequest, IEstadoContactoLeadResponse, IFinalizarEtapaContactoDesistioRequest, IInfoDesistioLeadResponse, IListarOpcionesResponse, IRegistrarCorreoRequest, IRegistrarLlamadaRequest, IRegistrarWhatsappRequest } from "../interfaces/clientscontacto.interface";
+import type { IEditarMensajeLeadEtapaContactoRequest, IEstadoContactoLeadResponse, IFinalizarEtapaContactoDesistioRequest, IHistorialMensajeLeadEtapaContactoResponse, IInfoDesistioLeadResponse, IListarOpcionesResponse, IRegistrarCorreoRequest, IRegistrarLlamadaRequest, IRegistrarWhatsappRequest } from "../interfaces/clientscontacto.interface";
 import { automatizateApiNest } from "@/api/automatizateApiNest";
 import type { IHistorialCorreoResponse, IHistorialLlamadaResponse, IHistorialWhatsappResponse } from "../interfaces/clientscontacto.interface";
 
@@ -231,7 +231,7 @@ export const finalizarEtapaContactoDesistio = async (
 
 export const obtenerInfoDesistioLead = async (
   idLead: number
-): Promise<IInfoDesistioLeadResponse> => {
+): Promise<IInfoDesistioLeadResponse[]> => {
 
   try {
 
@@ -239,7 +239,11 @@ export const obtenerInfoDesistioLead = async (
       `/lead/info-desistio-lead/${idLead}`
     );
 
-    return data;
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    return [data];
 
   } catch (error) {
 
@@ -255,6 +259,8 @@ export const obtenerInfoDesistioLead = async (
     throw error;
   }
 };
+
+
 
 export const registrarPrimerContacto = async (
   idEstadoContacto: number
@@ -275,21 +281,48 @@ export const registrarPrimerContacto = async (
   }
 };
 
-export const editarMensajeLeadEtapaContacto = async (
-  data: IEditarMensajeLeadEtapaContactoRequest
-) => {
+
+
+export const guardarMensajeLeadEtapaContacto = async (
+  idLeadEtapaContacto: number,
+  mensaje: string
+): Promise<IHistorialMensajeLeadEtapaContactoResponse> => {
   try {
-    const { data: response } = await automatizateApiNest.post(
-      "/lead/editar-mensaje-lead-etapa-contacto",
-      data
+    const { data } = await automatizateApiNest.post(
+      `/lead/guardar-mensaje-lead-etapa-contacto`,
+      {
+        id_lead_etapa_contacto: idLeadEtapaContacto,
+        mensaje,
+      }
     );
 
-    return response;
+    return data;
   } catch (error) {
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          "Error al editar el mensaje del contacto."
+          "Error al guardar el mensaje."
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const obtenerHistorialMensajesLeadEtapaContacto = async (
+  idLeadEtapaContacto: number
+): Promise<IHistorialMensajeLeadEtapaContactoResponse[]> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      `/lead/obtener-historial-mensajes-lead-etapa-contacto/${idLeadEtapaContacto}`
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al obtener el historial de mensajes."
       );
     }
 

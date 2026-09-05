@@ -11,10 +11,9 @@ export default defineComponent({
         }
     },
 
-
     setup(props) {
 
-        const desistio = ref<IInfoDesistioLeadResponse | null>(null);
+        const desistio = ref<IInfoDesistioLeadResponse[]>([]);
         const cargando = ref(false);
 
 
@@ -26,7 +25,6 @@ export default defineComponent({
 
                 desistio.value =
                     await obtenerInfoDesistioLead(props.idLead);
-
 
             } catch (error) {
 

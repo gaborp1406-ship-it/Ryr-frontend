@@ -45,7 +45,15 @@ export default defineComponent({
     const actualizando = ref(false);
     const checklistData = ref<IChecklistNegociacion | null>(null);
     const idLeadEtapa = ref<number | null>(null);
+    const esCreditoHipotecario = computed(() => {
+      return checklistData.value?.tipo_credito === 34;
+    });
+    type DecisionDirecta = "Acuerdo" | "Desacuerdo" | null;
 
+    const decisionDirecta = ref<DecisionDirecta>(null);
+    const esCreditoDirecto = computed(() => {
+      return checklistData.value?.tipo_credito === 35;
+    });
     const pasos = ref<PasoPrincipal[]>([
       {
         id: "proforma",
@@ -88,8 +96,8 @@ export default defineComponent({
 
 
     const mostrarAcciones = computed(() => {
-  return checklistData.value?.estado !== true;
-});
+      return checklistData.value?.estado !== true;
+    });
     const aprobacionBancaria = computed(() =>
       pasos.value.find((p) => p.id === "aprobacion_bancaria")
     );
@@ -249,7 +257,56 @@ export default defineComponent({
         cargando.value = false;
       }
     }
+    async function registrarDecisionDirecta(
+      valor: "Acuerdo" | "Desacuerdo"
+    ) {
+      if (!idLeadEtapa.value) return;
 
+      try {
+        actualizando.value = true;
+        errores.value = null;
+
+        // Limpiar decisión anterior
+        if (decisionDirecta.value === "Acuerdo") {
+          await actualizarChecklistNegociacion({
+            id_lead_etapa: idLeadEtapa.value,
+            campo: "proforma_enviada_decuerdo",
+            valor: false,
+          });
+        }
+
+        if (decisionDirecta.value === "Desacuerdo") {
+          await actualizarChecklistNegociacion({
+            id_lead_etapa: idLeadEtapa.value,
+            campo: "proforma_enviada_descuerdo",
+            valor: false,
+          });
+        }
+
+        const campo =
+          valor === "Acuerdo"
+            ? "proforma_enviada_decuerdo"
+            : "proforma_enviada_descuerdo";
+
+        await actualizarChecklistNegociacion({
+          id_lead_etapa: idLeadEtapa.value,
+          campo,
+          valor: true,
+        });
+
+        await cargarChecklist();
+
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al registrar la decisión";
+
+        console.error("Error registrando decisión directa:", error);
+      } finally {
+        actualizando.value = false;
+      }
+    }
     function sincronizarDatos(data: IChecklistNegociacion) {
       // Sincronizar proforma
       if (proforma.value) {
@@ -260,12 +317,15 @@ export default defineComponent({
           if (aprobacionBancaria.value) {
             aprobacionBancaria.value.bloqueado = false;
           }
+
           if (precalificacion.value) {
             precalificacion.value.bloqueado = false;
           }
+
           if (cartaAprobacion.value) {
             cartaAprobacion.value.bloqueado = false;
           }
+
           docsBanco.value.bloqueado = false;
         }
       }
@@ -302,12 +362,14 @@ export default defineComponent({
         decision.value = null;
       }
 
-      // Sincronizar aprobación bancaria (parent)
-      // Regla: se marca como completada (check verde) si se cumple AL MENOS UNA:
-      //  - precalificación completada
-      //  - decisión de carta = Aprobación
-      //  - decisión de carta = Denegación
-      // Si no se cumple ninguna, se mantiene sin check.
+      if (data.proforma_enviada_decuerdo) {
+  decisionDirecta.value = "Acuerdo";
+} else if (data.proforma_enviada_descuerdo) {
+  decisionDirecta.value = "Desacuerdo";
+} else {
+  decisionDirecta.value = null;
+}
+   
       if (aprobacionBancaria.value) {
         const bancariaCompletada =
           Boolean(precalificacion.value?.completado) ||
@@ -412,54 +474,54 @@ export default defineComponent({
       }
     }
 
-async function pasarACierre() {
-  const confirmacion = await Swal.fire({
-    title: "¿Pasar a cierre?",
-    text: "Esta acción finalizará la etapa de negociación y avanzará el proceso a cierre.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Sí, pasar a cierre",
-    cancelButtonText: "Cancelar",
-    confirmButtonColor: "#0f172a",
-    cancelButtonColor: "#94a3b8",
-    reverseButtons: true,
-  });
+    async function pasarACierre() {
+      const confirmacion = await Swal.fire({
+        title: "¿Pasar a cierre?",
+        text: "Esta acción finalizará la etapa de negociación y avanzará el proceso a cierre.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, pasar a cierre",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#0f172a",
+        cancelButtonColor: "#94a3b8",
+        reverseButtons: true,
+      });
 
-  if (!confirmacion.isConfirmed) return;
+      if (!confirmacion.isConfirmed) return;
 
-  try {
-    actualizando.value = true;
-    errores.value = null;
+      try {
+        actualizando.value = true;
+        errores.value = null;
 
-    await finalizarEtapaNegociacion(props.idLead);
+        await finalizarEtapaNegociacion(props.idLead);
 
-    await Swal.fire({
-      title: "Listo",
-      text: "El proceso avanzó a la etapa de cierre.",
-      icon: "success",
-      confirmButtonText: "Aceptar",
-      confirmButtonColor: "#2d8c4a",
-    });
+        await Swal.fire({
+          title: "Listo",
+          text: "El proceso avanzó a la etapa de cierre.",
+          icon: "success",
+          confirmButtonText: "Aceptar",
+          confirmButtonColor: "#2d8c4a",
+        });
 
-    emit("etapa-finalizada");
-  } catch (error) {
-    errores.value =
-      error instanceof Error
-        ? error.message
-        : "Error al finalizar la etapa de negociación";
-    console.error("Error finalizando etapa de negociación:", error);
+        emit("etapa-finalizada");
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al finalizar la etapa de negociación";
+        console.error("Error finalizando etapa de negociación:", error);
 
-    Swal.fire({
-      title: "Error",
-      text: errores.value,
-      icon: "error",
-      confirmButtonText: "Aceptar",
-      confirmButtonColor: "#e11d48",
-    });
-  } finally {
-    actualizando.value = false;
-  }
-}
+        Swal.fire({
+          title: "Error",
+          text: errores.value,
+          icon: "error",
+          confirmButtonText: "Aceptar",
+          confirmButtonColor: "#e11d48",
+        });
+      } finally {
+        actualizando.value = false;
+      }
+    }
 
 
     onMounted(() => {

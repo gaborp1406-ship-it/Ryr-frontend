@@ -25,3 +25,32 @@ export interface IChecklistCierre {
   fecha_modificacion: string;
   estado: boolean;
 }
+
+export interface IRegistrarDocumentoCierreRequest {
+  id_etapa_cierre: number;
+  nombre_documento: string;
+  url_documento: string;
+  tipo_documento?: string;
+}
+
+export interface IDocumentoCierre {
+  id: number;
+  id_etapa_cierre: number;
+  nombre_documento: string;
+  url_documento: string;
+  tipo_documento: string | null;
+  fecha_creacion: string;
+  estado: boolean;
+}
+
+export interface IEliminarDocumentoCierreResponse {
+  id: number;
+  estado: boolean;
+}
+
+export interface IInfoDesistioLeadOpoResponse {
+  id_lead: number;
+  id_lead_etapa: number;
+  motivo: number;
+  motivo_nombre: string;
+}

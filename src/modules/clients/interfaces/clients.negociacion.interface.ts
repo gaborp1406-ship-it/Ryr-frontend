@@ -19,6 +19,7 @@ export interface IActualizarChecklistNegociacionResponse {
 }
 
 
+
 export interface IChecklistNegociacion {
   id: number;
   id_lead_etapa: number;
@@ -28,6 +29,11 @@ export interface IChecklistNegociacion {
   aprobacion_bancaria_carta_aprobacion: boolean;
   carta_aprobacion_aprobado: boolean;
   carta_aprobacion_denegado: boolean;
+  tipo_credito: number | null;
+  proforma_enviada_decuerdo: boolean;
+  proforma_enviada_descuerdo: boolean;
+  url_precalificacion: string | null;
+  url_carta_aprobacion: string | null;
   fecha_creacion: string;
   fecha_modificacion: string;
   estado: boolean;

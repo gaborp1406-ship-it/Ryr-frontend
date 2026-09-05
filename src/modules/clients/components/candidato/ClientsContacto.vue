@@ -27,26 +27,85 @@
         <!-- Card: Historial de estados (posee toda la lógica de fetch de historial) -->
         <ClientsContactoHistorial v-if="idEstadoContacto" ref="historialRef" :id-lead="idLead"
             :id-estado-contacto="idEstadoContacto" :id-etapa="idEtapa" />
-        <!-- Card: Mensaje -->
+
+        <!-- Card: Historial de mensajes -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
             <div class="flex items-center gap-2 px-6 py-5 border-b border-slate-100">
                 <span class="w-1.5 h-1.5 rounded-full bg-[#2d8c4a]"></span>
                 <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wide">
-                    Comentario
+                    Historial de Mensajes
                 </h2>
             </div>
+
             <div class="px-6 py-6 space-y-3">
-                <textarea v-model="mensaje" @input="onMensajeEditado" rows="4" placeholder="Escribe un mensaje..."
-                    :disabled="guardandoMensaje"
+                <textarea v-model="nuevoMensaje" rows="4" placeholder="Escribe un mensaje..."
+                    :disabled="enviandoMensaje"
                     class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none disabled:opacity-60"></textarea>
                 <div class="flex justify-end">
-                    <button @click="guardarMensaje" :disabled="guardandoMensaje || !mensaje.trim()"
+                    <button @click="enviarMensaje" :disabled="enviandoMensaje || !nuevoMensaje.trim()"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {{ guardandoMensaje ? 'Guardando...' : (mensajeGuardado ? 'Actualizar' : 'Guardar') }}
+                        <svg v-if="enviandoMensaje" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"
+                            fill="none">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        {{ enviandoMensaje ? 'Guardando...' : 'Guardar' }}
                     </button>
                 </div>
             </div>
+
+            <div class="border-t border-slate-100 px-6 py-6">
+                <!-- Cargando historial -->
+                <div v-if="cargandoHistorialMensajes" class="flex items-center justify-center gap-2 py-6">
+                    <svg class="animate-spin h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span class="text-sm text-slate-400 font-medium">Cargando mensajes...</span>
+                </div>
+
+                <!-- Sin mensajes -->
+                <div v-else-if="historialMensajes.length === 0" class="text-center py-6">
+                    <p class="text-sm text-slate-400 font-medium">Aún no hay mensajes registrados.</p>
+                </div>
+
+                <!-- Listado -->
+                <div v-else class="space-y-3">
+                    <div v-for="item in mensajesPaginados" :key="item.id"
+                        class="bg-slate-50 border border-slate-100 rounded-lg px-4 py-3">
+                        <p class="text-sm text-slate-800 whitespace-pre-line">{{ item.mensaje }}</p>
+                        <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mt-2">
+                            {{ formatFechaHoraCompleta(item.fecha_creacion) }}
+                        </p>
+                    </div>
+
+                    <!-- Paginación -->
+                    <div v-if="totalPaginas > 1" class="flex items-center justify-between pt-2">
+                        <button @click="irPaginaAnterior" :disabled="paginaActual === 1"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                class="w-3.5 h-3.5">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                            Anterior
+                        </button>
+                        <span class="text-xs font-medium text-slate-400">
+                            Página {{ paginaActual }} de {{ totalPaginas }}
+                        </span>
+                        <button @click="irPaginaSiguiente" :disabled="paginaActual === totalPaginas"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-xs font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Siguiente
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                class="w-3.5 h-3.5">
+                                <path d="M9 18l6-6-6-6" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
             <!-- Animación de carga mientras se determina el estado de contacto (responsable de ocultar botones) -->
             <div v-if="cargando" class="px-6 py-8 flex items-center justify-center gap-2">
@@ -96,7 +155,7 @@
 
 
                     <!-- Solo aparece si estado es FALSE -->
-                    <button v-if="!estadoContacto" @click="agendarReunion" :disabled="!mensajeGuardado"
+                    <button v-if="!estadoContacto" @click="agendarReunion" :disabled="historialMensajes.length === 0"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <rect x="3" y="4" width="18" height="18" rx="2" />

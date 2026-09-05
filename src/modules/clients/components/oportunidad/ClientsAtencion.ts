@@ -100,7 +100,7 @@ export default defineComponent({
           throw new Error("No se pudo obtener la etapa actual del lead");
         }
 
-        if (reunion.idLeadEtapa.value == null) { 
+        if (reunion.idLeadEtapa.value == null) {
           throw new Error("No se pudo obtener la etapa del lead");
         }
         if (!sipRegistrado.value) {
@@ -157,7 +157,9 @@ export default defineComponent({
       const inicio = (paginaActualReuniones.value - 1) * ITEMS_POR_PAGINA;
       return reunion.historialReuniones.value.slice(inicio, inicio + ITEMS_POR_PAGINA);
     });
-
+    const puedeNegociar = computed(() => {
+      return reunion.estado.value !== true; // se oculta cuando estado === true
+    });
     const paginasVisiblesReuniones = computed(() => {
       const total = totalPaginasReuniones.value;
       const actual = paginaActualReuniones.value;
@@ -295,6 +297,100 @@ export default defineComponent({
       const estado = Number((reunion.reunion.value as any)?.estado);
       return estado !== 14; // Se puede marcar como realizada si NO está en estado 14
     });
+
+
+    // ---------- Modal de evidencia (audio / imagen / pdf) ----------
+    type TipoEvidencia = 'imagen' | 'pdf' | 'audio' | 'video' | null;
+
+    const modalEvidenciaVisible = ref(false);
+    const evidenciaUrlActual = ref('');
+    const tipoEvidenciaActual = ref<TipoEvidencia>(null);
+
+    function inferirTipoEvidencia(item: HistorialItem): TipoEvidencia {
+      if (!item.evidenciaUrl) return null;
+
+      // Las llamadas siempre son audio, sin importar la extensión.
+      if (item.tipo === 'llamada') return 'audio';
+
+      const ext = item.evidenciaUrl.split('?')[0].split('.').pop()?.toLowerCase();
+      if (!ext) return null;
+
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'imagen';
+      if (ext === 'pdf') return 'pdf';
+      if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return 'audio';
+      if (['mp4', 'webm', 'mov'].includes(ext)) return 'video';
+      return null;
+    }
+
+    function abrirEvidencia(item: HistorialItem) {
+      if (!item.evidenciaUrl) return;
+
+      const tipo = inferirTipoEvidencia(item);
+      if (!tipo) return;
+
+      evidenciaUrlActual.value = item.evidenciaUrl;
+      tipoEvidenciaActual.value = tipo;
+      modalEvidenciaVisible.value = true;
+    }
+
+    function cerrarEvidencia() {
+      modalEvidenciaVisible.value = false;
+      if (audioRef.value) {
+        audioRef.value.pause();
+      }
+      audioPlaying.value = false;
+      audioCurrentTime.value = 0;
+      audioDuration.value = 0;
+      tipoEvidenciaActual.value = null;
+      evidenciaUrlActual.value = '';
+    }
+
+    // ---------- Reproductor de audio (para llamadas) ----------
+    const audioRef = ref<HTMLAudioElement | null>(null);
+    const audioPlaying = ref(false);
+    const audioDuration = ref(0);
+    const audioCurrentTime = ref(0);
+    const audioRate = ref(1);
+
+    function onAudioLoaded() {
+      audioDuration.value = audioRef.value?.duration ?? 0;
+    }
+
+    function onAudioTimeUpdate() {
+      audioCurrentTime.value = audioRef.value?.currentTime ?? 0;
+    }
+
+    function onAudioEnded() {
+      audioPlaying.value = false;
+    }
+
+    function toggleAudioPlay() {
+      if (!audioRef.value) return;
+      if (audioPlaying.value) {
+        audioRef.value.pause();
+      } else {
+        audioRef.value.play();
+      }
+      audioPlaying.value = !audioPlaying.value;
+    }
+
+    function seekAudio() {
+      if (audioRef.value) {
+        audioRef.value.currentTime = audioCurrentTime.value;
+      }
+    }
+
+    function setAudioRate(rate: number) {
+      audioRate.value = rate;
+      if (audioRef.value) audioRef.value.playbackRate = rate;
+    }
+
+    function formatAudioTime(seconds: number): string {
+      if (!seconds || isNaN(seconds)) return '0:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
     onUnmounted(() => {
       if (eventSource.value) {
         eventSource.value.close();
@@ -335,6 +431,7 @@ export default defineComponent({
       abrirModalLlamada,
       cerrarModalLlamada,
       estadoLlamada,
+      puedeNegociar,
       llamadaActiva,
       numeroDestino,
       duracionSegundos,
@@ -352,7 +449,28 @@ export default defineComponent({
       irPaginaSiguiente,
       irAPagina,
 
+      modalEvidenciaVisible,
+      evidenciaUrlActual,
+      tipoEvidenciaActual,
+      abrirEvidencia,
+      cerrarEvidencia,
+
+      // ✅ NUEVO: reproductor de audio
+      audioRef,
+      audioPlaying,
+      audioDuration,
+      audioCurrentTime,
+      audioRate,
+      onAudioLoaded,
+      onAudioTimeUpdate,
+      onAudioEnded,
+      toggleAudioPlay,
+      seekAudio,
+      setAudioRate,
+      formatAudioTime,
+
       claseEstado: claseEstadoExport,
+
     };
   },
 });

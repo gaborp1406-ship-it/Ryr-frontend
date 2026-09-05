@@ -232,6 +232,13 @@ async function abrirNotificacion(notif: INotificacion) {
 
   isNotifOpen.value = false;
 
+  // ✅ Caso especial: cliente preguntando por otro proyecto -> ir al detalle del lead
+  if (notif.titulo === 'Cliente preguntando por otro proyecto') {
+    router.push(`/clients/details/${notif.id_lead}`);
+    return;
+  }
+
+  // Caso general: como antes
   if (router.currentRoute.value.path === '/clients') {
     eventBus.emit('refrescar-leads', notif.id_lead);
   } else {

@@ -9,8 +9,14 @@ import ModalMotivoDesistio from "@/modules/clients/components/candidato/contacto
 import ModalAgendarReu from "@/modules/clients/components/candidato/contacto/ModalAgendarReu.vue";
 import ClientsContactoHistorial from "@/modules/clients/components/candidato/ClientsContactoHistorial.vue";
 import type { HistorialItem } from "@/modules/clients/components/candidato/ClientsContactoHistorial";
-import { editarMensajeLeadEtapaContacto, finalizarEtapaContactoDesistio, obtenerEstadoContactoLead, registrarCorreo, registrarPrimerContacto } from "@/modules/clients/actions/clientsContacto.action";
-import type { IListarOpcionesResponse } from "../../interfaces/clientscontacto.interface.js";
+import {
+  finalizarEtapaContactoDesistio,
+  guardarMensajeLeadEtapaContacto,
+  obtenerEstadoContactoLead,
+  obtenerHistorialMensajesLeadEtapaContacto,
+  registrarPrimerContacto,
+} from "@/modules/clients/actions/clientsContacto.action";
+import type { IHistorialMensajeLeadEtapaContactoResponse, IListarOpcionesResponse } from "../../interfaces/clientscontacto.interface.js";
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
 import { useSipPhone } from "@/modules/clients/components/candidato/llamada/composables/useSipPhone.js";
 import { useLlamadaSaliente } from "@/modules/clients/components/candidato/llamada/composables/useLlamadaSaliente.js";
@@ -21,6 +27,8 @@ interface HistorialRefExpuesto {
   agregarItem: (item: HistorialItem) => void;
   idEstadoContacto: { value: number | null };
 }
+
+const MENSAJES_POR_PAGINA = 2;
 
 export default defineComponent({
   components: {
@@ -51,37 +59,92 @@ export default defineComponent({
 
     const cargando = ref(true);
     const historialRef = ref<HistorialRefExpuesto | null>(null);
-const mensaje = ref("");
-const mensajeGuardado = ref(false);
-const guardandoMensaje = ref(false);
 
-function onMensajeEditado() {
-  mensajeGuardado.value = false;
-}
+    // ---------- Historial de mensajes ----------
+    const nuevoMensaje = ref("");
+    const enviandoMensaje = ref(false);
+    const historialMensajes = ref<IHistorialMensajeLeadEtapaContactoResponse[]>([]);
+    const cargandoHistorialMensajes = ref(false);
+    const paginaActual = ref(1);
 
-async function guardarMensaje() {
-  if (!idEstadoContacto.value) return;
+    const mensajesOrdenados = computed(() =>
+      [...historialMensajes.value].sort(
+        (a, b) =>
+          new Date(b.fecha_creacion).getTime() -
+          new Date(a.fecha_creacion).getTime()
+      )
+    );
 
-  if (!mensaje.value.trim()) {
-    toast.error("El mensaje no puede estar vacío");
-    return;
-  }
+    const totalPaginas = computed(() =>
+      Math.max(1, Math.ceil(mensajesOrdenados.value.length / MENSAJES_POR_PAGINA))
+    );
 
-  guardandoMensaje.value = true;
-  try {
-    await editarMensajeLeadEtapaContacto({
-      id: idEstadoContacto.value,
-      mensaje: mensaje.value,
+    const mensajesPaginados = computed(() => {
+      const inicio = (paginaActual.value - 1) * MENSAJES_POR_PAGINA;
+      return mensajesOrdenados.value.slice(inicio, inicio + MENSAJES_POR_PAGINA);
     });
-    mensajeGuardado.value = true;
-    toast.success("Mensaje guardado correctamente");
-  } catch (error: any) {
-    console.error("Error guardando mensaje", error);
-    toast.error(error.message ?? "No se pudo guardar el mensaje");
-  } finally {
-    guardandoMensaje.value = false;
-  }
-}
+
+    watch(totalPaginas, (nuevoTotal) => {
+      if (paginaActual.value > nuevoTotal) {
+        paginaActual.value = nuevoTotal;
+      }
+    });
+
+    function irPaginaAnterior() {
+      if (paginaActual.value > 1) {
+        paginaActual.value -= 1;
+      }
+    }
+
+    function irPaginaSiguiente() {
+      if (paginaActual.value < totalPaginas.value) {
+        paginaActual.value += 1;
+      }
+    }
+
+    async function cargarHistorialMensajes() {
+      if (!idEstadoContacto.value) return;
+
+      cargandoHistorialMensajes.value = true;
+      try {
+        const data = await obtenerHistorialMensajesLeadEtapaContacto(
+          idEstadoContacto.value
+        );
+        historialMensajes.value = data ?? [];
+      } catch (error: any) {
+        console.error("Error cargando historial de mensajes", error);
+        toast.error(error.message ?? "No se pudo cargar el historial de mensajes");
+      } finally {
+        cargandoHistorialMensajes.value = false;
+      }
+    }
+
+    async function enviarMensaje() {
+      if (!idEstadoContacto.value) return;
+
+      if (!nuevoMensaje.value.trim()) {
+        toast.error("El mensaje no puede estar vacío");
+        return;
+      }
+
+      enviandoMensaje.value = true;
+      try {
+        await guardarMensajeLeadEtapaContacto(
+          idEstadoContacto.value,
+          nuevoMensaje.value
+        );
+        nuevoMensaje.value = "";
+        toast.success("Mensaje guardado correctamente");
+        paginaActual.value = 1;
+        await cargarHistorialMensajes();
+      } catch (error: any) {
+        console.error("Error guardando mensaje", error);
+        toast.error(error.message ?? "No se pudo guardar el mensaje");
+      } finally {
+        enviandoMensaje.value = false;
+      }
+    }
+
     // ---------- Llamada (SIP + SSE + estado de la llamada) ----------
     const eventSource = ref<EventSource | null>(null);
     const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono } = useSipPhone();
@@ -136,6 +199,25 @@ async function guardarMensaje() {
       return valor;
     }
 
+    function formatFechaHoraCompleta(valor: string | null | undefined): string {
+      if (!valor) return "-";
+      const d = new Date(valor);
+      if (!isNaN(d.getTime())) {
+        const fecha = d.toLocaleDateString("es-PE", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        const hora = d.toLocaleTimeString("es-PE", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+        return `${fecha} · ${hora}`;
+      }
+      return valor;
+    }
+
  async function cargarEstadoContacto() {
   try {
     const estado = await obtenerEstadoContactoLead(props.idLead);
@@ -153,10 +235,6 @@ async function guardarMensaje() {
       fecha: formatFechaSimple(estado.fecha_primer_contacto),
       hora: formatHoraSimple(estado.hora_primer_contacto),
     };
-
-    // Mensaje existente del lead
-    mensaje.value = estado.mensaje ?? "";
-    mensajeGuardado.value = !!estado.mensaje?.trim();
   } catch (error) {
     console.error("Error cargando estado contacto", error);
   } finally {
@@ -173,6 +251,13 @@ async function guardarMensaje() {
     function onPrimerContactoCargado(payload: { fecha: string; hora: string }) {
       contacto.value = payload;
     }
+
+    // Cargar historial de mensajes en cuanto tengamos el id de estado de contacto
+    watch(idEstadoContacto, (nuevoId) => {
+      if (nuevoId) {
+        cargarHistorialMensajes();
+      }
+    });
 
     // ---------- Llamada ----------
     const modalLlamadaAbierto = ref(false);
@@ -393,11 +478,20 @@ async function guardarMensaje() {
       onReunionAgendada,
       cerrarModalDesistio,
       onConfirmarDesistio,
-      mensaje,
-      mensajeGuardado,
-      onMensajeEditado,
-      guardarMensaje,
-      guardandoMensaje,
+
+      // Historial de mensajes
+      nuevoMensaje,
+      enviandoMensaje,
+      historialMensajes,
+      cargandoHistorialMensajes,
+      mensajesPaginados,
+      paginaActual,
+      totalPaginas,
+      enviarMensaje,
+      irPaginaAnterior,
+      irPaginaSiguiente,
+      formatFechaHoraCompleta,
+
       idEstadoContacto,
       cargandoTelefono,
 
