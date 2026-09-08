@@ -89,7 +89,7 @@ onUnmounted(() => {
 .app-menu {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 125vh;
   z-index: 50;
   overflow: hidden;
   background: #000;

@@ -2,12 +2,13 @@ import { defineComponent, ref, computed, onMounted } from "vue";
 import type { IChecklistNegociacion } from "../../interfaces/clients.negociacion.interface";
 import {
   actualizarChecklistNegociacion,
+  actualizarDocumentoNegociacion,
   finalizarEtapaNegociacion,
-  finalizarEtapaNegociacionDesistio,
   obtenerChecklistNegociacion,
 } from "../../actions/clientsNegociacion";
 import type { IListarOpcionesResponse } from "../../interfaces/clients.interface";
 import { listarOpciones } from "../../actions/clients.action";
+import { finalizarEtapaOportunidadDesistio } from "../../actions/clients.atencion.action";
 import Swal from "sweetalert2";
 
 type Decision = "Aprobación" | "Denegación" | null;
@@ -45,15 +46,13 @@ export default defineComponent({
     const actualizando = ref(false);
     const checklistData = ref<IChecklistNegociacion | null>(null);
     const idLeadEtapa = ref<number | null>(null);
-    const esCreditoHipotecario = computed(() => {
-      return checklistData.value?.tipo_credito === 34;
-    });
-    type DecisionDirecta = "Acuerdo" | "Desacuerdo" | null;
-
-    const decisionDirecta = ref<DecisionDirecta>(null);
-    const esCreditoDirecto = computed(() => {
-      return checklistData.value?.tipo_credito === 35;
-    });
+    const idEtapaNegociacion = ref<number | null>(null);
+    const seleccionandoTipoCredito = ref(false);
+    const guardandoTipoCredito = ref(false);
+    const TIPOS_CREDITO = {
+      HIPOTECARIO: 35,
+      DIRECTO: 34,
+    } as const;
     const pasos = ref<PasoPrincipal[]>([
       {
         id: "proforma",
@@ -86,6 +85,16 @@ export default defineComponent({
         ],
       },
     ]);
+    const tipoCreditoSeleccionado = computed<number | null>(() => {
+      const tipo = checklistData.value?.tipo_credito;
+
+      if (tipo === null || tipo === undefined) {
+        return null;
+      }
+
+      return Number(tipo);
+    });
+
 
     const decision = ref<Decision>(null);
 
@@ -93,10 +102,41 @@ export default defineComponent({
       pasos.value.find((p) => p.id === "proforma")
     );
 
+    async function seleccionarTipoCredito(tipo: number) {
+      if (!idLeadEtapa.value || guardandoTipoCredito.value) {
+        return;
+      }
 
+      try {
+        guardandoTipoCredito.value = true;
+        actualizando.value = true;
+        errores.value = null;
+
+        await actualizarChecklistNegociacion({
+          id_lead_etapa: idLeadEtapa.value,
+          campo: "tipo_credito",
+          valor: tipo,
+        });
+
+        await cargarChecklist();
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al seleccionar el tipo de crédito";
+
+        console.error("Error seleccionando tipo de crédito:", error);
+      } finally {
+        guardandoTipoCredito.value = false;
+        actualizando.value = false;
+      }
+    }
 
     const mostrarAcciones = computed(() => {
-      return checklistData.value?.estado !== true;
+      return (
+        checklistData.value?.estado !== true &&
+        flujoCompletado.value
+      );
     });
     const aprobacionBancaria = computed(() =>
       pasos.value.find((p) => p.id === "aprobacion_bancaria")
@@ -122,9 +162,6 @@ export default defineComponent({
       fecha: null,
     });
 
-    // ============================================================
-    // MODAL DESISTIO
-    // ============================================================
     const mostrarModalDesistio = ref(false);
     const opcionesDesistio = ref<IListarOpcionesResponse[]>([]);
     const motivoSeleccionado = ref<number | null>(null);
@@ -168,7 +205,7 @@ export default defineComponent({
         enviandoDesistio.value = true;
         errores.value = null;
 
-        await finalizarEtapaNegociacionDesistio(
+        await finalizarEtapaOportunidadDesistio(
           props.idLead,
           motivoSeleccionado.value
         );
@@ -189,29 +226,71 @@ export default defineComponent({
       }
     }
 
-    // ============================================================
-
     const completados = computed(() => {
-      let total = 0;
+      if (esCreditoDirecto.value) {
+        let total = 0;
+        let completado = 0;
+
+        total++;
+
+        if (proforma.value?.completado) {
+          completado++;
+        }
+
+        total++;
+
+        if (acuerdoDirecto.value !== null) {
+          completado++;
+        }
+
+        return completado;
+      }
+
+      // HIPOTECARIO
+
       let completado = 0;
 
-      total++;
-      if (proforma.value?.completado) completado++;
+      if (proforma.value?.completado) {
+        completado++;
+      }
 
-      total++;
-      if (precalificacion.value?.completado) completado++;
+      if (precalificacion.value?.completado) {
+        completado++;
+      }
 
-      total++;
-      if (docsBanco.value.completado) completado++;
+      if (docsBanco.value.completado) {
+        completado++;
+      }
 
-      total++;
-      if (cartaAprobacion.value?.completado) completado++;
+      if (cartaAprobacion.value?.completado) {
+        completado++;
+      }
 
       return completado;
     });
+    const flujoCompletado = computed(() => {
+      if (!checklistData.value) {
+        return false;
+      }
 
-    const totalPasos = computed(() => 4);
+      if (esCreditoDirecto.value) {
+        return acuerdoDirecto.value !== null;
+      }
 
+      if (esCreditoHipotecario.value) {
+        return (
+          proforma.value?.completado === true &&
+          precalificacion.value?.completado === true &&
+          docsBanco.value.completado === true &&
+          cartaAprobacion.value?.completado === true
+        );
+      }
+
+      return false;
+    });
+    const totalPasos = computed(() => {
+      return esCreditoDirecto.value ? 2 : 4;
+    });
     const progreso = computed(() => {
       return Math.round((completados.value / totalPasos.value) * 100);
     });
@@ -246,7 +325,9 @@ export default defineComponent({
 
         if (data && data.length > 0) {
           checklistData.value = data[0];
+          idEtapaNegociacion.value = data[0].id;
           idLeadEtapa.value = data[0].id_lead_etapa;
+
           sincronizarDatos(data[0]);
         }
       } catch (error) {
@@ -257,133 +338,214 @@ export default defineComponent({
         cargando.value = false;
       }
     }
-    async function registrarDecisionDirecta(
-      valor: "Acuerdo" | "Desacuerdo"
+
+    function archivoABase64(file: File): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          resolve(reader.result as string);
+        };
+
+        reader.onerror = () => {
+          reject(new Error("No se pudo leer el archivo."));
+        };
+
+        reader.readAsDataURL(file);
+      });
+    }
+    async function subirDocumento(
+      event: Event,
+      campo: "url_precalificacion" | "url_carta_aprobacion"
     ) {
-      if (!idLeadEtapa.value) return;
+      const input = event.target as HTMLInputElement;
+
+      if (!input.files || input.files.length === 0) {
+        return;
+      }
+
+      if (!idEtapaNegociacion.value) {
+        errores.value = "No se encontró el ID de la etapa de negociación.";
+        return;
+      }
+
+      const archivo = input.files[0];
 
       try {
         actualizando.value = true;
         errores.value = null;
 
-        // Limpiar decisión anterior
-        if (decisionDirecta.value === "Acuerdo") {
-          await actualizarChecklistNegociacion({
-            id_lead_etapa: idLeadEtapa.value,
-            campo: "proforma_enviada_decuerdo",
-            valor: false,
-          });
-        }
+        const base64 = await archivoABase64(archivo);
 
-        if (decisionDirecta.value === "Desacuerdo") {
-          await actualizarChecklistNegociacion({
-            id_lead_etapa: idLeadEtapa.value,
-            campo: "proforma_enviada_descuerdo",
-            valor: false,
-          });
-        }
-
-        const campo =
-          valor === "Acuerdo"
-            ? "proforma_enviada_decuerdo"
-            : "proforma_enviada_descuerdo";
-
-        await actualizarChecklistNegociacion({
-          id_lead_etapa: idLeadEtapa.value,
+        await actualizarDocumentoNegociacion({
+          id: idEtapaNegociacion.value,
           campo,
-          valor: true,
+          archivo: base64,
         });
 
         await cargarChecklist();
 
       } catch (error) {
+
         errores.value =
           error instanceof Error
             ? error.message
-            : "Error al registrar la decisión";
+            : "Error al subir el documento.";
 
-        console.error("Error registrando decisión directa:", error);
+        console.error("Error subiendo documento:", error);
+
       } finally {
+
         actualizando.value = false;
+        input.value = "";
       }
     }
     function sincronizarDatos(data: IChecklistNegociacion) {
-      // Sincronizar proforma
+      const tipoCredito = Number(data.tipo_credito);
+
+      // ==========================================
+      // PROFORMA
+      // ==========================================
+
       if (proforma.value) {
         proforma.value.completado = data.proforma_enviada;
-        proforma.value.fecha = data.proforma_enviada ? formatearFecha() : null;
+        proforma.value.fecha = data.proforma_enviada
+          ? formatearFecha()
+          : null;
+      }
 
-        if (data.proforma_enviada) {
-          if (aprobacionBancaria.value) {
-            aprobacionBancaria.value.bloqueado = false;
-          }
+      // ==========================================
+      // CRÉDITO HIPOTECARIO
+      // ==========================================
 
-          if (precalificacion.value) {
-            precalificacion.value.bloqueado = false;
-          }
+      if (tipoCredito === TIPOS_CREDITO.HIPOTECARIO) {
+        // ----------------------------------------
+        // APROBACIÓN BANCARIA
+        // ----------------------------------------
 
-          if (cartaAprobacion.value) {
-            cartaAprobacion.value.bloqueado = false;
-          }
+        if (aprobacionBancaria.value) {
+          aprobacionBancaria.value.bloqueado =
+            !data.proforma_enviada;
 
-          docsBanco.value.bloqueado = false;
+          aprobacionBancaria.value.completado =
+            data.aprobacion_bancaria_precalififacion &&
+            data.aprobacion_bancaria_carta_aprobacion &&
+            (
+              data.carta_aprobacion_aprobado ||
+              data.carta_aprobacion_denegado
+            );
         }
+
+        // ----------------------------------------
+        // PRECALIFICACIÓN
+        // ----------------------------------------
+
+        if (precalificacion.value) {
+          precalificacion.value.completado =
+            data.aprobacion_bancaria_precalififacion;
+
+          precalificacion.value.fecha =
+            data.aprobacion_bancaria_precalififacion
+              ? formatearFecha()
+              : null;
+
+          precalificacion.value.bloqueado =
+            !data.proforma_enviada;
+        }
+
+        // ----------------------------------------
+        // CARTA DE APROBACIÓN
+        // ----------------------------------------
+
+        if (cartaAprobacion.value) {
+          cartaAprobacion.value.completado =
+            data.carta_aprobacion_aprobado ||
+            data.carta_aprobacion_denegado;
+
+          cartaAprobacion.value.fecha =
+            cartaAprobacion.value.completado
+              ? formatearFecha()
+              : null;
+
+          cartaAprobacion.value.bloqueado =
+            !data.aprobacion_bancaria_precalififacion;
+        }
+
+        // ----------------------------------------
+        // DECISIÓN
+        // ----------------------------------------
+
+        if (data.carta_aprobacion_aprobado) {
+          decision.value = "Aprobación";
+        } else if (data.carta_aprobacion_denegado) {
+          decision.value = "Denegación";
+        } else {
+          decision.value = null;
+        }
+
+        // ----------------------------------------
+        // ENVÍO DE DOCUMENTOS AL BANCO
+        // ----------------------------------------
+
+        docsBanco.value.completado =
+          data.aprobacion_bancaria_carta_aprobacion;
+
+        docsBanco.value.fecha =
+          data.aprobacion_bancaria_carta_aprobacion
+            ? formatearFecha()
+            : null;
+
+        docsBanco.value.bloqueado =
+          !data.aprobacion_bancaria_precalififacion;
       }
 
-      // Sincronizar precalificación
-      if (precalificacion.value) {
-        precalificacion.value.completado = data.aprobacion_bancaria_precalififacion;
-        precalificacion.value.fecha = data.aprobacion_bancaria_precalififacion
-          ? formatearFecha()
-          : null;
-      }
+      // ==========================================
+      // CRÉDITO DIRECTO
+      // ==========================================
 
-      // Sincronizar documentos al banco
-      docsBanco.value.completado = data.aprobacion_bancaria_carta_aprobacion;
-      docsBanco.value.fecha = data.aprobacion_bancaria_carta_aprobacion
-        ? formatearFecha()
-        : null;
+      if (tipoCredito === TIPOS_CREDITO.DIRECTO) {
+        if (aprobacionBancaria.value) {
+          aprobacionBancaria.value.bloqueado = true;
+          aprobacionBancaria.value.completado = false;
+        }
 
-      // Sincronizar carta de aprobación
-      if (cartaAprobacion.value) {
-        cartaAprobacion.value.completado =
-          data.carta_aprobacion_aprobado || data.carta_aprobacion_denegado;
-        cartaAprobacion.value.fecha = cartaAprobacion.value.completado
-          ? formatearFecha()
-          : null;
-      }
+        if (precalificacion.value) {
+          precalificacion.value.bloqueado = true;
+          precalificacion.value.completado = false;
+        }
 
-      // Sincronizar decisión
-      if (data.carta_aprobacion_aprobado) {
-        decision.value = "Aprobación";
-      } else if (data.carta_aprobacion_denegado) {
-        decision.value = "Denegación";
-      } else {
-        decision.value = null;
-      }
+        if (cartaAprobacion.value) {
+          cartaAprobacion.value.bloqueado = true;
+          cartaAprobacion.value.completado = false;
+        }
 
-      if (data.proforma_enviada_decuerdo) {
-  decisionDirecta.value = "Acuerdo";
-} else if (data.proforma_enviada_descuerdo) {
-  decisionDirecta.value = "Desacuerdo";
-} else {
-  decisionDirecta.value = null;
-}
-   
-      if (aprobacionBancaria.value) {
-        const bancariaCompletada =
-          Boolean(precalificacion.value?.completado) ||
-          decision.value === "Aprobación" ||
-          decision.value === "Denegación";
-
-        aprobacionBancaria.value.completado = bancariaCompletada;
-        aprobacionBancaria.value.fecha = bancariaCompletada
-          ? formatearFecha()
-          : null;
+        docsBanco.value.bloqueado = true;
+        docsBanco.value.completado = false;
       }
     }
 
-    async function actualizarCampo(campo: string, valor: boolean) {
+
+
+    const esCreditoHipotecario = computed(() => {
+      return tipoCreditoSeleccionado.value === TIPOS_CREDITO.HIPOTECARIO;
+    });
+
+    const esCreditoDirecto = computed(() => {
+      return tipoCreditoSeleccionado.value === TIPOS_CREDITO.DIRECTO;
+    });
+
+    const tieneTipoCredito = computed(() => {
+      return (
+        tipoCreditoSeleccionado.value === TIPOS_CREDITO.HIPOTECARIO ||
+        tipoCreditoSeleccionado.value === TIPOS_CREDITO.DIRECTO
+      );
+    });
+
+
+    async function actualizarCampo(
+      campo: string,
+      valor: boolean | number
+    ) {
       if (!idLeadEtapa.value) return;
 
       try {
@@ -396,10 +558,13 @@ export default defineComponent({
           valor,
         });
 
-        // Recargar datos después de actualizar
         await cargarChecklist();
       } catch (error) {
-        errores.value = error instanceof Error ? error.message : "Error al actualizar";
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar";
+
         console.error("Error actualizando campo:", error);
       } finally {
         actualizando.value = false;
@@ -435,8 +600,6 @@ export default defineComponent({
       try {
         actualizando.value = true;
         errores.value = null;
-
-        // Limpiar decisión anterior
         if (decision.value !== valor) {
           if (decision.value === "Aprobación") {
             await actualizarChecklistNegociacion({
@@ -453,7 +616,6 @@ export default defineComponent({
           }
         }
 
-        // Registrar nueva decisión
         const campo =
           valor === "Aprobación"
             ? "carta_aprobacion_aprobado"
@@ -523,6 +685,73 @@ export default defineComponent({
       }
     }
 
+    async function registrarAcuerdoDirecto(
+      valor: "acuerdo" | "desacuerdo"
+    ) {
+      if (!proforma.value?.completado) {
+        return;
+      }
+
+      try {
+        actualizando.value = true;
+        errores.value = null;
+
+        // Primero limpiamos ambas opciones
+        await actualizarChecklistNegociacion({
+          id_lead_etapa: idLeadEtapa.value!,
+          campo: "proforma_enviada_decuerdo",
+          valor: false,
+        });
+
+        await actualizarChecklistNegociacion({
+          id_lead_etapa: idLeadEtapa.value!,
+          campo: "proforma_enviada_descuerdo",
+          valor: false,
+        });
+
+        // Marcamos la seleccionada
+        const campo =
+          valor === "acuerdo"
+            ? "proforma_enviada_decuerdo"
+            : "proforma_enviada_descuerdo";
+
+        await actualizarChecklistNegociacion({
+          id_lead_etapa: idLeadEtapa.value!,
+          campo,
+          valor: true,
+        });
+
+        await cargarChecklist();
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al registrar la respuesta del cliente";
+
+        console.error(
+          "Error registrando respuesta de crédito directo:",
+          error
+        );
+      } finally {
+        actualizando.value = false;
+      }
+    }
+
+    const acuerdoDirecto = computed(() => {
+      if (!checklistData.value) {
+        return null;
+      }
+
+      if (checklistData.value.proforma_enviada_decuerdo) {
+        return "acuerdo";
+      }
+
+      if (checklistData.value.proforma_enviada_descuerdo) {
+        return "desacuerdo";
+      }
+
+      return null;
+    });
 
     onMounted(() => {
       cargarChecklist();
@@ -532,11 +761,21 @@ export default defineComponent({
       cargando,
       errores,
       actualizando,
+      checklistData,
       pasos,
       proforma,
+      acuerdoDirecto,
+      registrarAcuerdoDirecto,
       aprobacionBancaria,
       precalificacion,
       cartaAprobacion,
+      tipoCreditoSeleccionado,
+      tieneTipoCredito,
+      TIPOS_CREDITO,
+      esCreditoDirecto,
+      esCreditoHipotecario,
+      seleccionarTipoCredito,
+      guardandoTipoCredito,
       docsBanco,
       decision,
       completados,
@@ -549,11 +788,12 @@ export default defineComponent({
       registrarDecision,
       pasarACierre,
       mostrarAcciones,
-      // modal desistio
+      subirDocumento,
       mostrarModalDesistio,
       opcionesDesistio,
       motivoSeleccionado,
       cargandoOpciones,
+      actualizarCampo,
       enviandoDesistio,
       abrirModalDesistio,
       cerrarModalDesistio,

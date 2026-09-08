@@ -112,8 +112,8 @@ const resetCountNotifySaleOp = () => {
 .sidebar {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding: 20px 14px 18px;
+  height: 125vh;
+  padding: 40px 14px 18px;
   background: #000;
   color: #fff;
   box-sizing: border-box;

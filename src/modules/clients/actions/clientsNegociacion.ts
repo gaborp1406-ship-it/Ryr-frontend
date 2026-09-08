@@ -1,6 +1,6 @@
 import { automatizateApiNest } from "@/api/automatizateApiNest";
 import { isAxiosError } from "axios";
-import type { IActualizarChecklistNegociacionRequest, IActualizarChecklistNegociacionResponse, IChecklistNegociacion } from "../interfaces/clients.negociacion.interface";
+import type { IActualizarChecklistNegociacionRequest, IActualizarChecklistNegociacionResponse, IActualizarDocumentoNegociacionRequest, IActualizarDocumentoNegociacionResponse, IChecklistNegociacion } from "../interfaces/clients.negociacion.interface";
 
 export const actualizarChecklistNegociacion = async (
   payload: IActualizarChecklistNegociacionRequest
@@ -85,6 +85,28 @@ export const finalizarEtapaNegociacionDesistio = async (
       throw new Error(
         error.response?.data?.message ??
           "Error al finalizar la etapa de oportunidad como desistido."
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const actualizarDocumentoNegociacion = async (
+  payload: IActualizarDocumentoNegociacionRequest
+): Promise<IActualizarDocumentoNegociacionResponse> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      "/lead/actualizar-documento-negociacion",
+      payload
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          "Error al subir el documento de negociación."
       );
     }
 

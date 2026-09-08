@@ -94,18 +94,24 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const isValidPermission = (url: string): boolean => {
-    if (!authCheckStatus.value?.permisos) return false;
+    if (!authCheckStatus.value?.permisos) {
+      return false;
+    }
+
+    const normalizedUrl = url.replace(/\/+$/, '') || '/';
 
     for (const menu of authCheckStatus.value.permisos) {
       for (const submenu of menu.subMenu) {
-        if (url.split('/').includes(submenu.url.replace('/', ''))) {
+        const permissionUrl = submenu.url.replace(/\/+$/, '') || '/';
+
+        if (permissionUrl === normalizedUrl) {
           return true;
         }
       }
     }
+
     return false;
   };
-
   const isTokenExpired = (): boolean => {
     if (!token.value || token.value.length < 10) return true;
 

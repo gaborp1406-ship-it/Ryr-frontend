@@ -159,374 +159,682 @@ const myForm = reactive({
   recordar: true,
 });
 
+
 const onLogin = async () => {
   if (myForm.usuario === '') {
     return usernameInputRef.value?.focus();
   }
+
   if (myForm.contrasenia === '') {
     return passwordInputRef.value?.focus();
   }
 
   isPending.value = true;
 
-  const resp = await authStore.login(myForm.usuario, myForm.contrasenia);
+  const resp = await authStore.login(
+    myForm.usuario,
+    myForm.contrasenia
+  );
 
   isPending.value = false;
 
-  if (resp.status) {
-    if (authStore.isAgent) {
-      router.push({ name: 'clients' }); // o router.push('/clients') si no usas name en esa ruta
-    } else {
-      router.push({ name: 'homeDashboardAll' });
-    }
+  if (!resp.status) {
+    toast.error(resp.message);
+    return;
+  }
+console.log('================ LOGIN ================');
+console.log('isAgent:', authStore.isAgent);
+console.log('isAdmin:', authStore.isAdmin);
+console.log(
+  'permiso clients:',
+  authStore.isValidPermission('/clients')
+);
+console.log(
+  'permiso dashboard:',
+  authStore.isValidPermission('/homeDashboardAll')
+);
+console.log('========================================');
+  console.log('ROL / AGENTE:', authStore.isAgent);
+  console.log('PERMISOS:', authStore.permissions);
+
+  if (authStore.isAgent) {
+    await router.push({ name: 'clients' });
     return;
   }
 
-  toast.error(resp.message);
+  await router.push({ name: 'homeDashboardAll' });
 };
+
 
 </script>
 
 <style scoped>
+/* =========================================================
+   LOGIN SHELL
+   ========================================================= */
+
 .login-shell {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+
+  width: 100%;
+  height: 100%;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   background: #0a0a0a;
-  overflow-y: auto;
+
+  overflow: hidden;
+
   z-index: 9999;
+
   box-sizing: border-box;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
+
+
+/* =========================================================
+   CARD PRINCIPAL
+   ========================================================= */
 
 .login-card {
-  width: 100vw;
-  height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: #0a0a0a;
-}
+  width: 100%;
+  height: 100%;
 
-/* ---------- Panel izquierdo ---------- */
-.panel-brand {
-  position: relative;
-  background:
-    radial-gradient(circle at 15% 90%, rgba(34, 197, 94, 0.22) 0%, transparent 55%),
-    radial-gradient(circle at 0% 0%, rgba(34, 197, 94, 0.10) 0%, transparent 45%),
-    #0e0e0e;
-  color: #fff;
-  padding: 72px 64px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+  background: #0a0a0a;
+
   overflow: hidden;
 }
 
+
+/* =========================================================
+   PANEL IZQUIERDO
+   ========================================================= */
+
+.panel-brand {
+  position: relative;
+
+  min-width: 0;
+  min-height: 0;
+
+  background:
+    radial-gradient(circle at 15% 90%,
+      rgba(34, 197, 94, 0.22) 0%,
+      transparent 55%),
+    radial-gradient(circle at 0% 0%,
+      rgba(34, 197, 94, 0.10) 0%,
+      transparent 45%),
+    #0e0e0e;
+
+  color: #fff;
+
+  padding: clamp(32px, 5vw, 80px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+
+/* Línea verde superior */
+
 .brand-topbar {
   position: absolute;
+
   top: 0;
   left: 0;
+
   width: 100%;
   height: 5px;
-  background: linear-gradient(90deg, #16a34a, #22c55e);
+
+  background: linear-gradient(90deg,
+      #16a34a,
+      #22c55e);
+
+  z-index: 3;
 }
+
+
+/* =========================================================
+   PATRÓN HEXAGONAL
+   ========================================================= */
 
 .hex-pattern {
   position: absolute;
+
   inset: 0 auto 0 0;
-  width: 280px;
+
+  width: min(280px, 45%);
+
   height: 100%;
+
   pointer-events: none;
+
   opacity: 0.35;
+
+  z-index: 0;
 }
 
 
+/* =========================================================
+   CONTENIDO DEL BRAND
+   ========================================================= */
+
 .panel-brand__content {
   position: relative;
+
   z-index: 1;
+
+  width: 100%;
+  max-width: 620px;
 
   display: flex;
   flex-direction: column;
 
-  align-items: flex-start;
+  align-items: center;
 
-  /* separación entre logo, línea y texto */
-  gap: 12px;
+  text-align: center;
+
+  gap: 20px;
 }
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
 
 .logo-mark {
-  width: 540px;
+  display: block;
+
+  width: min(520px, 90%);
+
+  max-width: 100%;
   height: auto;
 
-  margin: 10px;
+  margin: 0;
 
-  position: relative;
-
-  left: 50px;
-  top: 0px;
+  position: static;
 }
+
+
+/* =========================================================
+   DIVISOR
+   ========================================================= */
 
 .brand-divider {
   width: 80px;
-  /* largo */
   height: 4px;
-  /* grosor */
+
   background: #057930;
+
   border-radius: 20px;
 
   margin: 0;
 
-  position: relative;
-
-  left: 300px;
-  /* Derecha (+) / Izquierda (-) */
-  top: -80px;
-  /* Abajo (+) / Arriba (-) */
+  position: static;
 }
+
+
+/* =========================================================
+   TITULOS
+   ========================================================= */
 
 .panel-brand__title {
-  font-size: 2.6rem;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+
   font-weight: 800;
+
   line-height: 1.1;
-  margin: 0 0 18px;
+
+  margin: 0;
+
   letter-spacing: -0.01em;
+
   color: #fff;
-
-  position: relative;
-
-  left: 0px;
-  /* Derecha (+) / Izquierda (-) */
-  top: 0px;
-  /* Abajo (+) / Arriba (-) */
 }
+
 
 .title-thin {
   display: block;
+
   font-size: 1.05rem;
+
   font-weight: 500;
+
   letter-spacing: 0.28em;
+
   color: #22c55e;
+
   margin-top: 10px;
+
   text-transform: uppercase;
 }
+
 
 .title-rule {
   width: 46px;
   height: 3px;
+
   background: #22c55e;
-  margin: 22px 0 22px;
+
+  margin: 22px 0;
+
   border-radius: 2px;
 }
+
+
+/* =========================================================
+   TEXTO
+   ========================================================= */
 
 .panel-brand__text {
   margin: 0;
 
-  font-size: 1.35rem;
-  line-height: 1.8;
-  color: rgba(255, 255, 255, .65);
+  font-size: clamp(1rem, 1.5vw, 1.35rem);
+
+  line-height: 1.6;
+
+  color: rgba(255, 255, 255, 0.65);
+
   font-weight: 500;
 
-  position: relative;
-
-  left: 300px;
-  /* Derecha (+) / Izquierda (-) */
-  top: -73px;
-  /* Abajo (+) / Arriba (-) */
+  position: static;
 }
+
 
 .accent-text {
   color: #057930;
 }
 
-/* ---------- Panel derecho (formulario) ---------- */
+
+/* =========================================================
+   PANEL DERECHO
+   ========================================================= */
+
 .panel-form {
+  min-width: 0;
+  min-height: 0;
+
   display: flex;
+
   align-items: center;
   justify-content: center;
-  padding: 40px;
+
+  padding: clamp(24px, 4vw, 60px);
+
   background: #0a0a0a;
+
+  overflow-y: auto;
 }
+
+
+/* =========================================================
+   CARD DEL FORMULARIO
+   ========================================================= */
 
 .panel-form__inner {
   width: 100%;
-  max-width: 380px;
+
+  max-width: 430px;
+
+  box-sizing: border-box;
+
   background: #141414;
+
   border: 1px solid #262626;
+
   border-radius: 20px;
-  padding: 44px 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  padding: clamp(30px, 4vw, 44px);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5);
 }
+
+
+/* =========================================================
+   TEXTOS DEL FORMULARIO
+   ========================================================= */
 
 .form-eyebrow {
   display: block;
+
   font-size: 0.72rem;
+
   font-weight: 700;
+
   letter-spacing: 0.16em;
+
   text-transform: uppercase;
+
   color: #078937;
+
   margin-bottom: 10px;
 }
 
+
 .panel-form__title {
-  font-size: 1.7rem;
+  font-size: clamp(1.5rem, 2vw, 1.7rem);
+
   font-weight: 800;
+
   color: #fff;
+
   margin: 0 0 8px;
 }
 
+
 .panel-form__subtitle {
   font-size: 0.88rem;
+
   color: #8a8a8a;
+
   margin: 0 0 28px;
+
+  line-height: 1.5;
 }
+
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
 
 .field {
   margin-bottom: 18px;
 }
 
+
 .field__label {
   display: block;
+
   font-size: 0.78rem;
+
   font-weight: 600;
+
   color: #b0b0b0;
+
   margin-bottom: 7px;
 }
 
+
 .field__control {
   position: relative;
+
   display: flex;
+
   align-items: center;
+
+  width: 100%;
 }
+
 
 .field__icon {
   position: absolute;
+
   left: 16px;
+
   color: #078937;
+
   display: flex;
+
   pointer-events: none;
+
+  z-index: 1;
 }
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
 
 .field__control input {
   width: 100%;
+
   height: 48px;
+
   padding: 0 42px 0 44px;
+
   border-radius: 10px;
+
   border: 1px solid #2c2c2c;
+
   background: #1c1c1c;
+
   font-size: 0.9rem;
+
   color: #f0f0f0;
+
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
   box-sizing: border-box;
 }
+
 
 .field__control input::placeholder {
   color: #666;
 }
 
+
 .field__control input:focus {
   border-color: #078937;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+
+  box-shadow:
+    0 0 0 3px rgba(34, 197, 94, 0.18);
 }
+
+
+/* =========================================================
+   BOTÓN MOSTRAR CONTRASEÑA
+   ========================================================= */
 
 .field__toggle {
   position: absolute;
+
   right: 14px;
+
   background: none;
+
   border: none;
+
   color: #7a7a7a;
+
   cursor: pointer;
+
   display: flex;
-  padding: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 4px;
+
+  z-index: 2;
 }
+
 
 .field__toggle:hover {
   color: #078937;
 }
 
+
+/* =========================================================
+   OPCIONES
+   ========================================================= */
+
 .options-row {
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   margin: 4px 2px 26px;
 }
 
 
-
-
-
 .forgot-link {
   font-size: 0.8rem;
+
   color: #0e6f32;
+
   text-decoration: none;
+
   font-weight: 600;
 }
+
 
 .forgot-link:hover {
   text-decoration: underline;
 }
 
+
+/* =========================================================
+   BOTÓN LOGIN
+   ========================================================= */
+
 .btn-submit {
   width: 100%;
+
+  min-height: 50px;
+
   height: 50px;
+
   border: none;
+
   border-radius: 10px;
-  background: linear-gradient(90deg, #057930 0%, #147437c5 100%);
+
+  background:
+    linear-gradient(90deg,
+      #057930 0%,
+      #147437 100%);
+
   color: #fff;
+
   font-size: 0.92rem;
+
   font-weight: 700;
+
   cursor: pointer;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 8px;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
 }
 
+
 .btn-submit:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.95;
+
+  box-shadow:
+    0 8px 25px rgba(5, 121, 48, 0.25);
 }
+
 
 .btn-submit:active:not(:disabled) {
   transform: translateY(1px);
 }
 
+
 .btn-submit:disabled {
   opacity: 0.6;
+
   cursor: not-allowed;
 }
 
 
+/* =========================================================
+   AYUDA
+   ========================================================= */
+
 .help-row {
   text-align: center;
+
   font-size: 0.82rem;
+
   color: #8a8a8a;
+
   margin: 0;
 }
 
+
 .help-row a {
   color: #22c55e;
+
   font-weight: 700;
+
   text-decoration: none;
 }
+
 
 .help-row a:hover {
   text-decoration: underline;
 }
 
+
+/* =========================================================
+   BRAND INFO
+   ========================================================= */
+
 .brand-info {
   display: flex;
+
   align-items: center;
 
-  /* Controla la separación entre logo, línea y texto */
   gap: 20px;
 }
 
-/* Responsive */
+
+/* =========================================================
+   TABLETS
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .panel-brand {
+    padding: 40px;
+  }
+
+  .logo-mark {
+    width: min(420px, 90%);
+  }
+
+  .panel-form {
+    padding: 32px;
+  }
+}
+
+
+/* =========================================================
+   TABLET / CELULAR
+   ========================================================= */
+
 @media (max-width: 860px) {
   .login-card {
     grid-template-columns: 1fr;
@@ -537,11 +845,75 @@ const onLogin = async () => {
   }
 
   .panel-form {
+    width: 100%;
+
+    min-height: 100dvh;
+
     padding: 24px;
   }
 
   .panel-form__inner {
+    max-width: 430px;
+
     padding: 32px 24px;
+  }
+}
+
+
+/* =========================================================
+   CELULARES PEQUEÑOS
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .panel-form {
+    padding: 16px;
+  }
+
+  .panel-form__inner {
+    padding: 28px 20px;
+
+    border-radius: 16px;
+  }
+
+  .panel-form__title {
+    font-size: 1.5rem;
+  }
+
+  .field__control input {
+    height: 50px;
+  }
+
+  .btn-submit {
+    height: 50px;
+  }
+}
+
+
+/* =========================================================
+   PANTALLAS MUY BAJAS
+   ========================================================= */
+
+@media (max-height: 650px) and (min-width: 861px) {
+  .panel-brand {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+
+  .logo-mark {
+    width: min(400px, 80%);
+  }
+
+  .panel-form__inner {
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .panel-form__subtitle {
+    margin-bottom: 20px;
+  }
+
+  .field {
+    margin-bottom: 14px;
   }
 }
 </style>
