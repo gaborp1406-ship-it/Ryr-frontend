@@ -323,13 +323,6 @@ export default defineComponent({
           throw new Error("Usuario no autenticado");
         }
 
-        console.log("📞 Datos de llamada:", {
-          telefono: telefonoLead.value,
-          idEtapaLead: idEtapa.value,
-          idTrabajador: authStore.idEmploye,
-          agentExtension: sipCredentials.value.agentExtension,
-          idLead: props.idLead,
-        });
 
         // Realizar llamada al teléfono REAL del lead
         await realizarLlamadaSaliente(telefonoLead.value, {

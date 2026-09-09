@@ -80,7 +80,6 @@ export function useLlamadaSaliente() {
 
     // Traduce los eventos que llegan por SSE al estado visual del teléfono
     const procesarEventoLlamada = (event: any) => {
-        console.log("📡 Evento llamada:", event);
 
         switch (event.type) {
             case "ringing-agent":
@@ -168,7 +167,7 @@ export function useLlamadaSaliente() {
             });
 
             currentCallId.value = response.channelId;
-            console.log("✅ Llamada iniciada:", response);
+   
         } catch (error: any) {
             setSipStatus("connected");
             estadoLlamada.value = "idle";
@@ -192,7 +191,7 @@ export function useLlamadaSaliente() {
 
         try {
             await colgarLlamadaActiva(channelId);
-            console.log("📴 Solicitud de hangup enviada:", channelId);
+           
         } catch (error: any) {
             toast.error(error.message ?? "Error al colgar la llamada.");
             console.error("❌ Error al colgar:", error);

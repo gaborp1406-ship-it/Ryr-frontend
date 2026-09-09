@@ -139,7 +139,6 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      console.log("ModalAgendarReu idLead:", props.idLead);
       cargarOpciones();
       cargarPlataformas();
     });

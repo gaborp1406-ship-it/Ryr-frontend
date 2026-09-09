@@ -1,9 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-
 import { authRoutes } from '@/modules/auth/routes';
 import HomeLayout from '@/modules/home/layouts/homeLayout.vue';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
-
 import { leadsRoutes } from '@/modules/leads/routes';
 import { clientsRoutes } from '@/modules/clients/routes';
 import { calendarRoutes } from '@/modules/calendar/routes';
@@ -20,9 +18,6 @@ const router = createRouter({
       name: 'home',
       component: HomeLayout,
 
-      // IMPORTANTE:
-      // "/" es el layout/contenedor de las rutas protegidas.
-      // No debe exigir un permiso "/".
       meta: {
         requiresAuth: true,
         alwaysAllowed: true,
@@ -48,9 +43,6 @@ const router = createRouter({
         desistedRoutes,
       ],
     },
-
-    // Esta ruta está fuera de HomeLayout,
-    // por lo tanto se muestra sin sidebar/topbar.
     {
       path: '/forbidden',
       name: 'forbidden',
@@ -67,44 +59,13 @@ const router = createRouter({
   ],
 });
 
-
-// ============================================================
-// GUARD DE AUTENTICACIÓN Y PERMISOS
-// ============================================================
-
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
   const isInitialPageLoad = from.name === undefined;
 
-  console.log('========== ROUTER GUARD ==========');
-  console.log('FROM name:', from.name);
-  console.log('FROM path:', from.path);
-  console.log('TO name:', to.name);
-  console.log('TO path:', to.path);
-  console.log('TO fullPath:', to.fullPath);
-  console.log('requiresAuth:', to.meta.requiresAuth);
-  console.log('alwaysAllowed:', to.meta.alwaysAllowed);
-  console.log('isChecking:', authStore.isChecking);
-  console.log('isLoggedIn:', authStore.isLoggedIn());
-  console.log('isAgent:', authStore.isAgent);
-  console.log('isAdmin:', authStore.isAdmin);
-  console.log(
-    'isValidPermission:',
-    authStore.isValidPermission(to.path),
-  );
-  console.log('==================================');
-
-
-  // ============================================================
-  // RUTA PROTEGIDA
-  // ============================================================
 
   if (to.meta.requiresAuth) {
-
-    // ----------------------------------------------------------
-    // Esperar a que termine la verificación inicial
-    // ----------------------------------------------------------
 
     if (
       isInitialPageLoad &&
@@ -127,11 +88,6 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
-
-    // ----------------------------------------------------------
-    // Verificar autenticación
-    // ----------------------------------------------------------
-
     if (!authStore.isLoggedIn()) {
 
       if (
@@ -150,10 +106,6 @@ router.beforeEach(async (to, from, next) => {
     }
 
 
-    // ----------------------------------------------------------
-    // Verificar permisos
-    // ----------------------------------------------------------
-
     const rutaSiempreLibre =
       !!to.meta.alwaysAllowed;
 
@@ -162,28 +114,6 @@ router.beforeEach(async (to, from, next) => {
       rutaSiempreLibre ||
       authStore.isValidPermission(to.path);
 
-
-    console.log('---------- PERMISOS ----------');
-    console.log('Ruta:', to.path);
-    console.log('Admin:', authStore.isAdmin);
-    console.log(
-      'Always allowed:',
-      rutaSiempreLibre,
-    );
-    console.log(
-      'Permiso ruta:',
-      authStore.isValidPermission(to.path),
-    );
-    console.log(
-      'TIENE PERMISO:',
-      tienePermiso,
-    );
-    console.log('------------------------------');
-
-
-    // ----------------------------------------------------------
-    // Sin permiso
-    // ----------------------------------------------------------
 
     if (!tienePermiso) {
 
@@ -196,11 +126,6 @@ router.beforeEach(async (to, from, next) => {
       });
     }
 
-
-    // ----------------------------------------------------------
-    // Guardar última ruta válida
-    // ----------------------------------------------------------
-
     localStorage.setItem(
       'lastPath',
       to.fullPath,
@@ -208,11 +133,6 @@ router.beforeEach(async (to, from, next) => {
 
     return next();
   }
-
-
-  // ============================================================
-  // RUTAS PÚBLICAS
-  // ============================================================
 
   if (
     to.name === 'login' &&
@@ -230,6 +150,5 @@ router.beforeEach(async (to, from, next) => {
 
   return next();
 });
-
 
 export default router;

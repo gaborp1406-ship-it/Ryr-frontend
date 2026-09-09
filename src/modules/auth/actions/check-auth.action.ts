@@ -16,7 +16,7 @@ interface resp {
 }
 
 export const checkAuthAction = async (token: string): Promise<resp> => {
-  console.log('checkAuthAction ejecutándose con token:', token);
+  
   try {
     if (!token || token.length < 10) {
       return { status: false };

@@ -38,13 +38,13 @@ function configurarAudioRemoto(invitation: any) {
 
     pc.getReceivers().forEach((receiver: RTCRtpReceiver) => {
       if (receiver.track) {
-        console.log("🔊 Receiver encontrado:", receiver.track.kind);
+      
         remoteStream.addTrack(receiver.track);
       }
     });
 
     pc.ontrack = (event: RTCTrackEvent) => {
-      console.log("🔊 TRACK REMOTO:", event.track.kind);
+     
       remoteStream.addTrack(event.track);
       audio.srcObject = remoteStream;
       audio.play()
@@ -59,7 +59,7 @@ function configurarAudioRemoto(invitation: any) {
       .then(() => console.log("🔊 Audio remoto reproduciéndose (inicial)"))
       .catch((error) => console.warn("⚠️ No se pudo reproducir audio (inicial):", error));
 
-    console.log("🎧 Audio remoto configurado");
+
 
   } catch (error) {
     console.error("❌ Error configurando audio remoto:", error);
@@ -78,32 +78,27 @@ export function useSipPhone() {
   const sipCredentials = ref<ISipCredentials | null>(null);
 
   const manejarLlamadaEntrante = async (invitation: any) => {
-    console.log("=================================");
-    console.log("📞 INVITE RECIBIDO");
-    console.log("=================================");
 
     currentSession.value = invitation;
 
     invitation.stateChange.addListener((state: any) => {
-      console.log("📡 SIP STATE:", state);
-
+  
       if (state === SIP.SessionState.Establishing) {
-        console.log("🔄 ESTABLISHING");
+       
       }
 
       if (state === SIP.SessionState.Established) {
-        console.log("✅ ESTABLISHED");
+       
       }
 
       if (state === SIP.SessionState.Terminated) {
-        console.log("❌ TERMINATED");
+      
         currentSession.value = null;
       }
     });
 
     try {
-      console.log("📞 Ejecutando invitation.accept()...");
-
+ 
       await invitation.accept({
         sessionDescriptionHandlerOptions: {
           constraints: {
@@ -113,7 +108,6 @@ export function useSipPhone() {
         },
       });
 
-      console.log("✅ invitation.accept() TERMINÓ");
 
       configurarAudioRemoto(invitation);
 
@@ -124,7 +118,7 @@ export function useSipPhone() {
 
   const registrarUserAgent = async (credentials: ISipCredentials) => {
     if (userAgent.value) {
-      console.log("ℹ️ SIP ya inicializado");
+  
       return;
     }
 
@@ -156,7 +150,7 @@ export function useSipPhone() {
       }, 10000);
 
       registerer.value.stateChange.addListener((state: SIP.RegistererState) => {
-        console.log("📋 Registerer state:", state);
+       
 
         if (state === SIP.RegistererState.Registered) {
           clearTimeout(timeout);
@@ -175,7 +169,7 @@ export function useSipPhone() {
       });
     });
 
-    console.log(`✅ Agente ${credentials.agentExtension} registrado correctamente (confirmado)`);
+  
     toast.success(`Agente ${credentials.agentExtension} conectado`);
   };
 

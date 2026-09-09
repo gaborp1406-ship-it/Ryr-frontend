@@ -40,12 +40,10 @@ export default defineComponent({
      */
     const inicializarTelefono = async () => {
       if (sipRegistrado.value) {
-        console.log("✅ SIP ya registrado");
         return;
       }
 
       try {
-        console.log("📱 Inicializando telefonía...");
         const credenciales = await conectarTelefono();
 
         // Conectar a eventos SSE
@@ -54,7 +52,6 @@ export default defineComponent({
             credenciales.agentExtension,
             procesarEventoLlamada
           );
-          console.log("📡 SSE conectado");
         }
 
         toast.success("📱 Telefonía inicializada");
@@ -85,8 +82,6 @@ export default defineComponent({
         return;
       }
 
-      console.log(`📞 Llamando a: ${externalNumber}`);
-
       await realizarLlamadaSaliente(externalNumber, {
         agentExtension: sipCredentials.value.agentExtension,
         idTrabajador: authStore.idEmploye,
@@ -99,7 +94,6 @@ export default defineComponent({
      * COLGAR LLAMADA
      */
     const handleHangup = async () => {
-      console.log("📴 Colgando...");
       await hangup();
     };
 

@@ -182,21 +182,6 @@ const onLogin = async () => {
     toast.error(resp.message);
     return;
   }
-console.log('================ LOGIN ================');
-console.log('isAgent:', authStore.isAgent);
-console.log('isAdmin:', authStore.isAdmin);
-console.log(
-  'permiso clients:',
-  authStore.isValidPermission('/clients')
-);
-console.log(
-  'permiso dashboard:',
-  authStore.isValidPermission('/homeDashboardAll')
-);
-console.log('========================================');
-  console.log('ROL / AGENTE:', authStore.isAgent);
-  console.log('PERMISOS:', authStore.permissions);
-
   if (authStore.isAgent) {
     await router.push({ name: 'clients' });
     return;

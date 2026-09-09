@@ -28,13 +28,6 @@ authStore.$subscribe(
       return;
     }
 
-    console.log(
-      'Estado de autenticación actualizado:',
-      state.authStatus,
-      'Ruta actual:',
-      route.path
-    );
-
     // Si el usuario se autenticó y está en una ruta de login
     if (state.authStatus === AuthStatus.Authenticated) {
       const intendedPath = localStorage.getItem('intendedPath');
