@@ -201,46 +201,67 @@ export default defineComponent({
 
     function formatFechaHoraCompleta(valor: string | null | undefined): string {
       if (!valor) return "-";
-      const d = new Date(valor);
-      if (!isNaN(d.getTime())) {
-        const fecha = d.toLocaleDateString("es-PE", {
+
+      // PostgreSQL timestamp without time zone:
+      // se interpreta como hora local de America/Lima,
+      // sin convertirla a UTC.
+      const match = valor.match(
+        /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?/
+      );
+
+      if (match) {
+        const [, anio, mes, dia, horas, minutos] = match;
+
+        const fecha = new Date(
+          Number(anio),
+          Number(mes) - 1,
+          Number(dia)
+        );
+
+        const fechaFormateada = fecha.toLocaleDateString("es-PE", {
           day: "numeric",
           month: "long",
           year: "numeric",
+          timeZone: "America/Lima",
         });
-        const hora = d.toLocaleTimeString("es-PE", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
-        return `${fecha} · ${hora}`;
+
+        const horaFormateada = `${horas}:${minutos}`;
+
+        const [hora, minuto] = horaFormateada.split(":");
+        const horaNumero = Number(hora);
+
+        const hora12 = horaNumero % 12 || 12;
+        const periodo = horaNumero >= 12 ? "p. m." : "a. m.";
+
+        return `${fechaFormateada} · ${hora12}:${minuto} ${periodo}`;
       }
+
       return valor;
     }
 
- async function cargarEstadoContacto() {
-  try {
-    const estado = await obtenerEstadoContactoLead(props.idLead);
+    async function cargarEstadoContacto() {
+      try {
+        const estado = await obtenerEstadoContactoLead(props.idLead);
 
-    idEstadoContacto.value = estado.id_estado_contacto;
-    estadoContacto.value = estado.estado;
+        idEstadoContacto.value = estado.id_estado_contacto;
+        estadoContacto.value = estado.estado;
 
-    idEtapa.value = estado.id_etapa;
+        idEtapa.value = estado.id_etapa;
 
-    telefonoLead.value = estado.telefono
-      ? String(estado.telefono)
-      : null;
+        telefonoLead.value = estado.telefono
+          ? String(estado.telefono)
+          : null;
 
-    contacto.value = {
-      fecha: formatFechaSimple(estado.fecha_primer_contacto),
-      hora: formatHoraSimple(estado.hora_primer_contacto),
-    };
-  } catch (error) {
-    console.error("Error cargando estado contacto", error);
-  } finally {
-    cargando.value = false;
-  }
-}
+        contacto.value = {
+          fecha: formatFechaSimple(estado.fecha_primer_contacto),
+          hora: formatHoraSimple(estado.hora_primer_contacto),
+        };
+      } catch (error) {
+        console.error("Error cargando estado contacto", error);
+      } finally {
+        cargando.value = false;
+      }
+    }
 
 
     const contacto = ref({
