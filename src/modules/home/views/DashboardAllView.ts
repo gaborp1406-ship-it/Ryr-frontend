@@ -367,7 +367,7 @@ export default defineComponent({
       {
         key: 'visitas_pendientes',
         titulo: 'Visitas Agendadas',
-        subtitulo: 'Próximos 7 días',
+        subtitulo: 'Semana Actual',
         tipo: 12,
         estado: 13,
         color: '#2876c7',
@@ -376,7 +376,7 @@ export default defineComponent({
       {
         key: 'videollamadas_pendientes',
         titulo: 'Videollamadas Agendadas',
-        subtitulo: 'Próximos 7 días',
+        subtitulo: 'Semana Actual',
         tipo: 11,
         estado: 13,
         color: '#2876c7',
@@ -385,7 +385,7 @@ export default defineComponent({
       {
         key: 'visitas_realizadas',
         titulo: 'Visitas Realizadas',
-        subtitulo: 'Próximos 7 días',
+        subtitulo: 'Semana Actual',
         tipo: 12,
         estado: 14,
         color: '#2d9b59',
@@ -394,7 +394,7 @@ export default defineComponent({
       {
         key: 'videollamadas_realizadas',
         titulo: 'Videollamadas Realizadas',
-        subtitulo: 'Próximos 7 días',
+        subtitulo: 'Semana Actual',
         tipo: 11,
         estado: 14,
         color: '#2d9b59',

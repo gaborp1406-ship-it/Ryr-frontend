@@ -11,7 +11,7 @@
           </h2>
         </div>
         <div class="flex items-center gap-2">
-          <button @click="marcarComoRealizada"
+          <button v-if="puedeContactar" @click="marcarComoRealizada"
             :disabled="!puedeMarcarRealizada || finalizarActividadState.guardando.value"
             :title="!puedeMarcarRealizada ? 'No disponible en esta etapa' : ''"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm">
@@ -95,14 +95,14 @@
         <div class="border-t border-slate-100 px-6 py-4">
           <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3">
             <!-- Botones de Contacto -->
-            <div class="flex flex-wrap items-center gap-2">
-              <button @click="abrirModalWhatsapp"
+            <div v-if="puedeContactar" class="flex flex-wrap items-center gap-2">
+              <button  v-if="puedeContactar" @click="abrirModalWhatsapp"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 text-sm font-semibold transition-all duration-200">
                 <IconWhatsapp class="w-6 h-5" />
                 <span class="hidden sm:inline">WhatsApp</span>
               </button>
 
-              <button @click="abrirModalEmail"
+              <button v-if="puedeContactar" @click="abrirModalEmail"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 text-sm font-semibold transition-all duration-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M22 6 12 13 2 6" />
@@ -111,7 +111,7 @@
                 <span class="hidden sm:inline">Email</span>
               </button>
 
-              <button @click="abrirModalLlamada"
+              <button v-if="puedeContactar" @click="abrirModalLlamada"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-amber-300 hover:bg-amber-50 text-slate-700 text-sm font-semibold transition-all duration-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path
@@ -125,7 +125,7 @@
 
             <!-- Botones de Acción -->
             <div class="flex flex-wrap items-center gap-2">
-              <button @click="abrirReprogramar"
+              <button v-if="puedeContactar" @click="abrirReprogramar"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 text-sm font-semibold transition-all duration-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M21 12a9 9 0 1 1-2.64-6.36" />
@@ -134,7 +134,7 @@
                 <span class="hidden sm:inline">Reprogramar</span>
               </button>
 
-              <button v-if="puedeNegociar" @click="desistimiento.abrir()"
+              <button v-if="puedeNegociar && puedeContactar"  @click="desistimiento.abrir()"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold transition-all duration-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M12 9v6m4-10H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />

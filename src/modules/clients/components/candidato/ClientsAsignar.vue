@@ -67,7 +67,7 @@
 
             </div>
 
-            <div v-if="lead && !lead.estado" class="border-t border-slate-100 px-6 py-4 flex justify-end">
+            <div v-if="lead && !lead.estado && puedeContactar" class="border-t border-slate-100 px-6 py-4 flex justify-end">
                 <button @click="contactarLead" :disabled="loadingContactar"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-[#2d8c4a] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors duration-200">
 

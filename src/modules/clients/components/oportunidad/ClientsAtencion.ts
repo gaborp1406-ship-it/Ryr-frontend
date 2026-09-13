@@ -304,6 +304,8 @@ export default defineComponent({
     });
 
 
+    const puedeContactar = computed(() => authStore.isAgent);
+
     // ---------- Modal de evidencia (audio / imagen / pdf) ----------
     type TipoEvidencia = 'imagen' | 'pdf' | 'audio' | 'video' | null;
 
@@ -425,6 +427,7 @@ export default defineComponent({
       cerrarModalWhatsapp,
       modalWhatsappAbierto,
       onGuardarWhatsapp,
+      puedeContactar,
       puedeMarcarRealizada,
       abrirModalEmail,
       cerrarModalEmail,

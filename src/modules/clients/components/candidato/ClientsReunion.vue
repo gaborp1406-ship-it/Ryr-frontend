@@ -96,7 +96,7 @@
 
         <div class="flex flex-wrap gap-2 sm:justify-end">
 
-          <button @click="convertirOportunidad" :disabled="convirtiendo"
+          <button v-if="puedeContactar" @click="convertirOportunidad" :disabled="convirtiendo"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2d8c4a] hover:bg-[#256e3c] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors duration-200">
 
             <svg v-if="convirtiendo" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"

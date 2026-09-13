@@ -1,6 +1,7 @@
-import { defineComponent, onMounted, ref } from "vue";
+import { computed, defineComponent, onMounted, ref } from "vue";
 import Swal from "sweetalert2";
 import { finalizarEtapaLeadAsignacion, obtenerDetalleLeadCliente } from "../../actions/clientsAsignar.action";
+import { useAuthStore } from "@/modules/auth/stores/auth.store";
 
 export default defineComponent({
   emits: ["etapa-finalizada"],
@@ -16,6 +17,10 @@ export default defineComponent({
     const lead = ref<any>(null);
     const loading = ref(false);
     const loadingContactar = ref(false);
+    const authStore = useAuthStore();
+
+     const puedeContactar = computed(() => authStore.isAgent);
+
     const cargarInformacion = async () => {
       try {
         loading.value = true;
@@ -89,6 +94,7 @@ export default defineComponent({
       loading,
       loadingContactar,
       contactarLead,
+      puedeContactar
     };
   },
 });

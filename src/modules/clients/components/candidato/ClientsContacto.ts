@@ -449,6 +449,7 @@ export default defineComponent({
         );
       }
     }
+  const puedeContactar = computed(() => authStore.isAgent);
 
     async function onReunionAgendada() {
       cerrarModalAgendarReunion();
@@ -482,6 +483,7 @@ export default defineComponent({
       onGuardarWhatsapp,
       modalEmailAbierto,
       abrirModalEmail,
+      puedeContactar,
       cerrarModalEmail,
       onGuardarEmail,
       idEtapa,

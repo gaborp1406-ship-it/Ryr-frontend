@@ -71,7 +71,9 @@ export default defineComponent({
     const fuentes = ref<FuenteNegociacion[]>([]);
     const asesores = ref<AsesorNegociacion[]>([]);
     const leads = ref<LeadNegociacion[]>([]);
-
+const busquedaCliente = ref('');
+    const paginaActual = ref(1);
+    const leadsPorPagina = 5;
     const coloresDonut = [
       '#2d8c4a',
       '#70b889',
@@ -83,7 +85,7 @@ export default defineComponent({
       '#84c597',
     ];
 
-    const cargarDashboard = async () => {
+ const cargarDashboard = async () => {
       try {
         cargando.value = true;
         error.value = null;
@@ -139,6 +141,7 @@ export default defineComponent({
         );
 
         leads.value = leadsResponse ?? [];
+        paginaActual.value = 1; // resetear página al recargar datos
       } catch (err) {
         console.error(
           'Error al cargar dashboard de negociación:',
@@ -308,13 +311,107 @@ export default defineComponent({
     /**
      * NÚMERO DE FILAS VISIBLES
      */
-    const cantidadLeadsMostrados = computed(() => {
-      return leads.value.length;
+
+  const leadsFiltrados = computed(() => {
+      const query = busquedaCliente.value.trim().toLowerCase();
+
+      if (!query) return leads.value;
+
+      return leads.value.filter((lead) =>
+        (lead.nombre_cliente || '')
+          .toLowerCase()
+          .includes(query),
+      );
     });
 
     /**
-     * RECARGAR SI CAMBIA EL FILTRO DE FECHAS
+     * ===== NUEVO: TOTAL DE PÁGINAS =====
      */
+    const totalPaginas = computed(() => {
+      return Math.max(
+        1,
+        Math.ceil(leadsFiltrados.value.length / leadsPorPagina),
+      );
+    });
+
+    /**
+     * ===== NUEVO: LEADS DE LA PÁGINA ACTUAL =====
+     */
+    const leadsPaginados = computed(() => {
+      const inicio = (paginaActual.value - 1) * leadsPorPagina;
+      const fin = inicio + leadsPorPagina;
+
+      return leadsFiltrados.value.slice(inicio, fin);
+    });
+
+    /**
+     * ===== NUEVO: RANGO MOSTRADO (ej: "1-5 de 23") =====
+     */
+    const rangoMostrado = computed(() => {
+      if (!leadsFiltrados.value.length) {
+        return '0 de 0';
+      }
+
+      const inicio = (paginaActual.value - 1) * leadsPorPagina + 1;
+      const fin = Math.min(
+        paginaActual.value * leadsPorPagina,
+        leadsFiltrados.value.length,
+      );
+
+      return `${inicio}-${fin} de ${leadsFiltrados.value.length}`;
+    });
+
+    /**
+     * ===== NUEVO: NAVEGACIÓN DE PÁGINAS =====
+     */
+    const irAPagina = (pagina: number) => {
+      if (pagina < 1 || pagina > totalPaginas.value) return;
+      paginaActual.value = pagina;
+    };
+
+    const paginaAnterior = () => {
+      irAPagina(paginaActual.value - 1);
+    };
+
+    const paginaSiguiente = () => {
+      irAPagina(paginaActual.value + 1);
+    };
+
+    /**
+     * ===== NUEVO: NÚMEROS DE PÁGINA A MOSTRAR =====
+     * Muestra máximo 5 números de página, centrados en la actual
+     */
+    const numerosPagina = computed(() => {
+      const total = totalPaginas.value;
+      const actual = paginaActual.value;
+      const maxVisibles = 5;
+
+      if (total <= maxVisibles) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
+
+      let inicio = Math.max(1, actual - 2);
+      let fin = Math.min(total, inicio + maxVisibles - 1);
+
+      if (fin - inicio < maxVisibles - 1) {
+        inicio = Math.max(1, fin - maxVisibles + 1);
+      }
+
+      return Array.from(
+        { length: fin - inicio + 1 },
+        (_, i) => inicio + i,
+      );
+    });
+
+    // ===== NUEVO: RESETEAR PÁGINA AL BUSCAR =====
+    watch(busquedaCliente, () => {
+      paginaActual.value = 1;
+    });
+
+    const cantidadLeadsMostrados = computed(() => {
+      return leadsFiltrados.value.length;
+    });
+
     watch(
       () => [
         props.fechaInicio,
@@ -356,7 +453,16 @@ export default defineComponent({
       formatearFecha,
 
       cantidadLeadsMostrados,
-
+ busquedaCliente,
+      leadsFiltrados,
+      leadsPaginados,
+      paginaActual,
+      totalPaginas,
+      rangoMostrado,
+      irAPagina,
+      paginaAnterior,
+      paginaSiguiente,
+      numerosPagina,
       cargarDashboard,
     };
   },

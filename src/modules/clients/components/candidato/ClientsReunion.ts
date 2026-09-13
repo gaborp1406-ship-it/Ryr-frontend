@@ -3,6 +3,7 @@ import type { IListarActividadLeadResponse } from "../../interfaces/clientsreuni
 import { listarActividadesPorLead, obtenerInfoAgendarReuLead } from "../../actions/clientsReunion.action";
 import { finalizarEtapaContactoAgendarReunion } from "../../actions/clientsRealizarReunion";
 import type { IFinalizarEtapaContactoAgendarReunionRequest } from "../../interfaces/clientsrealizarreunion";
+import { useAuthStore } from "@/modules/auth/stores/auth.store";
 
 export default defineComponent({
   props: {
@@ -63,6 +64,8 @@ export default defineComponent({
 
       reunion.value = actividadReunion;
     }
+    const authStore = useAuthStore();
+    const puedeContactar = computed(() => authStore.isAgent);
 
     // Consulta si ya existe un registro de "agendar reunión" con estado true
     // (es decir, si el lead ya fue convertido a oportunidad)
@@ -131,6 +134,7 @@ export default defineComponent({
       yaConvertido,
       convirtiendo,
       errorConvertir,
+      puedeContactar,
       convertirOportunidad,
     };
   },

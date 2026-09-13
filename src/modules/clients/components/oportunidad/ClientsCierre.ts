@@ -380,6 +380,9 @@ export default defineComponent({
     const finalizandoRealizado = ref(false);
     const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
+     
+        const puedeContactar = computed(() => authStore.isAgent);
+     
  async function abrirModalDesistio() {
   mostrarModalDesistio.value = true;
   motivoSeleccionado.value = null;
@@ -532,7 +535,8 @@ async function confirmarDesistio() {
       cerrarCelebracion,
       esMotivoOtro,
 motivoOtro,
-      puedeEliminarDocumento
+      puedeEliminarDocumento,
+      puedeContactar
     };
   },
 });

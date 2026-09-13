@@ -865,7 +865,7 @@
           <div class="flex flex-wrap gap-2 sm:justify-end">
 
             <!-- DESISTIÓ -->
-            <button type="button" @click="abrirModalDesistio" :disabled="actualizando"
+            <button  v-if="puedeContactar" type="button" @click="abrirModalDesistio" :disabled="actualizando"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
@@ -878,7 +878,7 @@
             </button>
 
             <!-- PASAR A CIERRE -->
-            <button type="button" @click="pasarACierre" :disabled="actualizando"
+            <button   v-if="puedeContactar" type="button" @click="pasarACierre" :disabled="actualizando"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">

@@ -329,10 +329,9 @@
       class="overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
 
       <!-- HEADER -->
-      <div class="flex items-center justify-between gap-4 px-[19px] pb-[14px] pt-[18px]">
+      <div class="flex flex-wrap items-center justify-between gap-3 px-[19px] pb-[14px] pt-[18px]">
 
         <div>
-
           <span class="mb-1 block text-[11px] font-bold tracking-[0.14em] text-slate-400">
             PIPELINE
           </span>
@@ -340,14 +339,32 @@
           <h2 class="m-0 text-[17px] font-bold leading-tight tracking-[-0.02em]">
             Clientes Activos en Negociación
           </h2>
-
         </div>
 
+        <div class="flex items-center gap-[10px]">
 
-        <div class="flex items-center gap-2">
+          <!-- ===== NUEVO: BUSCADOR ===== -->
+          <div class="relative">
+            <svg viewBox="0 0 24 24" fill="none"
+              class="pointer-events-none absolute left-[10px] top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-slate-400">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" />
+              <path d="m20 20-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+
+            <input v-model="busquedaCliente" type="text" placeholder="Buscar por cliente..."
+              class="w-[210px] rounded-full border border-slate-200 bg-slate-50 py-[8px] pl-[32px] pr-[12px] text-[12px] text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-[#2d8c4a] focus:bg-white focus:ring-[3px] focus:ring-[#2d8c4a]/10" />
+
+            <button v-if="busquedaCliente" type="button"
+              class="absolute right-[8px] top-1/2 flex h-[16px] w-[16px] -translate-y-1/2 items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300"
+              @click="busquedaCliente = ''">
+              <svg viewBox="0 0 24 24" fill="none" class="h-[10px] w-[10px]">
+                <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
 
           <span v-if="!cargando"
-            class="rounded-full bg-[#2d8c4a]/10 px-[10px] py-[5px] text-[11px] font-bold text-[#2d8c4a]">
+            class="whitespace-nowrap rounded-full bg-[#2d8c4a]/10 px-[10px] py-[5px] text-[11px] font-bold text-[#2d8c4a]">
             {{ cantidadLeadsMostrados }} leads
           </span>
 
@@ -375,7 +392,7 @@
           </thead>
 
           <tbody>
-            <tr v-for="n in 6" :key="`row-skel-${n}`" class="border-b border-slate-100 last:border-b-0"
+            <tr v-for="n in 5" :key="`row-skel-${n}`" class="border-b border-slate-100 last:border-b-0"
               :class="n % 2 === 0 ? 'bg-[#f5f5f5]' : 'bg-white'">
               <td class="px-[14px] py-[12px]"><span class="skeleton h-[10px] w-[55px] rounded-full"></span></td>
               <td class="px-[14px] py-[12px]">
@@ -399,123 +416,68 @@
       <!-- TABLA REAL -->
       <!-- ===================================================== -->
 
-      <div v-else-if="leads.length" class="overflow-x-auto animate-[fadeIn_0.35s_ease]">
+      <div v-else-if="leadsFiltrados.length" class="overflow-x-auto animate-[fadeIn_0.35s_ease]">
 
         <table class="w-full min-w-[900px] border-collapse">
 
           <thead>
-
             <tr class="bg-[#050505] text-left">
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Lead ID
-              </th>
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Ejecutivo
-              </th>
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Nombre Cliente
-              </th>
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Fuente
-              </th>
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Proyecto
-              </th>
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Etapa
-              </th>
-
-              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
-                Fecha Ingreso
-              </th>
-
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Lead ID</th>
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Ejecutivo</th>
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Nombre Cliente</th>
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Fuente</th>
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Proyecto</th>
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Etapa</th>
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">Fecha Ingreso</th>
             </tr>
-
           </thead>
 
-
           <tbody>
+            <!-- ===== NUEVO: usa leadsPaginados en vez de leads ===== -->
+            <tr v-for="(lead, index) in leadsPaginados" :key="lead.id_lead"
+              class="border-b border-slate-100 last:border-b-0" :class="index % 2 === 0 ? 'bg-white' : 'bg-[#f5f5f5]'">
 
-            <tr v-for="(lead, index) in leads" :key="lead.id_lead" class="border-b border-slate-100 last:border-b-0"
-              :class="index % 2 === 0
-                ? 'bg-white'
-                : 'bg-[#f5f5f5]'
-                ">
-
-              <!-- ID -->
               <td class="px-[14px] py-[11px] text-[11px] font-medium text-slate-600">
                 L-{{ String(lead.id_lead).padStart(5, '0') }}
               </td>
 
-
-              <!-- ASESOR -->
               <td class="px-[14px] py-[11px]">
-
                 <div class="flex items-center gap-[8px]">
-
                   <div
                     class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#2d8c4a]/10 text-[10px] font-bold text-[#2d8c4a]">
                     {{ iniciales(lead.asesor) }}
                   </div>
-
                   <span class="max-w-[130px] truncate text-[11px] font-medium text-slate-700">
                     {{ lead.asesor || '-' }}
                   </span>
-
                 </div>
-
               </td>
 
-
-              <!-- CLIENTE -->
               <td class="max-w-[190px] px-[14px] py-[11px]">
-
                 <span class="block truncate text-[11px] font-semibold text-slate-700">
                   {{ lead.nombre_cliente || '-' }}
                 </span>
-
               </td>
 
-
-              <!-- FUENTE -->
               <td class="px-[14px] py-[11px]">
-
                 <span
                   class="inline-flex rounded-md bg-slate-100 px-[8px] py-[4px] text-[10px] font-medium text-slate-600">
                   {{ lead.fuente || '-' }}
                 </span>
-
               </td>
 
-
-              <!-- PROYECTO -->
               <td class="px-[14px] py-[11px] text-[11px] text-slate-600">
                 {{ lead.proyecto || '-' }}
               </td>
 
-
-              <!-- ETAPA -->
               <td class="px-[14px] py-[11px]">
-
                 <span
                   class="inline-flex items-center gap-[6px] rounded-full bg-[#2d8c4a]/10 px-[9px] py-[5px] text-[10px] font-bold text-[#2d8c4a]">
-
                   <span class="h-[6px] w-[6px] rounded-full bg-[#2d8c4a]"></span>
-
                   Negociación
-
                 </span>
-
               </td>
 
-
-              <!-- FECHA -->
               <td class="px-[14px] py-[11px] text-[11px] text-slate-500">
                 {{ formatearFecha(lead.fecha_creacion) }}
               </td>
@@ -525,6 +487,47 @@
           </tbody>
 
         </table>
+
+        <!-- ===== NUEVO: PAGINACIÓN ===== -->
+        <div
+          class="flex flex-wrap items-center justify-between gap-[10px] border-t border-slate-100 px-[19px] py-[13px]">
+
+          <span class="text-[11px] text-slate-400">
+            Mostrando {{ rangoMostrado }}
+          </span>
+
+          <div class="flex items-center gap-[5px]">
+
+            <button type="button" :disabled="paginaActual === 1"
+              class="flex h-[28px] w-[28px] items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              @click="paginaAnterior">
+              <svg viewBox="0 0 24 24" fill="none" class="h-[14px] w-[14px]">
+                <path d="m15 18-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+
+            <button v-for="num in numerosPagina" :key="num" type="button"
+              class="flex h-[28px] w-[28px] items-center justify-center rounded-lg text-[11px] font-bold transition"
+              :class="num === paginaActual
+                ? 'bg-[#2d8c4a] text-white'
+                : 'border border-slate-200 text-slate-500 hover:bg-slate-50'
+                " @click="irAPagina(num)">
+              {{ num }}
+            </button>
+
+            <button type="button" :disabled="paginaActual === totalPaginas"
+              class="flex h-[28px] w-[28px] items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              @click="paginaSiguiente">
+              <svg viewBox="0 0 24 24" fill="none" class="h-[14px] w-[14px]">
+                <path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
+
+          </div>
+
+        </div>
 
       </div>
 
@@ -536,29 +539,22 @@
       <div v-else class="flex min-h-[220px] flex-col items-center justify-center px-5">
 
         <div class="mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-slate-100 text-slate-400">
-
           <svg viewBox="0 0 24 24" fill="none" class="h-[22px] w-[22px]">
-
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.7"
               stroke-linecap="round" />
-
             <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.7" />
-
             <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.7"
               stroke-linecap="round" />
-
           </svg>
-
         </div>
 
-
         <strong class="text-[13px] font-semibold text-slate-600">
-          No hay leads en negociación
+          {{ busquedaCliente ? 'No se encontraron clientes' : 'No hay leads en negociación' }}
         </strong>
 
-
         <span class="mt-1 text-[11px] text-slate-400">
-          No existen clientes activos en esta etapa
+          {{ busquedaCliente ? `Sin resultados para "${busquedaCliente}"` : 'No existen clientes activos en esta etapa'
+          }}
         </span>
 
       </div>

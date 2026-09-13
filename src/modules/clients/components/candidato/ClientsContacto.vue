@@ -42,7 +42,7 @@
                     :disabled="enviandoMensaje"
                     class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none disabled:opacity-60"></textarea>
                 <div class="flex justify-end">
-                    <button @click="enviarMensaje" :disabled="enviandoMensaje || !nuevoMensaje.trim()"
+                    <button   v-if="puedeContactar" @click="enviarMensaje" :disabled="enviandoMensaje || !nuevoMensaje.trim()"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg v-if="enviandoMensaje" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"
                             fill="none">
@@ -118,11 +118,11 @@
 
             <div v-else class="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex flex-wrap gap-2">
-                    <button @click="abrirModalWhatsapp"
+                    <button v-if="puedeContactar"  @click="abrirModalWhatsapp"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">
                         <IconWhatsapp class="w-6 h-6" /> WhatsApp
                     </button>
-                    <button @click="abrirModalEmail"
+                    <button v-if="puedeContactar" @click="abrirModalEmail"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <path d="M22 6 12 13 2 6" />
@@ -130,7 +130,7 @@
                         </svg>
                         Email
                     </button>
-                    <button :disabled="cargandoTelefono" @click="abrirModalLlamada"
+                    <button v-if="puedeContactar" :disabled="cargandoTelefono" @click="abrirModalLlamada"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
@@ -143,7 +143,7 @@
                 <div class="flex flex-wrap gap-2 sm:justify-end">
 
                     <!-- Solo aparece si estado es FALSE -->
-                    <button v-if="!estadoContacto" @click="abrirModalDesistio"
+                    <button v-if="!estadoContacto  && puedeContactar" @click="abrirModalDesistio"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors duration-200">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <circle cx="12" cy="12" r="9" />
@@ -155,7 +155,7 @@
 
 
                     <!-- Solo aparece si estado es FALSE -->
-                    <button v-if="!estadoContacto" @click="agendarReunion" :disabled="historialMensajes.length === 0"
+                    <button v-if="!estadoContacto  && puedeContactar" @click="agendarReunion" :disabled="historialMensajes.length === 0"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <rect x="3" y="4" width="18" height="18" rx="2" />

@@ -10,6 +10,7 @@ import type { IListarOpcionesResponse } from "../../interfaces/clients.interface
 import { listarOpciones } from "../../actions/clients.action";
 import { finalizarEtapaOportunidadDesistio } from "../../actions/clients.atencion.action";
 import Swal from "sweetalert2";
+import { useAuthStore } from "@/modules/auth/stores/auth.store";
 
 type Decision = "Aprobación" | "Denegación" | null;
 
@@ -177,6 +178,10 @@ export default defineComponent({
 
     const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
+
+      const authStore = useAuthStore();
+        const puedeContactar = computed(() => authStore.isAgent);
+     
     async function abrirModalDesistio() {
       mostrarModalDesistio.value = true;
       motivoSeleccionado.value = null;
@@ -831,6 +836,7 @@ export default defineComponent({
       enviandoDesistio,
       abrirModalDesistio,
       motivoOtro,
+      puedeContactar,
       esMotivoOtro,
       cerrarModalDesistio,
       confirmarDesistio,
