@@ -199,7 +199,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.atendidos)}%` }"></div>
               </div>
               <strong class="w-[22px] shrink-0 text-right text-[10px] font-bold text-slate-700">{{ candidatos.atendidos
-              }}</strong>
+                }}</strong>
             </div>
 
             <div class="mb-[7px] flex items-center gap-[8px]">
@@ -209,7 +209,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.sinAtender)}%` }"></div>
               </div>
               <strong class="w-[22px] shrink-0 text-right text-[10px] font-bold text-slate-700">{{ candidatos.sinAtender
-              }}</strong>
+                }}</strong>
             </div>
 
             <div class="ml-[78px] mr-[10px] flex justify-between text-[8px] text-slate-400">
@@ -238,15 +238,15 @@
             <!-- TABS -->
             <div class="flex rounded-lg bg-slate-100 p-[3px]">
               <button type="button" class="rounded-md px-[8px] py-[5px] text-[8px] font-bold transition" :class="desistimientoEtapa === 3
-                  ? 'bg-white text-[#2d8c4a] shadow-sm'
-                  : 'text-slate-400'
+                ? 'bg-white text-[#2d8c4a] shadow-sm'
+                : 'text-slate-400'
                 " @click="cambiarEtapaDesistimiento(3)">
                 Candidatos
               </button>
 
               <button type="button" class="rounded-md px-[8px] py-[5px] text-[8px] font-bold transition" :class="desistimientoEtapa === 8
-                  ? 'bg-white text-[#2d8c4a] shadow-sm'
-                  : 'text-slate-400'
+                ? 'bg-white text-[#2d8c4a] shadow-sm'
+                : 'text-slate-400'
                 " @click="cambiarEtapaDesistimiento(8)">
                 Oportunidad
               </button>
@@ -288,8 +288,8 @@
                 <!-- PORCENTAJE DENTRO DE LA BARRA -->
                 <span v-if="Number(motivo.cantidad) > 0"
                   class="absolute inset-y-0 left-[8px] flex items-center text-[8px] font-bold" :class="getPorcentajeDesistimiento(Number(motivo.cantidad)) > 15
-                      ? 'text-white'
-                      : 'text-slate-500'
+                    ? 'text-white'
+                    : 'text-slate-500'
                     ">
                   {{ getPorcentajeDesistimiento(Number(motivo.cantidad)).toFixed(0) }}%
                 </span>
@@ -462,17 +462,17 @@
     <!-- ================================================= -->
     <!-- COMERCIAL -->
     <!-- ================================================= -->
-    <DashboardComercial v-else-if="activeTab === 'comercial'" />
-
+    <DashboardComercial v-else-if="activeTab === 'comercial'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin" />
     <!-- ================================================= -->
     <!-- CONTACTABILIDAD -->
     <!-- ================================================= -->
-    <DashboardContactabilidad v-else-if="activeTab === 'contactabilidad'" />
+    <DashboardContactabilidad v-else-if="activeTab === 'contactabilidad'" :fecha-inicio="fechaInicio"
+      :fecha-fin="fechaFin" />
 
     <!-- ================================================= -->
     <!-- CIERRES -->
     <!-- ================================================= -->
-    <DashboardCierre v-else-if="activeTab === 'cierres'" />
+    <DashboardCierre v-else-if="activeTab === 'cierres'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin" />
   </div>
 </template>
 

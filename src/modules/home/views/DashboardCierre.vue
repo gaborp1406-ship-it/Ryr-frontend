@@ -1,377 +1,604 @@
 <template>
-  <div class="min-h-full bg-[#f8faf9] p-6 font-sans text-[#0a0a0a] max-[600px]:p-[15px]">
+  <div class="min-h-full bg-[#f8faf9] p-6 font-sans text-[#0a0a0a] max-[700px]:p-[15px]">
 
-    <!-- KPIs -->
-    <div class="mb-[14px] grid grid-cols-4 gap-[14px] max-[1000px]:grid-cols-2 max-[600px]:grid-cols-1">
-      <!-- CIERRES -->
-      <div
-        class="min-h-[140px] rounded-[18px] border border-slate-200 bg-white p-[17px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="flex justify-between">
-          <div class="flex h-[35px] w-[35px] items-center justify-center rounded-[11px] bg-[#2d8c4a]/10 text-[#2d8c4a]">
-            <svg viewBox="0 0 24 24" fill="none" class="w-[18px]">
-              <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </div>
+    <!-- ERROR -->
+    <div v-if="error"
+      class="mb-[14px] flex items-center justify-between rounded-[14px] border border-red-100 bg-red-50 px-4 py-3">
+      <span class="text-[13px] text-red-600">
+        {{ error }}
+      </span>
 
-          <span class="h-fit rounded-full bg-[#2d8c4a]/[0.08] px-[7px] py-1 text-[9px] font-bold text-[#2d8c4a]">
-            +14.8%
-          </span>
-        </div>
-
-        <div class="mt-[13px] flex flex-col">
-          <span class="text-[10px] text-slate-500">
-            Cierres
-          </span>
-
-          <strong class="mt-[2px] text-[27px] font-bold leading-tight tracking-[-0.04em]">
-            42
-          </strong>
-        </div>
-
-        <div class="mt-[9px] text-[8px] text-slate-400">
-          Operaciones cerradas
-        </div>
-      </div>
-
-      <!-- VENTA ACUMULADA -->
-      <div
-        class="min-h-[140px] rounded-[18px] border border-slate-200 bg-white p-[17px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="flex justify-between">
-          <div class="flex h-[35px] w-[35px] items-center justify-center rounded-[11px] bg-slate-100 text-[#0a0a0a]">
-            <svg viewBox="0 0 24 24" fill="none" class="w-[18px]">
-              <path d="M12 3v18M17 7.5c0-1.7-2.2-3-5-3s-5 1.3-5 3 2.2 3 5 3 5 1.3 5 3-2.2 3-5 3-5-1.3-5-3"
-                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
-          </div>
-
-          <span class="h-fit rounded-full bg-[#2d8c4a]/[0.08] px-[7px] py-1 text-[9px] font-bold text-[#2d8c4a]">
-            +8.2%
-          </span>
-        </div>
-
-        <div class="mt-[13px] flex flex-col">
-          <span class="text-[10px] text-slate-500">
-            Venta acumulada
-          </span>
-
-          <strong class="mt-[2px] text-[27px] font-bold leading-tight tracking-[-0.04em]">
-            S/ 4.8M
-          </strong>
-        </div>
-
-        <div class="mt-[9px] text-[8px] text-slate-400">
-          Valor total de operaciones
-        </div>
-      </div>
-
-      <!-- CONVERSIÓN -->
-      <div
-        class="min-h-[140px] rounded-[18px] border border-slate-200 bg-white p-[17px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="flex justify-between">
-          <div class="flex h-[35px] w-[35px] items-center justify-center rounded-[11px] bg-[#eef5ff] text-blue-600">
-            <svg viewBox="0 0 24 24" fill="none" class="w-[18px]">
-              <path d="M4 19V10M10 19V5M16 19v-8M22 19V8" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" />
-            </svg>
-          </div>
-
-          <span class="h-fit rounded-full bg-[#2d8c4a]/[0.08] px-[7px] py-1 text-[9px] font-bold text-[#2d8c4a]">
-            +5.7%
-          </span>
-        </div>
-
-        <div class="mt-[13px] flex flex-col">
-          <span class="text-[10px] text-slate-500">
-            Conversión
-          </span>
-
-          <strong class="mt-[2px] text-[27px] font-bold leading-tight tracking-[-0.04em]">
-            18.4%
-          </strong>
-        </div>
-
-        <div class="mt-[9px] text-[8px] text-slate-400">
-          Oportunidades convertidas
-        </div>
-      </div>
-
-      <!-- TICKET -->
-      <div
-        class="min-h-[140px] rounded-[18px] border border-slate-200 bg-white p-[17px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="flex justify-between">
-          <div class="flex h-[35px] w-[35px] items-center justify-center rounded-[11px] bg-orange-50 text-orange-600">
-            <svg viewBox="0 0 24 24" fill="none" class="w-[18px]">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
-
-              <path d="m9 12 2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
-          </div>
-
-          <span class="h-fit rounded-full bg-[#2d8c4a]/[0.08] px-[7px] py-1 text-[9px] font-bold text-[#2d8c4a]">
-            +11.3%
-          </span>
-        </div>
-
-        <div class="mt-[13px] flex flex-col">
-          <span class="text-[10px] text-slate-500">
-            Ticket promedio
-          </span>
-
-          <strong class="mt-[2px] text-[27px] font-bold leading-tight tracking-[-0.04em]">
-            S/ 114K
-          </strong>
-        </div>
-
-        <div class="mt-[9px] text-[8px] text-slate-400">
-          Valor promedio por cierre
-        </div>
-      </div>
+      <button type="button" class="rounded-lg bg-red-600 px-3 py-1.5 text-[12px] font-semibold text-white"
+        @click="cargarDashboard">
+        Reintentar
+      </button>
     </div>
 
-    <!-- ROW PRINCIPAL -->
-    <div class="mb-[14px] grid grid-cols-[1.45fr_0.8fr] gap-[14px] max-[1000px]:grid-cols-1">
-      <!-- EVOLUCIÓN -->
-      <section
-        class="rounded-[18px] border border-slate-200 bg-white p-[19px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="mb-[18px] flex items-start justify-between">
-          <div>
-            <span class="mb-1 block text-[9px] font-bold tracking-[0.14em] text-slate-400">
-              EVOLUCIÓN
-            </span>
 
-            <h2 class="m-0 text-[15px] font-bold leading-tight tracking-[-0.02em]">
-              Cierres por periodo
-            </h2>
+    <!-- ======================================================= -->
+    <!-- FILA SUPERIOR -->
+    <!-- ======================================================= -->
+
+    <div
+      class="mb-[14px] grid grid-cols-[0.72fr_1fr_1.15fr_1fr] gap-[14px] max-[1100px]:grid-cols-2 max-[700px]:grid-cols-1">
+
+      <!-- ===================================================== -->
+      <!-- KPI TOTAL -->
+      <!-- ===================================================== -->
+
+      <section
+        class="relative min-h-[170px] overflow-hidden rounded-[18px] border border-slate-200 bg-white p-[18px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+        <!-- decoración -->
+        <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#2d8c4a]/[0.06]"></div>
+
+        <!-- SKELETON -->
+        <div v-if="cargando" class="relative flex flex-col gap-[10px]">
+          <div class="skeleton h-[38px] w-[38px] rounded-[11px]"></div>
+
+          <div class="mt-[12px] flex flex-col gap-[7px]">
+            <span class="skeleton h-[11px] w-[65%] rounded-full"></span>
+            <span class="skeleton h-[34px] w-[45%] rounded-[6px]"></span>
           </div>
 
-          <span class="rounded-lg bg-slate-50 px-[9px] py-[6px] text-[8px] text-slate-500">
-            Últimos 7 meses
-          </span>
+          <span class="skeleton mt-[8px] h-[9px] w-[75%] rounded-full"></span>
         </div>
 
-        <!-- CHART -->
-        <div class="flex h-[210px]">
-          <!-- Y AXIS -->
-          <div class="flex w-[25px] shrink-0 flex-col justify-between pb-[25px] text-[8px] text-slate-400">
-            <span>50</span>
-            <span>40</span>
-            <span>30</span>
-            <span>20</span>
-            <span>10</span>
-            <span>0</span>
-          </div>
+        <!-- CONTENIDO REAL -->
+        <div v-else class="relative animate-[fadeIn_0.35s_ease]">
 
-          <!-- CHART BODY -->
-          <div class="relative flex-1">
-            <!-- GRID -->
-            <div class="absolute inset-x-0 bottom-[25px] top-0 flex flex-col justify-between">
-              <span class="border-t border-dashed border-[#e8edf2]"></span>
-              <span class="border-t border-dashed border-[#e8edf2]"></span>
-              <span class="border-t border-dashed border-[#e8edf2]"></span>
-              <span class="border-t border-dashed border-[#e8edf2]"></span>
-              <span class="border-t border-dashed border-[#e8edf2]"></span>
-              <span class="border-t border-dashed border-[#e8edf2]"></span>
-            </div>
+          <div class="flex h-[38px] w-[38px] items-center justify-center rounded-[11px] bg-[#2d8c4a]/10 text-[#2d8c4a]">
+            <svg viewBox="0 0 24 24" fill="none" class="h-[19px] w-[19px]">
+              <path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
 
-            <!-- LINE -->
-            <svg viewBox="0 0 600 200" preserveAspectRatio="none"
-              class="absolute inset-x-0 bottom-[25px] top-0 h-[calc(100%-25px)] w-full">
-              <polyline :points="chartPoints" fill="none" stroke="#2d8c4a" stroke-width="3" stroke-linecap="round"
-                stroke-linejoin="round" />
-
-              <circle v-for="point in chartDots" :key="point.x" :cx="point.x" :cy="point.y" r="4" fill="white"
-                stroke="#2d8c4a" stroke-width="3" />
+              <path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
-
-            <!-- LABELS -->
-            <div class="absolute bottom-0 left-0 right-0 flex justify-between text-[8px] text-slate-500">
-              <span v-for="month in months" :key="month">
-                {{ month }}
-              </span>
-            </div>
           </div>
+
+
+          <div class="mt-[22px] flex flex-col">
+
+            <span class="text-[12px] text-slate-500">
+              Leads en etapa de
+            </span>
+
+            <span class="text-[12px] font-semibold text-slate-500">
+              negociación
+            </span>
+
+            <strong class="mt-[3px] text-[36px] font-bold leading-none tracking-[-0.04em]">
+              {{ totalLeads }}
+            </strong>
+
+          </div>
+
+
+          <div class="mt-[13px] text-[10px] text-slate-400">
+            Clientes activos en negociación
+          </div>
+
         </div>
       </section>
 
-      <!-- ESTADOS -->
-      <section
-        class="rounded-[18px] border border-slate-200 bg-white p-[19px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="mb-[18px] flex items-start justify-between">
-          <div>
-            <span class="mb-1 block text-[9px] font-bold tracking-[0.14em] text-slate-400">
-              RESULTADO
-            </span>
 
-            <h2 class="m-0 text-[15px] font-bold leading-tight tracking-[-0.02em]">
-              Estado de operaciones
-            </h2>
+      <!-- ===================================================== -->
+      <!-- DISTRIBUCIÓN POR PROYECTO -->
+      <!-- ===================================================== -->
+
+      <section
+        class="rounded-[18px] border border-slate-200 bg-white p-[18px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+        <div class="mb-[12px]">
+
+          <span class="mb-1 block text-[11px] font-bold tracking-[0.12em] text-slate-400">
+            DISTRIBUCIÓN
+          </span>
+
+          <h2 class="m-0 text-[16px] font-bold leading-tight tracking-[-0.02em]">
+            Por proyecto
+          </h2>
+
+        </div>
+
+        <!-- SKELETON -->
+        <div v-if="cargando" class="flex items-center justify-center gap-[18px]">
+          <div class="skeleton h-[120px] w-[120px] shrink-0 rounded-full"></div>
+
+          <div class="flex min-w-0 flex-1 flex-col gap-[10px]">
+            <div v-for="n in 5" :key="`proy-legend-skel-${n}`" class="flex items-center gap-[6px]">
+              <span class="skeleton h-[8px] w-[8px] shrink-0 rounded-full"></span>
+              <span class="skeleton h-[10px] w-[70%] rounded-full"></span>
+            </div>
           </div>
         </div>
 
-        <!-- STATUS -->
-        <div class="flex flex-col gap-[15px]">
-          <div v-for="item in operationStatus" :key="item.label"
-            class="flex items-center justify-between text-[10px] text-slate-500">
-            <div class="flex items-center gap-2">
-              <span class="h-[7px] w-[7px] shrink-0 rounded-full" :class="{
-                'bg-[#2d8c4a]': item.color === 'green',
-                'bg-[#0a0a0a]': item.color === 'black',
-                'bg-orange-600': item.color === 'orange',
-                'bg-slate-400': item.color === 'gray',
+        <!-- CONTENIDO REAL -->
+        <div v-else class="flex items-center justify-center gap-[18px] animate-[fadeIn_0.35s_ease]">
+
+          <!-- DONUT -->
+          <div class="relative h-[120px] w-[120px] shrink-0 rounded-full" :style="donutStyle">
+
+            <div class="absolute inset-[26px] flex flex-col items-center justify-center rounded-full bg-white">
+
+              <strong class="text-[24px] font-bold leading-none">
+                {{ totalProyectos }}
+              </strong>
+
+              <span class="mt-[4px] text-[10px] text-slate-400">
+                leads
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- LEYENDA -->
+          <div class="flex min-w-0 flex-col gap-[9px]">
+
+            <div v-for="(project, index) in proyectos.slice(0, 5)" :key="project.id_proyecto"
+              class="flex items-center gap-[7px]">
+
+              <span class="h-[8px] w-[8px] shrink-0 rounded-full" :style="{
+                backgroundColor:
+                  coloresDonut[index % coloresDonut.length],
               }"></span>
 
-              <span>
-                {{ item.label }}
+              <span class="max-w-[100px] truncate text-[10px] text-slate-500">
+                {{ project.proyecto }}
               </span>
+
+              <strong class="text-[10px] text-slate-800">
+                {{ porcentajeProyecto(project.cantidad_leads_negociacion) }}%
+              </strong>
+
             </div>
 
-            <strong class="text-slate-900">
-              {{ item.value }}
-            </strong>
-          </div>
-        </div>
+            <span v-if="!proyectos.length" class="text-[11px] text-slate-400">
+              Sin datos
+            </span>
 
-        <!-- CONVERSION -->
-        <div class="mt-[25px] flex flex-col rounded-xl bg-[#f8faf9] p-[14px]">
-          <span class="text-[9px] text-slate-500">
-            Tasa de cierre
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ===================================================== -->
+      <!-- LEADS POR EJECUTIVO -->
+      <!-- ===================================================== -->
+
+      <section
+        class="rounded-[18px] border border-slate-200 bg-white p-[18px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+        <div class="mb-[13px] flex items-start justify-between">
+
+          <div>
+
+            <span class="mb-1 block text-[11px] font-bold tracking-[0.12em] text-slate-400">
+              EJECUTIVOS
+            </span>
+
+            <h2 class="m-0 text-[16px] font-bold leading-tight tracking-[-0.02em]">
+              Leads por ejecutivo
+            </h2>
+
+          </div>
+
+          <span v-if="!cargando"
+            class="rounded-full bg-[#2d8c4a]/10 px-[8px] py-[4px] text-[10px] font-bold text-[#2d8c4a]">
+            {{ asesores.length }}
           </span>
 
-          <strong class="mt-[3px] text-[24px] font-bold leading-none text-[#2d8c4a]">
-            18.4%
-          </strong>
+          <span v-else class="skeleton h-[20px] w-[26px] rounded-full"></span>
 
-          <small class="mt-[3px] text-[8px] text-slate-400">
-            +3.2% respecto al periodo anterior
-          </small>
         </div>
+
+        <!-- SKELETON -->
+        <div v-if="cargando" class="flex flex-col gap-[13px]">
+          <div v-for="n in 5" :key="`ejec-skel-${n}`">
+            <div class="mb-[5px] flex items-center justify-between">
+              <span class="skeleton h-[10px] w-[55%] rounded-full"></span>
+              <span class="skeleton h-[10px] w-[12%] rounded-full"></span>
+            </div>
+            <div class="skeleton h-[8px] w-full rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- CONTENIDO REAL -->
+        <div v-else-if="asesores.length" class="flex flex-col gap-[12px]">
+
+          <div v-for="advisor in asesores.slice(0, 5)" :key="advisor.id_asesor" class="animate-[fadeIn_0.35s_ease]">
+
+            <div class="mb-[5px] flex items-center justify-between">
+
+              <span class="max-w-[150px] truncate text-[10px] font-medium text-slate-600">
+                {{ advisor.asesor }}
+              </span>
+
+              <strong class="text-[11px] text-slate-900">
+                {{ advisor.cantidad_leads_negociacion }}
+              </strong>
+
+            </div>
+
+
+            <div class="h-[8px] overflow-hidden rounded-full bg-slate-100">
+
+              <span class="block h-full rounded-full bg-[#2d8c4a] transition-all duration-500" :style="{
+                width: anchoBarraAsesor(
+                  advisor.cantidad_leads_negociacion,
+                ),
+              }"></span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div v-else class="flex h-[100px] items-center justify-center text-[11px] text-slate-400">
+          No hay ejecutivos con datos
+        </div>
+
       </section>
+
+
+      <!-- ===================================================== -->
+      <!-- LEADS POR FUENTE -->
+      <!-- ===================================================== -->
+
+      <section
+        class="rounded-[18px] border border-slate-200 bg-white p-[18px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+        <div class="mb-[13px] flex items-start justify-between">
+
+          <div>
+
+            <span class="mb-1 block text-[11px] font-bold tracking-[0.12em] text-slate-400">
+              ORIGEN
+            </span>
+
+            <h2 class="m-0 text-[16px] font-bold leading-tight tracking-[-0.02em]">
+              Leads por fuente
+            </h2>
+
+          </div>
+
+        </div>
+
+        <!-- SKELETON -->
+        <div v-if="cargando" class="flex flex-col gap-[11px]">
+          <div v-for="n in 6" :key="`fuente-skel-${n}`">
+            <div class="mb-[5px] flex items-center justify-between">
+              <span class="skeleton h-[10px] w-[50%] rounded-full"></span>
+              <span class="skeleton h-[10px] w-[12%] rounded-full"></span>
+            </div>
+            <div class="skeleton h-[8px] w-full rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- CONTENIDO REAL -->
+        <div v-else-if="fuentes.length" class="flex flex-col gap-[10px]">
+
+          <div v-for="source in fuentes.slice(0, 6)" :key="source.id_fuente" class="animate-[fadeIn_0.35s_ease]">
+
+            <div class="mb-[5px] flex items-center justify-between">
+
+              <span class="max-w-[140px] truncate text-[10px] text-slate-500">
+                {{ source.fuente }}
+              </span>
+
+              <strong class="text-[11px] text-slate-900">
+                {{ source.cantidad_leads_negociacion }}
+              </strong>
+
+            </div>
+
+
+            <div class="h-[8px] overflow-hidden rounded-full bg-slate-100">
+
+              <span class="block h-full rounded-full bg-[#0a0a0a] transition-all duration-500" :style="{
+                width: anchoBarraFuente(
+                  source.cantidad_leads_negociacion,
+                ),
+              }"></span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div v-else class="flex h-[100px] items-center justify-center text-[11px] text-slate-400">
+          No hay fuentes con datos
+        </div>
+
+      </section>
+
     </div>
 
-    <!-- SEGUNDA FILA -->
-    <div class="mb-[14px] grid grid-cols-3 gap-[14px] max-[1000px]:grid-cols-1">
-      <!-- ASESORES -->
-      <section
-        class="rounded-[18px] border border-slate-200 bg-white p-[19px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="mb-[18px] flex items-start justify-between">
-          <div>
-            <span class="mb-1 block text-[9px] font-bold tracking-[0.14em] text-slate-400">
-              RANKING
-            </span>
 
-            <h2 class="m-0 text-[15px] font-bold leading-tight tracking-[-0.02em]">
-              Cierres por asesor
-            </h2>
-          </div>
+    <!-- ======================================================= -->
+    <!-- TABLA PIPELINE -->
+    <!-- ======================================================= -->
+
+    <section
+      class="overflow-hidden rounded-[18px] border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+      <!-- HEADER -->
+      <div class="flex items-center justify-between gap-4 px-[19px] pb-[14px] pt-[18px]">
+
+        <div>
+
+          <span class="mb-1 block text-[11px] font-bold tracking-[0.14em] text-slate-400">
+            PIPELINE
+          </span>
+
+          <h2 class="m-0 text-[17px] font-bold leading-tight tracking-[-0.02em]">
+            Clientes Activos en Negociación
+          </h2>
+
         </div>
 
-        <!-- ADVISORS -->
-        <div class="flex flex-col">
-          <div v-for="(advisor, index) in advisors" :key="advisor.name"
-            class="grid grid-cols-[24px_32px_1fr_auto] items-center gap-2 border-b border-slate-100 py-[11px] last:border-b-0">
-            <!-- NUMBER -->
-            <span class="text-[9px] text-slate-400">
-              {{ String(index + 1).padStart(2, '0') }}
-            </span>
 
-            <!-- AVATAR -->
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-full bg-[#2d8c4a]/10 text-[9px] font-bold text-[#2d8c4a]">
-              {{ advisor.initials }}
-            </div>
+        <div class="flex items-center gap-2">
 
-            <!-- NAME -->
-            <div class="flex min-w-0 flex-col">
-              <strong class="truncate text-[10px] text-slate-700">
-                {{ advisor.name }}
-              </strong>
+          <span v-if="!cargando"
+            class="rounded-full bg-[#2d8c4a]/10 px-[10px] py-[5px] text-[11px] font-bold text-[#2d8c4a]">
+            {{ cantidadLeadsMostrados }} leads
+          </span>
 
-              <span class="mt-[2px] text-[8px] text-slate-400">
-                {{ advisor.sales }} cierres
-              </span>
-            </div>
+          <span v-else class="skeleton h-[26px] w-[70px] rounded-full"></span>
 
-            <!-- RESULT -->
-            <strong class="text-[10px] font-bold text-[#2d8c4a]">
-              {{ advisor.amount }}
-            </strong>
-          </div>
-        </div>
-      </section>
-
-      <!-- PROYECTOS -->
-      <section
-        class="rounded-[18px] border border-slate-200 bg-white p-[19px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="mb-[18px] flex items-start justify-between">
-          <div>
-            <span class="mb-1 block text-[9px] font-bold tracking-[0.14em] text-slate-400">
-              PROYECTOS
-            </span>
-
-            <h2 class="m-0 text-[15px] font-bold leading-tight tracking-[-0.02em]">
-              Cierres por proyecto
-            </h2>
-          </div>
         </div>
 
-        <!-- PROJECTS -->
-        <div class="flex flex-col gap-4">
-          <div v-for="project in projects" :key="project.name">
-            <div class="mb-[6px] flex justify-between text-[10px] text-slate-500">
-              <span>
-                {{ project.name }}
-              </span>
+      </div>
 
-              <strong class="text-slate-900">
-                {{ project.value }}
-              </strong>
-            </div>
 
-            <div class="h-[6px] overflow-hidden rounded-full bg-slate-100">
-              <span class="block h-full rounded-full bg-[#2d8c4a]" :style="{ width: `${project.percent}%` }"></span>
-            </div>
-          </div>
+      <!-- ===================================================== -->
+      <!-- SKELETON TABLA -->
+      <!-- ===================================================== -->
+
+      <div v-if="cargando" class="overflow-x-auto">
+        <table class="w-full min-w-[900px] border-collapse">
+          <thead>
+            <tr class="bg-[#050505] text-left">
+              <th
+                v-for="col in ['Lead ID', 'Ejecutivo', 'Nombre Cliente', 'Fuente', 'Proyecto', 'Etapa', 'Fecha Ingreso']"
+                :key="col" class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                {{ col }}
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="n in 6" :key="`row-skel-${n}`" class="border-b border-slate-100 last:border-b-0"
+              :class="n % 2 === 0 ? 'bg-[#f5f5f5]' : 'bg-white'">
+              <td class="px-[14px] py-[12px]"><span class="skeleton h-[10px] w-[55px] rounded-full"></span></td>
+              <td class="px-[14px] py-[12px]">
+                <div class="flex items-center gap-[7px]">
+                  <span class="skeleton h-[27px] w-[27px] shrink-0 rounded-full"></span>
+                  <span class="skeleton h-[10px] w-[80px] rounded-full"></span>
+                </div>
+              </td>
+              <td class="px-[14px] py-[12px]"><span class="skeleton h-[10px] w-[110px] rounded-full"></span></td>
+              <td class="px-[14px] py-[12px]"><span class="skeleton h-[18px] w-[65px] rounded-md"></span></td>
+              <td class="px-[14px] py-[12px]"><span class="skeleton h-[10px] w-[90px] rounded-full"></span></td>
+              <td class="px-[14px] py-[12px]"><span class="skeleton h-[18px] w-[85px] rounded-full"></span></td>
+              <td class="px-[14px] py-[12px]"><span class="skeleton h-[10px] w-[75px] rounded-full"></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <!-- ===================================================== -->
+      <!-- TABLA REAL -->
+      <!-- ===================================================== -->
+
+      <div v-else-if="leads.length" class="overflow-x-auto animate-[fadeIn_0.35s_ease]">
+
+        <table class="w-full min-w-[900px] border-collapse">
+
+          <thead>
+
+            <tr class="bg-[#050505] text-left">
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Lead ID
+              </th>
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Ejecutivo
+              </th>
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Nombre Cliente
+              </th>
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Fuente
+              </th>
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Proyecto
+              </th>
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Etapa
+              </th>
+
+              <th class="px-[14px] py-[10px] text-[10px] font-bold tracking-wide text-white">
+                Fecha Ingreso
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr v-for="(lead, index) in leads" :key="lead.id_lead" class="border-b border-slate-100 last:border-b-0"
+              :class="index % 2 === 0
+                ? 'bg-white'
+                : 'bg-[#f5f5f5]'
+                ">
+
+              <!-- ID -->
+              <td class="px-[14px] py-[11px] text-[11px] font-medium text-slate-600">
+                L-{{ String(lead.id_lead).padStart(5, '0') }}
+              </td>
+
+
+              <!-- ASESOR -->
+              <td class="px-[14px] py-[11px]">
+
+                <div class="flex items-center gap-[8px]">
+
+                  <div
+                    class="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#2d8c4a]/10 text-[10px] font-bold text-[#2d8c4a]">
+                    {{ iniciales(lead.asesor) }}
+                  </div>
+
+                  <span class="max-w-[130px] truncate text-[11px] font-medium text-slate-700">
+                    {{ lead.asesor || '-' }}
+                  </span>
+
+                </div>
+
+              </td>
+
+
+              <!-- CLIENTE -->
+              <td class="max-w-[190px] px-[14px] py-[11px]">
+
+                <span class="block truncate text-[11px] font-semibold text-slate-700">
+                  {{ lead.nombre_cliente || '-' }}
+                </span>
+
+              </td>
+
+
+              <!-- FUENTE -->
+              <td class="px-[14px] py-[11px]">
+
+                <span
+                  class="inline-flex rounded-md bg-slate-100 px-[8px] py-[4px] text-[10px] font-medium text-slate-600">
+                  {{ lead.fuente || '-' }}
+                </span>
+
+              </td>
+
+
+              <!-- PROYECTO -->
+              <td class="px-[14px] py-[11px] text-[11px] text-slate-600">
+                {{ lead.proyecto || '-' }}
+              </td>
+
+
+              <!-- ETAPA -->
+              <td class="px-[14px] py-[11px]">
+
+                <span
+                  class="inline-flex items-center gap-[6px] rounded-full bg-[#2d8c4a]/10 px-[9px] py-[5px] text-[10px] font-bold text-[#2d8c4a]">
+
+                  <span class="h-[6px] w-[6px] rounded-full bg-[#2d8c4a]"></span>
+
+                  Negociación
+
+                </span>
+
+              </td>
+
+
+              <!-- FECHA -->
+              <td class="px-[14px] py-[11px] text-[11px] text-slate-500">
+                {{ formatearFecha(lead.fecha_creacion) }}
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+
+      <!-- ===================================================== -->
+      <!-- SIN LEADS -->
+      <!-- ===================================================== -->
+
+      <div v-else class="flex min-h-[220px] flex-col items-center justify-center px-5">
+
+        <div class="mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-slate-100 text-slate-400">
+
+          <svg viewBox="0 0 24 24" fill="none" class="h-[22px] w-[22px]">
+
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round" />
+
+            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.7" />
+
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round" />
+
+          </svg>
+
         </div>
-      </section>
 
-      <!-- MOTIVOS -->
-      <section
-        class="rounded-[18px] border border-slate-200 bg-white p-[19px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
-        <div class="mb-[18px] flex items-start justify-between">
-          <div>
-            <span class="mb-1 block text-[9px] font-bold tracking-[0.14em] text-slate-400">
-              PÉRDIDAS
-            </span>
 
-            <h2 class="m-0 text-[15px] font-bold leading-tight tracking-[-0.02em]">
-              Oportunidades no cerradas
-            </h2>
-          </div>
-        </div>
+        <strong class="text-[13px] font-semibold text-slate-600">
+          No hay leads en negociación
+        </strong>
 
-        <!-- REASONS -->
-        <div class="flex flex-col gap-4">
-          <div v-for="reason in lossReasons" :key="reason.label">
-            <div class="mb-[6px] flex justify-between text-[10px] text-slate-500">
-              <span>
-                {{ reason.label }}
-              </span>
 
-              <strong class="text-slate-900">
-                {{ reason.value }}
-              </strong>
-            </div>
+        <span class="mt-1 text-[11px] text-slate-400">
+          No existen clientes activos en esta etapa
+        </span>
 
-            <div class="h-[6px] overflow-hidden rounded-full bg-slate-100">
-              <span class="block h-full rounded-full bg-[#2d8c4a]" :style="{ width: `${reason.percent}%` }"></span>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+      </div>
+
+    </section>
+
   </div>
 </template>
 
 <script src="./DashboardCierre.ts" lang="ts"></script>
+
+<style scoped>
+/* Shimmer profesional: barrido de luz sobre fondo neutro */
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(90deg, #eef1f0 25%, #e4e9e7 37%, #eef1f0 63%);
+  background-size: 400px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* Fade-in suave cuando los datos reales reemplazan al skeleton */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

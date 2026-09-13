@@ -8,14 +8,15 @@ interface IFiltroFechasDashboard {
   fechaInicio?: string | null;
   fechaFin?: string | null;
 }
-
 // ============================================================
-// CONTAR LEADS POR ETAPA
+// 1. CONTAR LEADS EN CIERRE
+//
+// Etapa 7 = Cierre
 //
 // fechaInicio / fechaFin:
 // Formato: YYYY-MM-DD
 // ============================================================
-export const contarLeadsPorEtapa = async ({
+export const contarLeadsCierreDashboard = async ({
   fechaInicio,
   fechaFin,
 }: IFiltroFechasDashboard = {}) => {
@@ -31,7 +32,7 @@ export const contarLeadsPorEtapa = async ({
     }
 
     const { data } = await automatizateApiNest.get(
-      '/dashboard/leads-por-etapa',
+      '/dashboard/leads-cierre',
       {
         params:
           Object.keys(params).length > 0
@@ -46,7 +47,7 @@ export const contarLeadsPorEtapa = async ({
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al contar leads por etapa.',
+          'Error al contar leads en cierre.',
       );
     }
 
@@ -56,12 +57,14 @@ export const contarLeadsPorEtapa = async ({
 
 
 // ============================================================
-// CONTAR LEADS POR FASE
+// 2. CONTAR TOTAL DE LEADS
+//
+// Incluye todos los leads de todas las etapas.
 //
 // fechaInicio / fechaFin:
 // Formato: YYYY-MM-DD
 // ============================================================
-export const contarLeadsPorFase = async ({
+export const contarTotalLeadsDashboard = async ({
   fechaInicio,
   fechaFin,
 }: IFiltroFechasDashboard = {}) => {
@@ -77,7 +80,7 @@ export const contarLeadsPorFase = async ({
     }
 
     const { data } = await automatizateApiNest.get(
-      '/dashboard/leads-por-fase',
+      '/dashboard/total-leads',
       {
         params:
           Object.keys(params).length > 0
@@ -92,7 +95,7 @@ export const contarLeadsPorFase = async ({
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al contar leads por fase.',
+          'Error al contar el total de leads.',
       );
     }
 
@@ -102,111 +105,15 @@ export const contarLeadsPorFase = async ({
 
 
 // ============================================================
-// CONTAR ACTIVIDADES DEL DASHBOARD
+// 3. CIERRES POR PROYECTO
 //
-// ESTA API TODAVÍA NO RECIBE FILTRO DE FECHAS
-// ============================================================
-export interface IContarActividadesDashboardParams {
-  fechaInicio?: string | null;
-  fechaFin?: string | null;
-}
-
-export const contarActividadesDashboard = async (
-  params: IContarActividadesDashboardParams = {},
-) => {
-  try {
-    const { data } = await automatizateApiNest.get(
-      '/dashboard/actividades',
-      {
-        params: {
-          fechaInicio: params.fechaInicio || undefined,
-          fechaFin: params.fechaFin || undefined,
-        },
-      },
-    );
-
-    return data;
-  } catch (error) {
-    if (isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ??
-          'Error al contar actividades del dashboard.',
-      );
-    }
-
-    throw error;
-  }
-};
-
-// ============================================================
-// CONTAR DESISTIMIENTOS
-//
-// idEtapa:
-// 3 = Desistio
-// 8 = Desistio - Oportunidad
-// null / undefined = ambos
+// Devuelve todos los proyectos, incluso los que tengan 0
+// cierres.
 //
 // fechaInicio / fechaFin:
 // Formato: YYYY-MM-DD
 // ============================================================
-export const contarDesistimientosDashboard = async (
-  idEtapa?: number | null,
-  fechaInicio?: string | null,
-  fechaFin?: string | null,
-) => {
-  try {
-    const params: Record<string, string | number> = {};
-
-    if (
-      idEtapa !== undefined &&
-      idEtapa !== null
-    ) {
-      params.id_etapa = idEtapa;
-    }
-
-    if (fechaInicio) {
-      params.fecha_inicio = fechaInicio;
-    }
-
-    if (fechaFin) {
-      params.fecha_fin = fechaFin;
-    }
-
-    const { data } = await automatizateApiNest.get(
-      '/dashboard/desistimientos',
-      {
-        params:
-          Object.keys(params).length > 0
-            ? params
-            : undefined,
-      },
-    );
-
-    return data;
-
-  } catch (error) {
-    if (isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ??
-          'Error al contar desistimientos.',
-      );
-    }
-
-    throw error;
-  }
-};
-
-
-// ============================================================
-// CONTAR LEADS ATENDIDOS / SIN ATENDER
-//
-// Etapa 1 = Sin atender
-// Etapas 2-8 = Atendidos
-//
-// fechaInicio / fechaFin:
-// Formato: YYYY-MM-DD
-// ============================================================
-export const contarLeadsAtendidosDashboard = async ({
+export const contarCierresPorProyectoDashboard = async ({
   fechaInicio,
   fechaFin,
 }: IFiltroFechasDashboard = {}) => {
@@ -222,7 +129,7 @@ export const contarLeadsAtendidosDashboard = async ({
     }
 
     const { data } = await automatizateApiNest.get(
-      '/dashboard/leads-atendidos',
+      '/dashboard/cierres-por-proyecto',
       {
         params:
           Object.keys(params).length > 0
@@ -237,7 +144,7 @@ export const contarLeadsAtendidosDashboard = async ({
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al contar leads atendidos.',
+          'Error al contar cierres por proyecto.',
       );
     }
 
@@ -246,4 +153,198 @@ export const contarLeadsAtendidosDashboard = async ({
 };
 
 
+// ============================================================
+// 4. CIERRES POR FUENTE
+//
+// Devuelve todas las fuentes, incluso las que tengan 0
+// cierres.
+//
+// fechaInicio / fechaFin:
+// Formato: YYYY-MM-DD
+// ============================================================
+export const contarCierresPorFuenteDashboard = async ({
+  fechaInicio,
+  fechaFin,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string> = {};
 
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/cierres-por-fuente',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al contar cierres por fuente.',
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+// ============================================================
+// 5. CIERRES POR ASESOR
+//
+// Devuelve todos los asesores, incluso los que tengan 0
+// cierres.
+//
+// fechaInicio / fechaFin:
+// Formato: YYYY-MM-DD
+// ============================================================
+export const contarCierresPorAsesorDashboard = async ({
+  fechaInicio,
+  fechaFin,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/cierres-por-asesor',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al contar cierres por asesor.',
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+// ============================================================
+// 6. TOTAL DE LEADS POR FUENTE
+//
+// Devuelve todas las fuentes y cantidad total de leads.
+//
+// fechaInicio / fechaFin:
+// Formato: YYYY-MM-DD
+// ============================================================
+export const contarTotalLeadsPorFuenteDashboard = async ({
+  fechaInicio,
+  fechaFin,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/total-leads-por-fuente',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al contar total de leads por fuente.',
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+// ============================================================
+// 7. TASA DE CIERRE
+//
+// Retorna:
+// - leads_cierre
+// - total_leads
+// - tasa_cierre_porcentaje
+//
+// fechaInicio / fechaFin:
+// Formato: YYYY-MM-DD
+// ============================================================
+export const contarTasaCierreDashboard = async ({
+  fechaInicio,
+  fechaFin,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/tasa-cierre',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al calcular la tasa de cierre.',
+      );
+    }
+
+    throw error;
+  }
+};

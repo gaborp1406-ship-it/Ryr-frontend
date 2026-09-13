@@ -1,23 +1,32 @@
 import {
   defineComponent,
+  ref,
+  watch,
+  onMounted,
 } from 'vue';
 
+import {
+  contarLeadsCierreDashboard,
+  contarTotalLeadsDashboard,
+  contarCierresPorProyectoDashboard,
+  contarCierresPorFuenteDashboard,
+  contarCierresPorAsesorDashboard,
+  contarTotalLeadsPorFuenteDashboard,
+  contarTasaCierreDashboard,
+} from '../actions/dashboardComercial';
+
+// ============================================================
+// TIPOS DE UI
+// ============================================================
 interface Kpi {
   label: string;
   value: string;
-  trend: number;
-  description: string;
+
   icon: string;
   color: string;
 }
 
-interface Stage {
-  name: string;
-  value: number;
-  percent: number;
-}
-
-interface Source {
+interface BarItem {
   name: string;
   value: number;
   percent: number;
@@ -26,136 +35,234 @@ interface Source {
 interface Advisor {
   name: string;
   initials: string;
-  opportunities: number;
-  conversion: number;
+  cierres: number;
 }
 
 export default defineComponent({
   name: 'DashboardComercial',
 
-  setup() {
+  props: {
+    // Fechas controladas por el componente padre (DashboardAllView)
+    fechaInicio: {
+      type: String,
+      default: '',
+    },
+    fechaFin: {
+      type: String,
+      default: '',
+    },
+  },
 
-    const kpis: Kpi[] = [
-      {
-        label: 'Oportunidades',
-        value: '186',
-        trend: 12.4,
-        description: 'Oportunidades activas',
-        icon: 'target',
-        color: 'green',
-      },
-      {
-        label: 'Leads gestionados',
-        value: '320',
-        trend: 8.7,
-        description: 'Candidatos en gestión',
-        icon: 'users',
-        color: 'black',
-      },
-      {
-        label: 'Reuniones',
-        value: '128',
-        trend: 15.2,
-        description: 'Reuniones programadas',
-        icon: 'calendar',
-        color: 'blue',
-      },
-      {
-        label: 'Conversión',
-        value: '18.4%',
-        trend: 5.6,
-        description: 'Conversión comercial',
-        icon: 'chart',
-        color: 'orange',
-      },
-    ];
+  setup(props) {
+    // ------------------------------------------------------------
+    // ESTADO
+    // ------------------------------------------------------------
+    const loading = ref(false);
+    const error = ref<string | null>(null);
 
+    const kpis = ref<Kpi[]>([]);
+    const proyectos = ref<BarItem[]>([]);
+    const leadsPorFuente = ref<BarItem[]>([]);
+    const cierresPorFuente = ref<BarItem[]>([]);
+    const advisors = ref<Advisor[]>([]);
 
-    const stages: Stage[] = [
-      {
-        name: 'Asignación',
-        value: 320,
-        percent: 100,
-      },
-      {
-        name: 'Contacto',
-        value: 264,
-        percent: 82,
-      },
-      {
-        name: 'Reunión',
-        value: 176,
-        percent: 55,
-      },
-      {
-        name: 'Negociación',
-        value: 92,
-        percent: 29,
-      },
-      {
-        name: 'Cierre',
-        value: 42,
-        percent: 13,
-      },
-    ];
+    // ------------------------------------------------------------
+    // HELPERS
+    // ------------------------------------------------------------
+    const pickString = (obj: any, keys: string[], fallback = 'N/D') => {
+      for (const key of keys) {
+        if (obj?.[key] !== undefined && obj[key] !== null) {
+          return String(obj[key]);
+        }
+      }
+      return fallback;
+    };
+
+    const pickNumber = (obj: any, keys: string[], fallback = 0) => {
+      for (const key of keys) {
+        if (obj?.[key] !== undefined && obj[key] !== null) {
+          const num = Number(obj[key]);
+          if (!Number.isNaN(num)) return num;
+        }
+      }
+      return fallback;
+    };
 
 
-    const sources: Source[] = [
-      {
-        name: 'Facebook',
-        value: 124,
-        percent: 78,
-      },
-      {
-        name: 'Landing',
-        value: 86,
-        percent: 54,
-      },
-      {
-        name: 'WhatsApp',
-        value: 63,
-        percent: 40,
-      },
-      {
-        name: 'Referidos',
-        value: 47,
-        percent: 30,
-      },
-    ];
+    const firstItem = (data: any) => {
+      if (Array.isArray(data)) return data[0] ?? {};
+      return data ?? {};
+    };
+
+    const getInitials = (name: string) => {
+      return name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('');
+    };
+
+    const toBarItems = (
+      list: any[],
+      nameKeys: string[],
+      valueKeys: string[],
+    ): BarItem[] => {
+      const raw = (list ?? []).map((item) => ({
+        name: pickString(item, nameKeys),
+        value: pickNumber(item, valueKeys),
+      }));
+
+      const max = Math.max(1, ...raw.map((item) => item.value));
+
+      return raw
+        .map((item) => ({
+          ...item,
+          percent: Math.round((item.value / max) * 100),
+        }))
+        .sort((a, b) => b.value - a.value);
+    };
+
+    const cargarDashboard = async () => {
+      loading.value = true;
+      error.value = null;
+
+      const filtro = {
+        fechaInicio: props.fechaInicio || null,
+        fechaFin: props.fechaFin || null,
+      };
+
+      try {
+        const [
+          leadsCierre,
+          totalLeads,
+          cierresProyecto,
+          cierresFuente,
+          cierresAsesor,
+          totalLeadsFuente,
+          tasaCierre,
+        ] = await Promise.all([
+          contarLeadsCierreDashboard(filtro),
+          contarTotalLeadsDashboard(filtro),
+          contarCierresPorProyectoDashboard(filtro),
+          contarCierresPorFuenteDashboard(filtro),
+          contarCierresPorAsesorDashboard(filtro),
+          contarTotalLeadsPorFuenteDashboard(filtro),
+          contarTasaCierreDashboard(filtro),
+        ]);
 
 
-    const advisors: Advisor[] = [
-      {
-        name: 'Carlos Mendoza',
-        initials: 'CM',
-        opportunities: 68,
-        conversion: 24,
-      },
-      {
-        name: 'Andrea Torres',
-        initials: 'AT',
-        opportunities: 61,
-        conversion: 22,
-      },
-      {
-        name: 'Luis Ramírez',
-        initials: 'LR',
-        opportunities: 57,
-        conversion: 20,
-      },
-      {
-        name: 'María Flores',
-        initials: 'MF',
-        opportunities: 49,
-        conversion: 18,
-      },
-    ];
+        proyectos.value = toBarItems(
+          cierresProyecto,
+          ['proyecto'],
+          ['cantidad_leads_cierre'],
+        );
 
+
+        leadsPorFuente.value = toBarItems(
+          totalLeadsFuente,
+          ['fuente'],
+          ['total_leads'],
+        );
+
+        // /dashboard/cierres-por-fuente -> [{ id_fuente, fuente, cantidad_leads_cierre }]
+        cierresPorFuente.value = toBarItems(
+          cierresFuente,
+          ['fuente'],
+          ['cantidad_leads_cierre'],
+        );
+
+        // /dashboard/cierres-por-asesor -> [{ id_asesor, asesor, cantidad_leads_cierre }]
+        advisors.value = (cierresAsesor ?? [])
+          .map((item: any) => {
+            const name = pickString(item, ['asesor']);
+            return {
+              name,
+              initials: getInitials(name),
+              cierres: pickNumber(item, ['cantidad_leads_cierre']),
+            };
+          })
+          .sort((a: Advisor, b: Advisor) => b.cierres - a.cierres);
+
+        // -- KPIs --
+        // /dashboard/total-leads -> [{ "total_leads": "4" }]
+        const totalLeadsValor = pickNumber(firstItem(totalLeads), [
+          'total_leads',
+        ]);
+
+        // /dashboard/leads-cierre -> [{ "cantidad_leads_cierre": "1" }]
+        const leadsCierreValor = pickNumber(firstItem(leadsCierre), [
+          'cantidad_leads_cierre',
+        ]);
+
+        // /dashboard/tasa-cierre -> [{ "leads_cierre": "1", "total_leads": "4", "tasa_cierre_porcentaje": "25.00" }]
+        const tasaCierreValor = pickNumber(firstItem(tasaCierre), [
+          'tasa_cierre_porcentaje',
+        ]);
+
+        const asesoresConCierres = advisors.value.filter(
+          (a) => a.cierres > 0,
+        ).length;
+
+        kpis.value = [
+          {
+            label: 'Total leads',
+            value: totalLeadsValor.toLocaleString('es-PE'),
+
+            icon: 'users',
+            color: 'black',
+          },
+          {
+            label: 'Leads en cierre',
+            value: leadsCierreValor.toLocaleString('es-PE'),
+
+            icon: 'target',
+            color: 'green',
+          },
+          {
+            label: 'Tasa de cierre',
+            value: `${tasaCierreValor.toFixed(1)}%`,
+
+            icon: 'chart',
+            color: 'orange',
+          },
+          {
+            label: 'Asesores con cierres',
+            value: String(asesoresConCierres),
+
+            icon: 'calendar',
+            color: 'blue',
+          },
+        ];
+      } catch (err) {
+        error.value =
+          err instanceof Error
+            ? err.message
+            : 'Ocurrió un error al cargar el dashboard.';
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // Recargar automáticamente cuando el padre cambie las fechas
+    watch(
+      () => [props.fechaInicio, props.fechaFin],
+      () => {
+        cargarDashboard();
+      },
+    );
+
+    onMounted(() => {
+      cargarDashboard();
+    });
 
     return {
+      loading,
+      error,
       kpis,
-      stages,
-      sources,
+      proyectos,
+      leadsPorFuente,
+      cierresPorFuente,
       advisors,
     };
   },

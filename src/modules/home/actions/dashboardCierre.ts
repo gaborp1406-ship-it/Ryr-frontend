@@ -1,21 +1,15 @@
 import { automatizateApiNest } from '@/api/automatizateApiNest';
 import { isAxiosError } from 'axios';
 
-// ============================================================
-// TIPO PARA FILTRO DE FECHAS
-// ============================================================
 interface IFiltroFechasDashboard {
   fechaInicio?: string | null;
   fechaFin?: string | null;
 }
 
-// ============================================================
-// CONTAR LEADS POR ETAPA
-//
-// fechaInicio / fechaFin:
-// Formato: YYYY-MM-DD
-// ============================================================
-export const contarLeadsPorEtapa = async ({
+/**
+ * 1. Total de leads en negociación
+ */
+export const contarLeadsNegociacionDashboard = async ({
   fechaInicio,
   fechaFin,
 }: IFiltroFechasDashboard = {}) => {
@@ -31,7 +25,7 @@ export const contarLeadsPorEtapa = async ({
     }
 
     const { data } = await automatizateApiNest.get(
-      '/dashboard/leads-por-etapa',
+      '/dashboard/leads-negociacion',
       {
         params:
           Object.keys(params).length > 0
@@ -41,12 +35,11 @@ export const contarLeadsPorEtapa = async ({
     );
 
     return data;
-
   } catch (error) {
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al contar leads por etapa.',
+          'Error al contar leads en negociación',
       );
     }
 
@@ -54,14 +47,10 @@ export const contarLeadsPorEtapa = async ({
   }
 };
 
-
-// ============================================================
-// CONTAR LEADS POR FASE
-//
-// fechaInicio / fechaFin:
-// Formato: YYYY-MM-DD
-// ============================================================
-export const contarLeadsPorFase = async ({
+/**
+ * 2. Leads en negociación por fuente
+ */
+export const contarNegociacionPorFuenteDashboard = async ({
   fechaInicio,
   fechaFin,
 }: IFiltroFechasDashboard = {}) => {
@@ -77,7 +66,7 @@ export const contarLeadsPorFase = async ({
     }
 
     const { data } = await automatizateApiNest.get(
-      '/dashboard/leads-por-fase',
+      '/dashboard/negociacion-por-fuente',
       {
         params:
           Object.keys(params).length > 0
@@ -87,12 +76,11 @@ export const contarLeadsPorFase = async ({
     );
 
     return data;
-
   } catch (error) {
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al contar leads por fase.',
+          'Error al contar negociación por fuente',
       );
     }
 
@@ -100,113 +88,10 @@ export const contarLeadsPorFase = async ({
   }
 };
 
-
-// ============================================================
-// CONTAR ACTIVIDADES DEL DASHBOARD
-//
-// ESTA API TODAVÍA NO RECIBE FILTRO DE FECHAS
-// ============================================================
-export interface IContarActividadesDashboardParams {
-  fechaInicio?: string | null;
-  fechaFin?: string | null;
-}
-
-export const contarActividadesDashboard = async (
-  params: IContarActividadesDashboardParams = {},
-) => {
-  try {
-    const { data } = await automatizateApiNest.get(
-      '/dashboard/actividades',
-      {
-        params: {
-          fechaInicio: params.fechaInicio || undefined,
-          fechaFin: params.fechaFin || undefined,
-        },
-      },
-    );
-
-    return data;
-  } catch (error) {
-    if (isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ??
-          'Error al contar actividades del dashboard.',
-      );
-    }
-
-    throw error;
-  }
-};
-
-// ============================================================
-// CONTAR DESISTIMIENTOS
-//
-// idEtapa:
-// 3 = Desistio
-// 8 = Desistio - Oportunidad
-// null / undefined = ambos
-//
-// fechaInicio / fechaFin:
-// Formato: YYYY-MM-DD
-// ============================================================
-export const contarDesistimientosDashboard = async (
-  idEtapa?: number | null,
-  fechaInicio?: string | null,
-  fechaFin?: string | null,
-) => {
-  try {
-    const params: Record<string, string | number> = {};
-
-    if (
-      idEtapa !== undefined &&
-      idEtapa !== null
-    ) {
-      params.id_etapa = idEtapa;
-    }
-
-    if (fechaInicio) {
-      params.fecha_inicio = fechaInicio;
-    }
-
-    if (fechaFin) {
-      params.fecha_fin = fechaFin;
-    }
-
-    const { data } = await automatizateApiNest.get(
-      '/dashboard/desistimientos',
-      {
-        params:
-          Object.keys(params).length > 0
-            ? params
-            : undefined,
-      },
-    );
-
-    return data;
-
-  } catch (error) {
-    if (isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ??
-          'Error al contar desistimientos.',
-      );
-    }
-
-    throw error;
-  }
-};
-
-
-// ============================================================
-// CONTAR LEADS ATENDIDOS / SIN ATENDER
-//
-// Etapa 1 = Sin atender
-// Etapas 2-8 = Atendidos
-//
-// fechaInicio / fechaFin:
-// Formato: YYYY-MM-DD
-// ============================================================
-export const contarLeadsAtendidosDashboard = async ({
+/**
+ * 3. Leads en negociación por proyecto
+ */
+export const contarNegociacionPorProyectoDashboard = async ({
   fechaInicio,
   fechaFin,
 }: IFiltroFechasDashboard = {}) => {
@@ -222,7 +107,7 @@ export const contarLeadsAtendidosDashboard = async ({
     }
 
     const { data } = await automatizateApiNest.get(
-      '/dashboard/leads-atendidos',
+      '/dashboard/negociacion-por-proyecto',
       {
         params:
           Object.keys(params).length > 0
@@ -232,12 +117,11 @@ export const contarLeadsAtendidosDashboard = async ({
     );
 
     return data;
-
   } catch (error) {
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al contar leads atendidos.',
+          'Error al contar negociación por proyecto',
       );
     }
 
@@ -245,5 +129,84 @@ export const contarLeadsAtendidosDashboard = async ({
   }
 };
 
+/**
+ * 4. Leads en negociación por asesor
+ */
+export const contarNegociacionPorAsesorDashboard = async ({
+  fechaInicio,
+  fechaFin,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string> = {};
 
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
 
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/negociacion-por-asesor',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al contar negociación por asesor',
+      );
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * 5. Listado de todos los leads en negociación
+ */
+export const listarLeadsNegociacionDashboard = async ({
+  fechaInicio,
+  fechaFin,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/listar-leads-negociacion',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al listar leads en negociación',
+      );
+    }
+
+    throw error;
+  }
+};

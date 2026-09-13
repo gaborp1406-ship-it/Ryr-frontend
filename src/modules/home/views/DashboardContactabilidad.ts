@@ -1,157 +1,476 @@
 import {
+  computed,
   defineComponent,
+  onMounted,
+  ref,
+  watch,
 } from 'vue';
+import {
+  obtenerContactoPorAsesorDashboard,
+  obtenerLeadsContactadosAsesorDashboard,
+  obtenerRangosContactoDashboard,
+  obtenerResumenContactoDashboard,
+} from '../actions/dashboardContabilidad';
 
-interface CallResult {
-  label: string;
-  value: number;
-  color: string;
-}
 
-interface DailyCall {
-  day: string;
-  value: number;
-  percent: number;
-}
 
-interface CallState {
-  label: string;
-  value: number;
-  percent: number;
-}
 
-interface Advisor {
+// ============================================================
+// TIPOS
+// ============================================================
+
+interface AsesorLeadsBar {
+  id: number | string;
   name: string;
-  initials: string;
-  calls: number;
-  contactRate: number;
+  value: number;
+  percent: number;
 }
+
+interface AsesorTiempoBar {
+  id: number | string;
+  name: string;
+  minutos: number;
+  texto: string;
+  percent: number;
+}
+
+interface RangoContactoRow {
+  orden: number;
+  rango: string;
+  cantidad: number;
+}
+
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+const numero = (valor: unknown): number => {
+  const resultado = Number(valor);
+
+  return Number.isFinite(resultado)
+    ? resultado
+    : 0;
+};
+
+
+// Busca el primer valor numérico válido entre varias
+// posibles llaves, porque el nombre exacto de cada campo
+// puede variar según cómo lo entregue el backend.
+const primerValor = (
+  objeto: any,
+  llaves: string[],
+): number => {
+
+  for (const llave of llaves) {
+    if (objeto?.[llave] !== undefined && objeto?.[llave] !== null) {
+      return numero(objeto[llave]);
+    }
+  }
+
+  return 0;
+};
+
+
+const primerTexto = (
+  objeto: any,
+  llaves: string[],
+  porDefecto = 'Sin nombre',
+): string => {
+
+  for (const llave of llaves) {
+    if (objeto?.[llave]) {
+      return String(objeto[llave]);
+    }
+  }
+
+  return porDefecto;
+};
+
+
+const formatearNumero = (valor: unknown): string => {
+  return numero(valor).toLocaleString('es-PE');
+};
+
+
+const formatearDecimal = (valor: unknown): string => {
+  return numero(valor).toLocaleString('es-PE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+
+// Convierte textos tipo "10 min 28 seg" a minutos decimales (10.47).
+// Si el valor ya viene como número, lo respeta tal cual.
+const parseMinutosTexto = (valor: unknown): number => {
+
+  if (typeof valor === 'number') {
+    return valor;
+  }
+
+  const texto = String(valor ?? '').trim();
+
+  const matchMin = texto.match(/(\d+(?:[.,]\d+)?)\s*min/i);
+  const matchSeg = texto.match(/(\d+(?:[.,]\d+)?)\s*seg/i);
+
+  if (!matchMin && !matchSeg) {
+    // No tenía el formato "X min Y seg": puede que ya sea
+    // un número en texto plano (ej. "10.47" o "10,47").
+    return numero(texto.replace(',', '.'));
+  }
+
+  const minutos = matchMin
+    ? Number(matchMin[1].replace(',', '.'))
+    : 0;
+
+  const segundos = matchSeg
+    ? Number(matchSeg[1].replace(',', '.'))
+    : 0;
+
+  return Number((minutos + segundos / 60).toFixed(2));
+};
+
 
 export default defineComponent({
   name: 'DashboardContactabilidad',
 
-  setup() {
+  props: {
+    fechaInicio: {
+      type: String,
+      default: null,
+    },
 
-    const callResults: CallResult[] = [
-      {
-        label: 'Contacto efectivo',
-        value: 1426,
-        color: 'green',
-      },
-      {
-        label: 'No contestó',
-        value: 814,
-        color: 'black',
-      },
-      {
-        label: 'Buzón',
-        value: 372,
-        color: 'gray',
-      },
-      {
-        label: 'Número inválido',
-        value: 228,
-        color: 'light',
-      },
-    ];
+    fechaFin: {
+      type: String,
+      default: null,
+    },
+  },
+
+  setup(props) {
+
+    // ========================================================
+    // LOADING
+    // ========================================================
+
+    const cargando = ref(false);
+
+    const errorDashboard = ref<string | null>(null);
 
 
-    const dailyCalls: DailyCall[] = [
-      {
-        day: 'Lun',
-        value: 360,
-        percent: 72,
-      },
-      {
-        day: 'Mar',
-        value: 420,
-        percent: 84,
-      },
-      {
-        day: 'Mié',
-        value: 390,
-        percent: 78,
-      },
-      {
-        day: 'Jue',
-        value: 460,
-        percent: 92,
-      },
-      {
-        day: 'Vie',
-        value: 510,
-        percent: 100,
-      },
-      {
-        day: 'Sáb',
-        value: 390,
-        percent: 78,
-      },
-      {
-        day: 'Dom',
-        value: 310,
-        percent: 62,
-      },
-    ];
+    // ========================================================
+    // DATOS RAW DE LAS 4 APIS
+    // ========================================================
+
+    const resumenContacto = ref<any>(null);
+
+    const contactoPorAsesor = ref<any[]>([]);
+
+    const rangosContacto = ref<any[]>([]);
+
+    const leadsContactadosAsesor = ref<any[]>([]);
 
 
-    const callStates: CallState[] = [
-      {
-        label: 'Contacto efectivo',
-        value: 1426,
-        percent: 100,
-      },
-      {
-        label: 'No contesta',
-        value: 814,
-        percent: 57,
-      },
-      {
-        label: 'Buzón de voz',
-        value: 372,
-        percent: 26,
-      },
-      {
-        label: 'Número inválido',
-        value: 228,
-        percent: 16,
-      },
-    ];
+    // ========================================================
+    // CARGAR DASHBOARD (solo las 4 APIs indicadas)
+    // ========================================================
+
+    const cargarDashboard = async () => {
+      try {
+        cargando.value = true;
+        errorDashboard.value = null;
+
+        const [
+          contacto,
+          rangos,
+          resumen,
+          asesoresRes,
+        ] = await Promise.all([
+          obtenerContactoPorAsesorDashboard({
+            fechaInicio: props.fechaInicio,
+            fechaFin: props.fechaFin,
+          }),
+
+          obtenerRangosContactoDashboard({
+            fechaInicio: props.fechaInicio,
+            fechaFin: props.fechaFin,
+          }),
+
+          obtenerResumenContactoDashboard({
+            fechaInicio: props.fechaInicio,
+            fechaFin: props.fechaFin,
+          }),
+
+          obtenerLeadsContactadosAsesorDashboard({
+            fechaInicio: props.fechaInicio,
+            fechaFin: props.fechaFin,
+          }),
+        ]);
 
 
-    const advisors: Advisor[] = [
-      {
-        name: 'Carlos Mendoza',
-        initials: 'CM',
-        calls: 620,
-        contactRate: 58,
+        // ==============================================
+        // CONTACTO POR ASESOR
+        // (asesor, cantidad de leads contactados,
+        //  promedio de tiempo de contacto)
+        // ==============================================
+
+        contactoPorAsesor.value =
+          Array.isArray(contacto)
+            ? contacto
+            : [];
+
+
+        // ==============================================
+        // RANGOS DE CONTACTO
+        // ==============================================
+
+        rangosContacto.value =
+          Array.isArray(rangos)
+            ? rangos
+            : [];
+
+
+        // ==============================================
+        // RESUMEN
+        // ==============================================
+
+        if (Array.isArray(resumen)) {
+          resumenContacto.value =
+            resumen[0] ?? null;
+        } else {
+          resumenContacto.value =
+            resumen ?? null;
+        }
+
+
+        // ==============================================
+        // LEADS CONTACTADOS POR ASESOR
+        // ==============================================
+
+        leadsContactadosAsesor.value =
+          Array.isArray(asesoresRes)
+            ? asesoresRes
+            : [];
+
+      } catch (error) {
+        console.error(
+          'Error cargando dashboard de contactabilidad:',
+          error,
+        );
+
+        errorDashboard.value =
+          error instanceof Error
+            ? error.message
+            : 'Error al cargar el dashboard.';
+      } finally {
+        cargando.value = false;
+      }
+    };
+
+
+    // ========================================================
+    // KPI - N° DE LEADS ENTRANTES
+    // (viene del resumen de contacto)
+    // ========================================================
+
+    const leadsEntrantes = computed(() => {
+      return primerValor(resumenContacto.value, [
+        'total_leads',
+        'leads_entrantes',
+        'total',
+      ]);
+    });
+
+
+    // ========================================================
+    // KPI - LEADS CONTACTADOS (total)
+    // ========================================================
+
+    const leadsContactadosTotal = computed(() => {
+      return primerValor(resumenContacto.value, [
+        'leads_contactados',
+        'contactados',
+      ]);
+    });
+
+
+    // ========================================================
+    // KPI - MINUTOS / HORAS PROMEDIO
+    // ========================================================
+
+    const minutosPromedio = computed(() => {
+      return primerValor(resumenContacto.value, [
+        'promedio_minutos',
+        'minutos_promedio',
+      ]);
+    });
+
+    const horasPromedio = computed(() => {
+      return primerValor(resumenContacto.value, [
+        'promedio_horas',
+        'horas_promedio',
+      ]);
+    });
+
+
+    // ========================================================
+    // GRÁFICO — LEADS CONTACTADOS POR EJECUTIVO
+    // (barras verticales, verde)
+    // ========================================================
+
+    const leadsPorEjecutivo = computed<AsesorLeadsBar[]>(() => {
+
+      const filas = leadsContactadosAsesor.value.map(
+        (asesor, index) => ({
+          id: primerValor(asesor, ['id_asesor']) || index,
+          name: primerTexto(asesor, ['asesor', 'nombre']),
+          value: primerValor(asesor, [
+            'leads_contactados',
+            'cantidad_leads',
+            'cantidad',
+          ]),
+        }),
+      );
+
+      const ordenadas = filas
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 8);
+
+      const maximo = Math.max(
+        1,
+        ...ordenadas.map(item => item.value),
+      );
+
+      return ordenadas.map(item => ({
+        ...item,
+        percent: Number(
+          ((item.value / maximo) * 100).toFixed(1),
+        ),
+      }));
+    });
+
+
+    // ========================================================
+    // GRÁFICO — MINUTOS CONTACTADOS POR EJECUTIVO
+    // (barras horizontales, oscuro)
+    // ========================================================
+
+    const minutosPorEjecutivo = computed<AsesorTiempoBar[]>(() => {
+
+      const filas = contactoPorAsesor.value.map(
+        (asesor, index) => {
+
+          // El campo puede venir como texto "10 min 28 seg"
+          // o, en otras respuestas, ya como número de minutos.
+          const textoOnumero =
+            asesor?.promedio_tiempo_contacto ??
+            asesor?.minutos_a_1er_contacto ??
+            asesor?.promedio_minutos ??
+            asesor?.minutos_promedio ??
+            0;
+
+          return {
+            id: primerValor(asesor, ['id_asesor']) || index,
+            name: primerTexto(asesor, ['asesor', 'nombre']),
+            minutos: parseMinutosTexto(textoOnumero),
+            texto: typeof textoOnumero === 'string'
+              ? textoOnumero
+              : formatearDecimal(textoOnumero) + ' min',
+          };
+        },
+      );
+
+      const ordenadas = filas
+        .filter(item => item.name !== 'Sin nombre' || item.minutos > 0)
+        .sort((a, b) => a.minutos - b.minutos)
+        .slice(0, 8);
+
+      const maximo = Math.max(
+        1,
+        ...ordenadas.map(item => item.minutos),
+      );
+
+      return ordenadas.map(item => ({
+        ...item,
+        percent: Number(
+          ((item.minutos / maximo) * 100).toFixed(1),
+        ),
+      }));
+    });
+
+
+    // ========================================================
+    // TABLA — LEADS CONTACTADOS EN RANGOS
+    // ========================================================
+
+    const rangosTabla = computed<RangoContactoRow[]>(() => {
+
+      return rangosContacto.value.map((item, index) => ({
+        orden: index + 1,
+        rango: primerTexto(item, ['rango_contacto', 'rango'], '—'),
+        cantidad: primerValor(item, [
+          'cantidad_leads',
+          'cantidad',
+          'lead_id',
+          'total',
+        ]),
+      }));
+    });
+
+    const rangosTotal = computed(() => {
+      return rangosTabla.value.reduce(
+        (suma, item) => suma + item.cantidad,
+        0,
+      );
+    });
+
+
+    // ========================================================
+    // RECARGAR CUANDO CAMBIAN LAS FECHAS
+    // ========================================================
+
+    watch(
+      () => [props.fechaInicio, props.fechaFin],
+      () => {
+        cargarDashboard();
       },
-      {
-        name: 'Andrea Torres',
-        initials: 'AT',
-        calls: 590,
-        contactRate: 55,
-      },
-      {
-        name: 'Luis Ramírez',
-        initials: 'LR',
-        calls: 570,
-        contactRate: 52,
-      },
-      {
-        name: 'María Flores',
-        initials: 'MF',
-        calls: 510,
-        contactRate: 48,
-      },
-    ];
+    );
+
+
+    // ========================================================
+    // MONTAR
+    // ========================================================
+
+    onMounted(() => {
+      cargarDashboard();
+    });
 
 
     return {
-      callResults,
-      dailyCalls,
-      callStates,
-      advisors,
+
+      // loading
+      cargando,
+      errorDashboard,
+
+      // KPIs
+      leadsEntrantes,
+      leadsContactadosTotal,
+      minutosPromedio,
+      horasPromedio,
+
+      // gráficos
+      leadsPorEjecutivo,
+      minutosPorEjecutivo,
+
+      // tabla
+      rangosTabla,
+      rangosTotal,
+
+      // helpers
+      formatearNumero,
+      formatearDecimal,
+
+      cargarDashboard,
     };
   },
 });
