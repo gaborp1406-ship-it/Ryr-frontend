@@ -1,13 +1,13 @@
 import { defineComponent, ref, reactive, computed, onMounted, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
-import { listarActividadesAsesores } from '../actions/calendar.action';
+import { listarActividadesAsesores, obtenerDetalleActividad } from '../actions/calendar.action';
 
 
 import type {
   IListarActividadesAsesoresRequest,
   IListarActividadesAsesoresResponse,
-
+  IObtenerDetalleActividadResponse,
 } from '@/modules/calendar/interfaces/calendar.interface';
 import type { IListarAsesoresResponse } from '@/modules/clients/interfaces/clients.interface';
 import type { IListarOpcionesResponse } from '@/modules/leads/interfaces/lead.interface';
@@ -274,6 +274,67 @@ export default defineComponent({
       view.value = 'dia';
     }
 
+    // ── MODAL DE DETALLE DE ACTIVIDAD ──────────────────────────────
+    const showDetailModal = ref(false);
+    const loadingDetail = ref(false);
+    const detailError = ref('');
+    const activityDetail = ref<IObtenerDetalleActividadResponse | null>(null);
+
+    async function openActivityDetail(id: number, evt?: Event) {
+      // Evita que el click del evento dispare el click de la celda (que navega a la vista día).
+      evt?.stopPropagation();
+
+      showDetailModal.value = true;
+      loadingDetail.value = true;
+      detailError.value = '';
+      activityDetail.value = null;
+
+      try {
+        activityDetail.value = await obtenerDetalleActividad(id);
+      } catch (err) {
+        detailError.value = err instanceof Error ? err.message : 'Error al obtener el detalle de la actividad.';
+        toast.error(detailError.value);
+      } finally {
+        loadingDetail.value = false;
+      }
+    }
+
+    function closeActivityDetail() {
+      showDetailModal.value = false;
+      activityDetail.value = null;
+      detailError.value = '';
+    }
+
+    function formatFecha(fecha: string | null | undefined) {
+      if (!fecha) return '—';
+      const [datePart] = fecha.split('T');
+      const [y, m, d] = datePart.split('-');
+      if (!y || !m || !d) return fecha;
+      return `${d}/${m}/${y}`;
+    }
+
+    function formatHora(hora: string | null | undefined) {
+      if (!hora) return '—';
+      return hora.slice(0, 5);
+    }
+
+    function formatFechaHoraCreacion(fecha: string | null | undefined) {
+      if (!fecha) return '—';
+      const d = new Date(fecha);
+      if (isNaN(d.getTime())) return fecha;
+      return d.toLocaleString('es-PE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    const detailTypeColor = computed(() =>
+      activityDetail.value ? colorForTipo(activityDetail.value.id_tipo_actividad) : TYPE_PALETTE[0]
+    );
+
 
 
     return {
@@ -295,19 +356,26 @@ export default defineComponent({
       headerLabel,
       navigate,
       goToday,
-
       monthCells,
       selectDay,
       typeColor,
-
       weekCells,
-
       dayLabel,
       dayHours,
       eventsAtHour,
       currentDateStr,
 
-  
+      // Modal de detalle
+      showDetailModal,
+      loadingDetail,
+      detailError,
+      activityDetail,
+      openActivityDetail,
+      closeActivityDetail,
+      formatFecha,
+      formatHora,
+      formatFechaHoraCreacion,
+      detailTypeColor,
     };
   },
 });

@@ -165,18 +165,27 @@ export default defineComponent({
     const mostrarModalDesistio = ref(false);
     const opcionesDesistio = ref<IListarOpcionesResponse[]>([]);
     const motivoSeleccionado = ref<number | null>(null);
+
+    const motivoOtro = ref("");
+    const ID_MOTIVO_OTRO = 36;
+
+    const esMotivoOtro = computed(
+      () => motivoSeleccionado.value === ID_MOTIVO_OTRO
+    );
     const cargandoOpciones = ref(false);
     const enviandoDesistio = ref(false);
 
-    const ID_LISTADO_MOTIVOS_DESISTIO = 8;
+    const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
     async function abrirModalDesistio() {
       mostrarModalDesistio.value = true;
       motivoSeleccionado.value = null;
+      motivoOtro.value = "";
       errores.value = null;
 
       try {
         cargandoOpciones.value = true;
+
         opcionesDesistio.value = await listarOpciones(
           ID_LISTADO_MOTIVOS_DESISTIO
         );
@@ -185,7 +194,11 @@ export default defineComponent({
           error instanceof Error
             ? error.message
             : "Error al cargar los motivos de desistimiento";
-        console.error("Error cargando opciones de desistimiento:", error);
+
+        console.error(
+          "Error cargando opciones de desistimiento:",
+          error
+        );
       } finally {
         cargandoOpciones.value = false;
       }
@@ -193,25 +206,42 @@ export default defineComponent({
 
     function cerrarModalDesistio() {
       if (enviandoDesistio.value) return;
+
       mostrarModalDesistio.value = false;
       motivoSeleccionado.value = null;
+      motivoOtro.value = "";
       opcionesDesistio.value = [];
     }
-
     async function confirmarDesistio() {
       if (!motivoSeleccionado.value) return;
+
+      if (
+        motivoSeleccionado.value === ID_MOTIVO_OTRO &&
+        !motivoOtro.value.trim()
+      ) {
+        errores.value =
+          "Debes especificar el motivo del desistimiento.";
+        return;
+      }
 
       try {
         enviandoDesistio.value = true;
         errores.value = null;
 
+        const textoOtro =
+          motivoSeleccionado.value === ID_MOTIVO_OTRO
+            ? motivoOtro.value.trim()
+            : undefined;
+
         await finalizarEtapaOportunidadDesistio(
           props.idLead,
-          motivoSeleccionado.value
+          motivoSeleccionado.value,
+          textoOtro
         );
 
         mostrarModalDesistio.value = false;
         motivoSeleccionado.value = null;
+        motivoOtro.value = "";
         opcionesDesistio.value = [];
 
         emit("etapa-finalizada");
@@ -220,7 +250,11 @@ export default defineComponent({
           error instanceof Error
             ? error.message
             : "Error al registrar el desistimiento";
-        console.error("Error registrando desistimiento:", error);
+
+        console.error(
+          "Error registrando desistimiento:",
+          error
+        );
       } finally {
         enviandoDesistio.value = false;
       }
@@ -796,6 +830,8 @@ export default defineComponent({
       actualizarCampo,
       enviandoDesistio,
       abrirModalDesistio,
+      motivoOtro,
+      esMotivoOtro,
       cerrarModalDesistio,
       confirmarDesistio,
     };

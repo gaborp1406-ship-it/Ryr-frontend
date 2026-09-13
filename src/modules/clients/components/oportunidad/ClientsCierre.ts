@@ -368,68 +368,101 @@ export default defineComponent({
     const mostrarModalDesistio = ref(false);
     const opcionesDesistio = ref<IListarOpcionesResponse[]>([]);
     const motivoSeleccionado = ref<number | null>(null);
+
+    const motivoOtro = ref("");
+    const ID_MOTIVO_OTRO = 36;
+
+    const esMotivoOtro = computed(
+      () => motivoSeleccionado.value === ID_MOTIVO_OTRO
+    );
     const cargandoOpciones = ref(false);
     const enviandoDesistio = ref(false);
     const finalizandoRealizado = ref(false);
-    const ID_LISTADO_MOTIVOS_DESISTIO = 8;
+    const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
-    async function abrirModalDesistio() {
-      mostrarModalDesistio.value = true;
-      motivoSeleccionado.value = null;
-      errores.value = null;
+ async function abrirModalDesistio() {
+  mostrarModalDesistio.value = true;
+  motivoSeleccionado.value = null;
+  motivoOtro.value = "";
+  errores.value = null;
 
-      try {
-        cargandoOpciones.value = true;
-        opcionesDesistio.value = await listarOpciones(
-          ID_LISTADO_MOTIVOS_DESISTIO
-        );
-      } catch (error) {
-        errores.value =
-          error instanceof Error
-            ? error.message
-            : "Error al cargar los motivos de desistimiento";
-        console.error("Error cargando opciones de desistimiento:", error);
-      } finally {
-        cargandoOpciones.value = false;
-      }
-    }
+  try {
+    cargandoOpciones.value = true;
+    opcionesDesistio.value = await listarOpciones(
+      ID_LISTADO_MOTIVOS_DESISTIO
+    );
+  } catch (error) {
+    errores.value =
+      error instanceof Error
+        ? error.message
+        : "Error al cargar los motivos de desistimiento";
 
-    function cerrarModalDesistio() {
-      if (enviandoDesistio.value) return;
-      mostrarModalDesistio.value = false;
-      motivoSeleccionado.value = null;
-      opcionesDesistio.value = [];
-    }
+    console.error(
+      "Error cargando opciones de desistimiento:",
+      error
+    );
+  } finally {
+    cargandoOpciones.value = false;
+  }
+}
 
-    async function confirmarDesistio() {
-      if (!motivoSeleccionado.value) return;
+ function cerrarModalDesistio() {
+  if (enviandoDesistio.value) return;
 
-      try {
-        enviandoDesistio.value = true;
-        errores.value = null;
+  mostrarModalDesistio.value = false;
+  motivoSeleccionado.value = null;
+  motivoOtro.value = "";
+  opcionesDesistio.value = [];
+}
+async function confirmarDesistio() {
+  if (!motivoSeleccionado.value) return;
 
-        await finalizarEtapaCierreDesistio(
-          props.idLead,
-          motivoSeleccionado.value
-        );
+  if (
+    motivoSeleccionado.value === ID_MOTIVO_OTRO &&
+    !motivoOtro.value.trim()
+  ) {
+    errores.value = "Debes especificar el motivo del desistimiento.";
+    return;
+  }
 
-        mostrarModalDesistio.value = false;
-        motivoSeleccionado.value = null;
-        opcionesDesistio.value = [];
+  try {
+    enviandoDesistio.value = true;
+    errores.value = null;
 
-        await cargarChecklist(); // refresca checklistData.estado
+    const textoOtro =
+      motivoSeleccionado.value === ID_MOTIVO_OTRO
+        ? motivoOtro.value.trim()
+        : undefined;
 
-        emit("etapa-finalizada");
-      } catch (error) {
-        errores.value =
-          error instanceof Error
-            ? error.message
-            : "Error al registrar el desistimiento";
-        console.error("Error registrando desistimiento:", error);
-      } finally {
-        enviandoDesistio.value = false;
-      }
-    }
+    await finalizarEtapaCierreDesistio(
+      props.idLead,
+      motivoSeleccionado.value,
+      textoOtro
+    );
+
+    mostrarModalDesistio.value = false;
+    motivoSeleccionado.value = null;
+    motivoOtro.value = "";
+    opcionesDesistio.value = [];
+
+    await cargarChecklist();
+
+    emit("etapa-finalizada");
+  } catch (error) {
+    errores.value =
+      error instanceof Error
+        ? error.message
+        : "Error al registrar el desistimiento";
+
+    console.error(
+      "Error registrando desistimiento:",
+      error
+    );
+  } finally {
+    enviandoDesistio.value = false;
+  }
+}
+
 
     async function marcarRealizado() {
       try {
@@ -497,6 +530,8 @@ export default defineComponent({
       mostrarCelebracion,
       confetti,
       cerrarCelebracion,
+      esMotivoOtro,
+motivoOtro,
       puedeEliminarDocumento
     };
   },

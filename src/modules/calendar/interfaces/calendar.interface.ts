@@ -23,3 +23,23 @@ export interface IListarActividadesAsesoresResponse {
   tipo_actividad: string;
   nombre_cliente: string;
 }
+
+export interface IObtenerDetalleActividadResponse {
+  id: number;
+  id_asesor: number;
+  nombre_asesor: string;
+  id_lead: number;
+  id_tipo_actividad: number;
+  tipo_actividad: string;
+  titulo: string;
+  descripcion: string | null;
+  fecha: string;
+  hora: string;
+  estado: number | null;
+  estado_nombre: string | null;
+  estado_actividad: boolean | null;
+  fecha_creacion: string | null;
+  fecha_actualizacion: string | null;
+  id_usuario_creacion: number | null;
+  lugar_plataforma: string | null;
+}

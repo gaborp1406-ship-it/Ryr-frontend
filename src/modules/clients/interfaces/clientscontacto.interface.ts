@@ -63,6 +63,7 @@ export interface IListarOpcionesResponse {
 export interface IFinalizarEtapaContactoDesistioRequest {
   id_lead: number;
   motivo?: number;
+  motivo_otro?: string;
 }
 
 export interface IInfoDesistioLeadResponse {

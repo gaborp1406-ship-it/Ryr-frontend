@@ -37,6 +37,10 @@ export default defineComponent({
     const filtroFechaInicio = ref('');
     const filtroFechaFin = ref('');
 
+    // La fase ya NO es un filtro "opcional": siempre hay una activa (1 o 2).
+    // Arranca en Fase 1 al entrar a la vista.
+    const filtroFase = ref<number>(1);
+
     const onCambioFecha = () => {
 
       if (
@@ -53,6 +57,13 @@ export default defineComponent({
     const queryAsesor = ref('');
     const queryProyecto = ref('');
     const queryFuente = ref('');
+
+    // Ya no admite null: solo se alterna entre Fase 1 y Fase 2.
+    const seleccionarFase = (fase: number) => {
+      if (filtroFase.value === fase) return;
+      filtroFase.value = fase;
+      cargarClientes();
+    };
 
     const abiertoAsesor = ref(false);
     const abiertoProyecto = ref(false);
@@ -198,6 +209,7 @@ export default defineComponent({
           id_asesor: filtroAsesor.value?.id ?? null,
           id_proyecto: filtroProyecto.value?.id ?? null,
           id_fuente: filtroFuente.value?.id ?? null,
+          id_fase: filtroFase.value,
         });
 
         paginaActual.value = 1;
@@ -207,7 +219,6 @@ export default defineComponent({
         cargando.value = false;
       }
     };
-
     const onBuscarTexto = () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
@@ -217,16 +228,23 @@ export default defineComponent({
 
     const limpiarFiltros = () => {
       search.value = '';
+
       if (!authStore.isAgent) {
         filtroAsesor.value = null;
         queryAsesor.value = '';
       }
+
       filtroProyecto.value = null;
       filtroFuente.value = null;
+      // OJO: filtroFase se deja intacto a propósito, "Limpiar filtros"
+      // no debe quitar la fase activa (Fase 1 / Fase 2).
+
       filtroFechaInicio.value = '';
       filtroFechaFin.value = '';
+
       queryProyecto.value = '';
       queryFuente.value = '';
+
       cargarClientes();
     };
     const hayFiltrosActivos = computed(
@@ -237,8 +255,8 @@ export default defineComponent({
         !!filtroFuente.value ||
         !!filtroFechaInicio.value ||
         !!filtroFechaFin.value
+      // filtroFase NO cuenta como "filtro activo": siempre hay uno seleccionado.
     );
-
     const verLead = (idLead: number) => {
       router.push({
         name: "client-details",
@@ -268,6 +286,7 @@ export default defineComponent({
           queryAsesor.value = propio?.label ?? '';
         }
 
+        // filtroFase ya arranca en 1 por defecto (ver ref arriba).
         await cargarClientes();
       } catch (error: any) {
         toast.error(error.message);
@@ -307,6 +326,8 @@ export default defineComponent({
       limpiarFiltros,
       hayFiltrosActivos,
       verLead,
+      filtroFase,
+      seleccionarFase,
       clientesPaginados,
       paginaActual,
       totalPaginas,

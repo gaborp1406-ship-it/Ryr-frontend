@@ -467,6 +467,7 @@ export function useReprogramacion(idLead: number | string) {
     };
 }
 
+
 export function useDesistimiento(idLead: number | string) {
     const modalAbierto = ref(false);
     const cargandoOpciones = ref(false);
@@ -481,30 +482,40 @@ export function useDesistimiento(idLead: number | string) {
         motivoSeleccionado.value = null;
 
         try {
-            opciones.value = await listarOpciones(8);
+            opciones.value = await listarOpciones(3);
             modalAbierto.value = true;
         } catch (e) {
-            error.value = e instanceof Error ? e.message : "Error al cargar las opciones.";
+            error.value =
+                e instanceof Error
+                    ? e.message
+                    : "Error al cargar las opciones.";
         } finally {
             cargandoOpciones.value = false;
         }
     }
 
     function cerrar() {
-        // Guard solo aplica al cierre manual mientras se está guardando.
+        // Solo permite cerrar manualmente cuando no se está guardando.
         if (guardando.value) return;
+
         modalAbierto.value = false;
         motivoSeleccionado.value = null;
         error.value = null;
     }
 
-    async function confirmar(callbacks: { onSuccess?: () => void } = {}) {
+    async function confirmar(
+        callbacks: {
+            motivo_otro?: string;
+            onSuccess?: () => void | Promise<void>;
+        } = {}
+    ) {
         if (!motivoSeleccionado.value) {
             error.value = "Selecciona un motivo.";
             return;
         }
 
         const numIdLead = Number(idLead);
+
         if (!numIdLead) {
             error.value = "No se encontró el ID del lead.";
             return;
@@ -514,18 +525,23 @@ export function useDesistimiento(idLead: number | string) {
         error.value = null;
 
         try {
-            await finalizarEtapaOportunidadDesistio(numIdLead, motivoSeleccionado.value);
+            await finalizarEtapaOportunidadDesistio(
+                numIdLead,
+                motivoSeleccionado.value,
+                callbacks.motivo_otro?.trim() || undefined
+            );
 
-            // FIX: mismo problema que en reprogramación. Reseteamos el
-            // estado directamente en vez de llamar a cerrar(), que se
-            // bloqueaba a sí mismo por el guard de guardando.value.
+            // Cerramos directamente porque guardando todavía está en true.
             modalAbierto.value = false;
             motivoSeleccionado.value = null;
             error.value = null;
 
-            callbacks.onSuccess?.();
+            await callbacks.onSuccess?.();
         } catch (e) {
-            error.value = e instanceof Error ? e.message : "Error al registrar desistimiento.";
+            error.value =
+                e instanceof Error
+                    ? e.message
+                    : "Error al registrar desistimiento.";
         } finally {
             guardando.value = false;
         }
@@ -543,5 +559,8 @@ export function useDesistimiento(idLead: number | string) {
         confirmar,
     };
 }
+
+
+
 
 export const claseEstadoExport = claseEstado;

@@ -91,9 +91,7 @@
                   :class="paso.completado ? 'text-[#2d8c4a]' : 'text-slate-700'">
                   {{ paso.titulo }}
                 </p>
-                <p v-if="paso.fecha" class="text-xs text-slate-400 mt-0.5">
-                  {{ paso.fecha }}
-                </p>
+
               </div>
 
               <span class="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
@@ -265,6 +263,20 @@
           <p class="text-sm font-medium text-slate-700">{{ opcion.nombre }}</p>
         </button>
 
+        <div v-if="esMotivoOtro" class="mt-3">
+          <label for="motivo-otro" class="block text-sm font-medium text-slate-700 mb-1.5">
+            Especifica el motivo
+          </label>
+
+          <textarea id="motivo-otro" v-model="motivoOtro" rows="4" maxlength="500"
+            placeholder="Ingresa el motivo del desistimiento..." :disabled="enviandoDesistio"
+            class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100 disabled:bg-slate-50 disabled:cursor-not-allowed"></textarea>
+
+          <div class="mt-1 text-right text-xs text-slate-400">
+            {{ motivoOtro.length }}/500
+          </div>
+        </div>
+
         <p v-if="!cargandoOpciones && opcionesDesistio.length === 0" class="text-sm text-slate-400 text-center py-4">
           No hay opciones disponibles.
         </p>
@@ -275,8 +287,10 @@
           class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50">
           Cancelar
         </button>
-        <button @click="confirmarDesistio" :disabled="!motivoSeleccionado || enviandoDesistio"
-          class="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
+        <button @click="confirmarDesistio" :disabled="!motivoSeleccionado ||
+          enviandoDesistio ||
+          (esMotivoOtro && !motivoOtro.trim())
+          " class="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
           {{ enviandoDesistio ? 'Guardando...' : 'Confirmar desistimiento' }}
         </button>
       </div>

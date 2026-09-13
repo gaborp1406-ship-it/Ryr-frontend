@@ -134,7 +134,7 @@
                 <span class="hidden sm:inline">Reprogramar</span>
               </button>
 
-              <button @click="desistimiento.abrir()"
+              <button v-if="puedeNegociar" @click="desistimiento.abrir()"
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold transition-all duration-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M12 9v6m4-10H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />

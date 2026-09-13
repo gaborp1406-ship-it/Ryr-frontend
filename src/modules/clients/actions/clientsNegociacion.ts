@@ -68,14 +68,16 @@ export const finalizarEtapaNegociacion = async (
 
 export const finalizarEtapaNegociacionDesistio = async (
   id_lead: number,
-  motivo?: number
+  motivo?: number,
+  motivo_otro?: string
 ) => {
   try {
     const { data: response } = await automatizateApiNest.post(
-      `/lead/finalizar-etapa-negociacion-desistio`,
+      "/lead/finalizar-etapa-negociacion-desistio",
       {
         id_lead,
         motivo,
+        motivo_otro,
       }
     );
 
@@ -84,7 +86,7 @@ export const finalizarEtapaNegociacionDesistio = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          "Error al finalizar la etapa de oportunidad como desistido."
+          "Error al finalizar la etapa de negociación como desistido."
       );
     }
 

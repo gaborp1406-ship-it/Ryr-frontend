@@ -126,6 +126,29 @@
       </button>
     </div>
 
+    <!-- ============ BARRA SUPERIOR DE TABLA: toggle de Fase ============ -->
+    <div class="flex items-center justify-between px-1">
+      <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
+        Clientes potenciales
+      </p>
+
+      <!-- Toggle Fase 1 / Fase 2, estilo "pestaña-paginación" -->
+      <div class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-1 shadow-sm">
+        <button type="button" @click="seleccionarFase(1)"
+          class="relative rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200" :class="filtroFase === 1
+            ? 'bg-[#2d8c4a] text-white shadow-[0_1px_4px_rgba(45,140,74,0.35)]'
+            : 'text-slate-500 hover:text-slate-700'">
+          Candidato
+        </button>
+        <button type="button" @click="seleccionarFase(2)"
+          class="relative rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200" :class="filtroFase === 2
+            ? 'bg-[#2d8c4a] text-white shadow-[0_1px_4px_rgba(45,140,74,0.35)]'
+            : 'text-slate-500 hover:text-slate-700'">
+          Oportunidad
+        </button>
+      </div>
+    </div>
+
     <!-- ============ TABLA ============ -->
     <div
       class="flex-1 overflow-auto rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
@@ -139,7 +162,7 @@
             <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Cliente</th>
             <th class="rlv-mono px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">DNI</th>
             <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Fuente</th>
-                        <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Etapa</th>
+            <th class="px-4 py-3.5 text-left text-[10px] font-medium uppercase tracking-[0.14em]">Etapa</th>
 
             <th class="px-4 py-3.5 text-center text-[10px] font-medium uppercase tracking-[0.14em]">Ver</th>
           </tr>
@@ -203,7 +226,7 @@
                   {{ cliente.fuente }}
                 </span>
               </td>
-<td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.etapa_actual }}</td>
+              <td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.etapa_actual }}</td>
               <td class="px-4 py-3 text-center">
                 <button type="button" @click="verLead(cliente.id_lead)" title="Ver detalle del lead"
                   class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">
@@ -217,7 +240,7 @@
             </tr>
 
             <tr v-if="clientesPaginados.length === 0">
-              <td colspan="7" class="px-4 py-8 text-center text-slate-400 text-xs">
+              <td colspan="8" class="px-4 py-8 text-center text-slate-400 text-xs">
                 No se encontraron clientes potenciales con los filtros aplicados.
               </td>
             </tr>

@@ -190,14 +190,16 @@ export const finalizarEtapaAtencion = async (
 
 export const finalizarEtapaOportunidadDesistio = async (
   id_lead: number,
-  motivo?: number
+  motivo?: number,
+  motivo_otro?: string
 ) => {
   try {
     const { data: response } = await automatizateApiNest.post(
-      `/lead/finalizar-etapa-oportunidad-desistio`,
+      "/lead/finalizar-etapa-oportunidad-desistio",
       {
         id_lead,
         motivo,
+        motivo_otro,
       }
     );
 

@@ -331,13 +331,13 @@
             <button type="button" @click="completarProforma" :disabled="actualizando"
               class="w-full flex items-center gap-3 px-4 py-4 rounded-xl border transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
               :class="proforma?.completado
-                  ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
-                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
+                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 ">
 
               <span class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0" :class="proforma?.completado
-                  ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                  : 'border-slate-300'
+                ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                : 'border-slate-300'
                 ">
 
                 <svg v-if="proforma?.completado" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
@@ -350,15 +350,12 @@
               <div class="flex-1">
 
                 <p class="text-sm font-medium" :class="proforma?.completado
-                    ? 'text-[#2d8c4a]'
-                    : 'text-slate-700'
+                  ? 'text-[#2d8c4a]'
+                  : 'text-slate-700'
                   ">
                   Proforma enviada al cliente
                 </p>
 
-                <p v-if="proforma?.fecha" class="text-xs text-slate-400 mt-0.5">
-                  {{ proforma.fecha }}
-                </p>
 
               </div>
 
@@ -380,8 +377,8 @@
                 <div class="flex items-center gap-3">
 
                   <span class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0" :class="proforma?.completado
-                      ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                      : 'border-slate-300 bg-white'
+                    ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                    : 'border-slate-300 bg-white'
                     ">
 
                     <svg v-if="proforma?.completado" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
@@ -414,13 +411,13 @@
                   @click="actualizarCampo('proforma_enviada_decuerdo', true)"
                   class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all disabled:opacity-50"
                   :class="checklistData?.proforma_enviada_decuerdo
-                      ? 'border-[#2d8c4a] bg-[#2d8c4a]/5 text-[#2d8c4a]'
-                      : 'border-slate-200 text-slate-600 hover:border-[#2d8c4a] hover:bg-[#2d8c4a]/5'
+                    ? 'border-[#2d8c4a] bg-[#2d8c4a]/5 text-[#2d8c4a]'
+                    : 'border-slate-200 text-slate-600 hover:border-[#2d8c4a] hover:bg-[#2d8c4a]/5'
                     ">
 
                   <span class="w-4 h-4 rounded-full border flex items-center justify-center" :class="checklistData?.proforma_enviada_decuerdo
-                      ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                      : 'border-slate-300'
+                    ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                    : 'border-slate-300'
                     ">
 
                     <svg v-if="checklistData?.proforma_enviada_decuerdo" viewBox="0 0 24 24" fill="none" stroke="white"
@@ -439,13 +436,13 @@
                   @click="actualizarCampo('proforma_enviada_descuerdo', true)"
                   class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all disabled:opacity-50"
                   :class="checklistData?.proforma_enviada_descuerdo
-                      ? 'border-rose-400 bg-rose-50 text-rose-600'
-                      : 'border-slate-200 text-slate-600 hover:border-rose-300 hover:bg-rose-50'
+                    ? 'border-rose-400 bg-rose-50 text-rose-600'
+                    : 'border-slate-200 text-slate-600 hover:border-rose-300 hover:bg-rose-50'
                     ">
 
                   <span class="w-4 h-4 rounded-full border flex items-center justify-center" :class="checklistData?.proforma_enviada_descuerdo
-                      ? 'border-rose-500 bg-rose-500'
-                      : 'border-slate-300'
+                    ? 'border-rose-500 bg-rose-500'
+                    : 'border-slate-300'
                     ">
 
                     <svg v-if="checklistData?.proforma_enviada_descuerdo" viewBox="0 0 24 24" fill="none" stroke="white"
@@ -477,13 +474,13 @@
             <button type="button" @click="completarProforma" :disabled="actualizando"
               class="w-full flex items-center gap-3 px-4 py-4 rounded-xl border transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
               :class="proforma?.completado
-                  ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
-                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
+                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 ">
 
               <span class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0" :class="proforma?.completado
-                  ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                  : 'border-slate-300'
+                ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                : 'border-slate-300'
                 ">
 
                 <svg v-if="proforma?.completado" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
@@ -496,15 +493,12 @@
               <div class="flex-1">
 
                 <p class="text-sm font-medium" :class="proforma?.completado
-                    ? 'text-[#2d8c4a]'
-                    : 'text-slate-700'
+                  ? 'text-[#2d8c4a]'
+                  : 'text-slate-700'
                   ">
                   Proforma enviada al cliente
                 </p>
 
-                <p v-if="proforma?.fecha" class="text-xs text-slate-400 mt-0.5">
-                  {{ proforma.fecha }}
-                </p>
 
               </div>
 
@@ -523,13 +517,13 @@
 
               <!-- CABECERA -->
               <div class="flex items-center gap-3 px-4 py-4" :class="aprobacionBancaria?.completado
-                  ? 'bg-[#2d8c4a]/5'
-                  : 'bg-slate-50'
+                ? 'bg-[#2d8c4a]/5'
+                : 'bg-slate-50'
                 ">
 
                 <span class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0" :class="aprobacionBancaria?.completado
-                    ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                    : 'border-slate-300 bg-white'
+                  ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                  : 'border-slate-300 bg-white'
                   ">
 
                   <svg v-if="aprobacionBancaria?.completado" viewBox="0 0 24 24" fill="none" stroke="white"
@@ -542,14 +536,10 @@
                 <div class="flex-1">
 
                   <p class="text-sm font-semibold" :class="aprobacionBancaria?.completado
-                      ? 'text-[#2d8c4a]'
-                      : 'text-slate-700'
+                    ? 'text-[#2d8c4a]'
+                    : 'text-slate-700'
                     ">
                     Aprobación bancaria
-                  </p>
-
-                  <p v-if="aprobacionBancaria?.fecha" class="text-xs text-slate-400 mt-0.5">
-                    {{ aprobacionBancaria.fecha }}
                   </p>
 
                 </div>
@@ -567,8 +557,8 @@
                 <!-- PRECALIFICACIÓN -->
                 <!-- ========================================= -->
                 <div class="rounded-xl border transition-all" :class="precalificacion?.completado
-                    ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
-                    : 'border-slate-200'
+                  ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
+                  : 'border-slate-200'
                   ">
 
                   <div class="flex items-center gap-3 px-4 py-3">
@@ -578,8 +568,8 @@
                       class="flex items-center gap-3 flex-1 min-w-0 text-left disabled:opacity-40 disabled:cursor-not-allowed">
 
                       <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="precalificacion?.completado
-                          ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                          : 'border-slate-300'
+                        ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                        : 'border-slate-300'
                         ">
 
                         <svg v-if="precalificacion?.completado" viewBox="0 0 24 24" fill="none" stroke="white"
@@ -595,9 +585,6 @@
                           Precalificación
                         </p>
 
-                        <p v-if="precalificacion?.fecha" class="text-xs text-slate-400 mt-0.5">
-                          {{ precalificacion.fecha }}
-                        </p>
 
                       </span>
 
@@ -657,10 +644,10 @@
                   <div class="flex items-center gap-3 px-4 py-3 bg-slate-50">
 
                     <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="cartaAprobacion?.completado
-                        ? decision === 'Denegación'
-                          ? 'border-rose-500 bg-rose-500'
-                          : 'border-[#2d8c4a] bg-[#2d8c4a]'
-                        : 'border-slate-300 bg-white'
+                      ? decision === 'Denegación'
+                        ? 'border-rose-500 bg-rose-500'
+                        : 'border-[#2d8c4a] bg-[#2d8c4a]'
+                      : 'border-slate-300 bg-white'
                       ">
 
                       <svg v-if="
@@ -683,9 +670,7 @@
                         Carta de aprobación
                       </p>
 
-                      <p v-if="cartaAprobacion?.fecha" class="text-xs text-slate-400 mt-0.5">
-                        {{ cartaAprobacion.fecha }}
-                      </p>
+
 
                     </div>
 
@@ -743,13 +728,13 @@
                       "
                       class="w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       :class="docsBanco.completado
-                          ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
-                          : 'border-slate-200 hover:border-slate-300'
+                        ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
+                        : 'border-slate-200 hover:border-slate-300'
                         ">
 
                       <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="docsBanco.completado
-                          ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                          : 'border-slate-300'
+                        ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                        : 'border-slate-300'
                         ">
 
                         <svg v-if="docsBanco.completado" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
@@ -765,9 +750,7 @@
                           Envío de docs al banco
                         </p>
 
-                        <p v-if="docsBanco.fecha" class="text-xs text-slate-400 mt-0.5">
-                          {{ docsBanco.fecha }}
-                        </p>
+
 
                       </div>
 
@@ -786,15 +769,15 @@
                       <button type="button" @click="registrarDecision('Aprobación')" :disabled="actualizando"
                         class="w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         :class="decision === 'Aprobación'
-                            ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
-                            : decision === 'Denegación'
-                              ? 'border-slate-200 bg-slate-50 opacity-50'
-                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
+                          : decision === 'Denegación'
+                            ? 'border-slate-200 bg-slate-50 opacity-50'
+                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                           ">
 
                         <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="decision === 'Aprobación'
-                            ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                            : 'border-slate-300 bg-white'
+                          ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                          : 'border-slate-300 bg-white'
                           ">
 
                           <svg v-if="decision === 'Aprobación'" viewBox="0 0 24 24" fill="none" stroke="white"
@@ -807,8 +790,8 @@
                         <div class="flex-1">
 
                           <p class="text-sm font-medium" :class="decision === 'Aprobación'
-                              ? 'text-[#2d8c4a]'
-                              : 'text-slate-700'
+                            ? 'text-[#2d8c4a]'
+                            : 'text-slate-700'
                             ">
                             Aprobación
                           </p>
@@ -825,15 +808,15 @@
                       <button type="button" @click="registrarDecision('Denegación')" :disabled="actualizando"
                         class="w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         :class="decision === 'Denegación'
-                            ? 'border-rose-500 bg-rose-50'
-                            : decision === 'Aprobación'
-                              ? 'border-slate-200 bg-slate-50 opacity-50'
-                              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          ? 'border-rose-500 bg-rose-50'
+                          : decision === 'Aprobación'
+                            ? 'border-slate-200 bg-slate-50 opacity-50'
+                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                           ">
 
                         <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="decision === 'Denegación'
-                            ? 'border-rose-500 bg-rose-500'
-                            : 'border-slate-300 bg-white'
+                          ? 'border-rose-500 bg-rose-500'
+                          : 'border-slate-300 bg-white'
                           ">
 
                           <svg v-if="decision === 'Denegación'" viewBox="0 0 24 24" fill="none" stroke="white"
@@ -846,8 +829,8 @@
                         <div class="flex-1">
 
                           <p class="text-sm font-medium" :class="decision === 'Denegación'
-                              ? 'text-rose-600'
-                              : 'text-slate-700'
+                            ? 'text-rose-600'
+                            : 'text-slate-700'
                             ">
                             Denegación
                           </p>
@@ -966,13 +949,13 @@
           @click="motivoSeleccionado = opcion.id" :disabled="enviandoDesistio"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all disabled:opacity-50"
           :class="motivoSeleccionado === opcion.id
-              ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
-              : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
+            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
             ">
 
           <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="motivoSeleccionado === opcion.id
-              ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-              : 'border-slate-300'
+            ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+            : 'border-slate-300'
             ">
 
             <svg v-if="motivoSeleccionado === opcion.id" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
@@ -987,7 +970,20 @@
           </p>
 
         </button>
+        <!-- MOTIVO OTRO -->
+        <div v-if="esMotivoOtro" class="mt-3">
+          <label for="motivo-otro-negociacion" class="block text-sm font-medium text-slate-700 mb-1.5">
+            Especifica el motivo
+          </label>
 
+          <textarea id="motivo-otro-negociacion" v-model="motivoOtro" rows="4" maxlength="500"
+            placeholder="Ingresa el motivo del desistimiento..." :disabled="enviandoDesistio"
+            class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100 disabled:bg-slate-50 disabled:cursor-not-allowed"></textarea>
+
+          <div class="mt-1 text-right text-xs text-slate-400">
+            {{ motivoOtro.length }}/500
+          </div>
+        </div>
         <!-- SIN OPCIONES -->
         <p v-if="
           !cargandoOpciones &&
@@ -1007,8 +1003,8 @@
         </button>
 
         <button type="button" @click="confirmarDesistio" :disabled="!motivoSeleccionado ||
-          enviandoDesistio
-          "
+          enviandoDesistio ||
+          (esMotivoOtro && !motivoOtro.trim())"
           class="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
 
           {{

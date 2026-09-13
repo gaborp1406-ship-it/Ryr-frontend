@@ -29,6 +29,7 @@ export interface IListarClientesPotencialesRequest {
   id_asesor?: number | null;
   id_fuente?: number | null;
   id_proyecto?: number | null;
+  id_fase?: number | null;
 }
 
 export interface IClientePotencial {

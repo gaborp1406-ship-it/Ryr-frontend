@@ -428,16 +428,25 @@ export default defineComponent({
       modalDesistioAbierto.value = false;
     }
 
-    async function onConfirmarDesistio(opcion: IListarOpcionesResponse) {
+    async function onConfirmarDesistio(
+      opcion: IListarOpcionesResponse,
+      motivo_otro?: string
+    ) {
       try {
         await finalizarEtapaContactoDesistio({
           id_lead: props.idLead,
           motivo: opcion.id,
+          motivo_otro,
         });
+
         cerrarModalDesistio();
         emit("etapa-finalizada");
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error finalizando desistimiento", error);
+
+        toast.error(
+          error?.message ?? "No se pudo registrar el desistimiento."
+        );
       }
     }
 

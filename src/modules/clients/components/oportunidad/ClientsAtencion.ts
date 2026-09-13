@@ -213,22 +213,27 @@ export default defineComponent({
       });
     }
 
-    async function onConfirmarDesistimiento(motivo: number) {
-      desistimiento.motivoSeleccionado.value = motivo;
+  async function onConfirmarDesistimiento(
+  motivo: number,
+  motivo_otro?: string
+) {
+  desistimiento.motivoSeleccionado.value = motivo;
 
-      await desistimiento.confirmar({
-        onSuccess: async () => {
-          await reunion.cargarInfoEstadoReunion();
-          await Promise.all([
-            reunion.cargarReunion(),
-            reunion.cargarHistorialContacto(),
-            reunion.cargarHistorialReuniones(),
-          ]);
-          emit("etapa-finalizada");
-        },
-      });
-    }
+  await desistimiento.confirmar({
+    motivo_otro,
+    onSuccess: async () => {
+      await reunion.cargarInfoEstadoReunion();
 
+      await Promise.all([
+        reunion.cargarReunion(),
+        reunion.cargarHistorialContacto(),
+        reunion.cargarHistorialReuniones(),
+      ]);
+
+      emit("etapa-finalizada");
+    },
+  });
+}
     async function marcarComoRealizada() {
       await finalizarActividadState.confirmar(reunion.reunion.value, {
         onSuccess: async () => {

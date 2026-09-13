@@ -150,7 +150,7 @@
                             <path d="M9 9l6 6M15 9l-6 6" />
                         </svg>
 
-                        No contestó
+                        Desistir
                     </button>
 
 

@@ -71,14 +71,16 @@ export const finalizarEtapaCierre = async (
 
 export const finalizarEtapaCierreDesistio = async (
   id_lead: number,
-  motivo?: number
+  motivo?: number,
+  motivo_otro?: string
 ) => {
   try {
     const { data: response } = await automatizateApiNest.post(
-      `/lead/finalizar-etapa-cierre-desistio`,
+      "/lead/finalizar-etapa-cierre-desistio",
       {
         id_lead,
         motivo,
+        motivo_otro,
       }
     );
 
@@ -87,7 +89,7 @@ export const finalizarEtapaCierreDesistio = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-        "Error al finalizar la etapa de oportunidad como desistido."
+          "Error al finalizar la etapa de cierre como desistido."
       );
     }
 
