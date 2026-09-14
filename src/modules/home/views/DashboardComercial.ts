@@ -3,6 +3,7 @@ import {
   ref,
   watch,
   onMounted,
+  type PropType,
 } from 'vue';
 
 import {
@@ -50,6 +51,11 @@ export default defineComponent({
     fechaFin: {
       type: String,
       default: '',
+    },
+    // Asesor controlado por el componente padre (DashboardAllView)
+    idAsesor: {
+      type: [Number, null] as PropType<number | null>,
+      default: null,
     },
   },
 
@@ -130,6 +136,7 @@ export default defineComponent({
       const filtro = {
         fechaInicio: props.fechaInicio || null,
         fechaFin: props.fechaFin || null,
+        idAsesor: props.idAsesor ?? null,
       };
 
       try {
@@ -244,9 +251,9 @@ export default defineComponent({
       }
     };
 
-    // Recargar automáticamente cuando el padre cambie las fechas
+    // Recargar automáticamente cuando el padre cambie fechas o asesor
     watch(
-      () => [props.fechaInicio, props.fechaFin],
+      () => [props.fechaInicio, props.fechaFin, props.idAsesor],
       () => {
         cargarDashboard();
       },

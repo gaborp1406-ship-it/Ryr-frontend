@@ -27,7 +27,7 @@ export const listarOpciones = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al listar opciones.'
+        'Error al listar opciones.'
       );
     }
 
@@ -48,7 +48,7 @@ export const listarProyectos = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al listar proyectos.'
+        'Error al listar proyectos.'
       );
     }
 
@@ -69,7 +69,7 @@ export const listarAsesores = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al listar asesores.'
+        'Error al listar asesores.'
       );
     }
 
@@ -89,7 +89,7 @@ export const listarLeadsDiarios = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al listar leads diarios.'
+        'Error al listar leads diarios.'
       );
     }
 
@@ -149,33 +149,43 @@ export const validarLeadDuplicado = async (
   }
 };
 
+
 export const obtenerLeadsPorEtapaActual = async (
   idEtapa?: number,
-  idAgente?: number
+  idAgente?: number,
+  fechaInicio?: string,
+  fechaFin?: string
 ): Promise<ILeadPorEtapaActual[]> => {
+
   try {
+
     const { data } = await automatizateApiNest.get(
       '/lead/leads-por-etapa-actual',
       {
         params: {
           ...(idEtapa !== undefined && { idEtapa }),
           ...(idAgente !== undefined && { idAgente }),
+          ...(fechaInicio !== undefined && { fechaInicio }),
+          ...(fechaFin !== undefined && { fechaFin }),
         },
       }
     );
 
     return data;
+
   } catch (error) {
+
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al obtener leads por etapa actual.'
+        'Error al obtener leads por etapa actual.'
       );
     }
 
     throw error;
   }
 };
+
 export const listarEtapas = async (
 ): Promise<IListarEtapaResponse[]> => {
   try {
@@ -188,7 +198,7 @@ export const listarEtapas = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al listar etapas.'
+        'Error al listar etapas.'
       );
     }
 
@@ -213,7 +223,7 @@ export const reabrirLeadEtapa = async (
     if (isAxiosError(error)) {
       throw new Error(
         error.response?.data?.message ??
-          'Error al reabrir el lead.'
+        'Error al reabrir el lead.'
       );
     }
 

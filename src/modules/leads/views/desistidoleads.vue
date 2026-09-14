@@ -1,6 +1,60 @@
 <template>
   <div class="flex flex-col gap-5">
+    <div class="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
 
+        <!-- ASESOR -->
+        <div v-if="puedeFiltrarPorAsesor" class="flex min-w-[220px] flex-1 flex-col gap-1.5">
+          <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Asesor
+          </label>
+
+          <select v-model="idAsesorSeleccionado" :disabled="cargandoAsesores" @change="cambiarAsesor"
+            class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10 disabled:cursor-not-allowed disabled:bg-slate-50">
+            <option :value="undefined">
+              Todos los asesores
+            </option>
+
+            <option v-for="asesor in asesores" :key="asesor.id_asesor" :value="asesor.id_asesor">
+              {{ asesor.nombre_abrev || asesor.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- FECHA INICIO -->
+        <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
+          <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Fecha inicio
+          </label>
+
+          <input v-model="fechaInicio" type="date"
+            class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
+        </div>
+
+        <!-- FECHA FIN -->
+        <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
+          <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Fecha fin
+          </label>
+
+          <input v-model="fechaFin" type="date"
+            class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
+        </div>
+
+        <!-- APLICAR -->
+        <button type="button" @click="aplicarFiltros" :disabled="cargandoLeads"
+          class="h-10 rounded-xl bg-[#2d8c4a] px-5 text-xs font-semibold text-white transition hover:bg-[#24753d] disabled:cursor-not-allowed disabled:opacity-60">
+          {{ cargandoLeads ? 'Cargando...' : 'Aplicar filtros' }}
+        </button>
+
+        <!-- LIMPIAR -->
+        <button type="button" @click="limpiarFiltros" :disabled="cargandoLeads"
+          class="h-10 rounded-xl border border-slate-200 bg-white px-5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+          Limpiar
+        </button>
+
+      </div>
+    </div>
     <!-- ============ TABLA ============ -->
     <div
       class="flex-1 overflow-auto rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -81,7 +135,7 @@
                 </span>
               </td>
 
-           
+
 
               <td class="px-4 py-3 text-center">
                 <button v-if="mostrarBotonReabrir(lead)" type="button" :disabled="reabriendoId === lead.id_lead"
@@ -92,8 +146,8 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <svg v-else class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg v-else class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 12a9 9 0 1 1 3 6.7" />
                     <path d="M3 16v-4h4" />
                   </svg>

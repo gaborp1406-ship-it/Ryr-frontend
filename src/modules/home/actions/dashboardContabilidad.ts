@@ -7,6 +7,7 @@ import { isAxiosError } from 'axios';
 interface IFiltroFechasDashboard {
     fechaInicio?: string | null;
     fechaFin?: string | null;
+    idAsesor?: number | null;
 }
 // ============================================================
 // 2. CONTACTO POR ASESOR
@@ -24,9 +25,10 @@ interface IFiltroFechasDashboard {
 export const obtenerContactoPorAsesorDashboard = async ({
     fechaInicio,
     fechaFin,
+    idAsesor,
 }: IFiltroFechasDashboard = {}) => {
     try {
-        const params: Record<string, string> = {};
+        const params: Record<string, string | number> = {};
 
         if (fechaInicio) {
             params.fecha_inicio = fechaInicio;
@@ -34,6 +36,10 @@ export const obtenerContactoPorAsesorDashboard = async ({
 
         if (fechaFin) {
             params.fecha_fin = fechaFin;
+        }
+
+        if (idAsesor !== undefined && idAsesor !== null) {
+            params.id_asesor = idAsesor;
         }
 
         const { data } = await automatizateApiNest.get(
@@ -78,9 +84,10 @@ export const obtenerContactoPorAsesorDashboard = async ({
 export const obtenerRangosContactoDashboard = async ({
     fechaInicio,
     fechaFin,
+    idAsesor,
 }: IFiltroFechasDashboard = {}) => {
     try {
-        const params: Record<string, string> = {};
+        const params: Record<string, string | number> = {};
 
         if (fechaInicio) {
             params.fecha_inicio = fechaInicio;
@@ -88,6 +95,10 @@ export const obtenerRangosContactoDashboard = async ({
 
         if (fechaFin) {
             params.fecha_fin = fechaFin;
+        }
+
+        if (idAsesor !== undefined && idAsesor !== null) {
+            params.id_asesor = idAsesor;
         }
 
         const { data } = await automatizateApiNest.get(
@@ -132,9 +143,10 @@ export const obtenerRangosContactoDashboard = async ({
 export const obtenerResumenContactoDashboard = async ({
     fechaInicio,
     fechaFin,
+    idAsesor,
 }: IFiltroFechasDashboard = {}) => {
     try {
-        const params: Record<string, string> = {};
+        const params: Record<string, string | number> = {};
 
         if (fechaInicio) {
             params.fecha_inicio = fechaInicio;
@@ -142,6 +154,10 @@ export const obtenerResumenContactoDashboard = async ({
 
         if (fechaFin) {
             params.fecha_fin = fechaFin;
+        }
+
+        if (idAsesor !== undefined && idAsesor !== null) {
+            params.id_asesor = idAsesor;
         }
 
         const { data } = await automatizateApiNest.get(
@@ -184,9 +200,10 @@ export const obtenerResumenContactoDashboard = async ({
 export const obtenerLeadsContactadosAsesorDashboard = async ({
     fechaInicio,
     fechaFin,
+    idAsesor,
 }: IFiltroFechasDashboard = {}) => {
     try {
-        const params: Record<string, string> = {};
+        const params: Record<string, string | number> = {};
 
         if (fechaInicio) {
             params.fecha_inicio = fechaInicio;
@@ -194,6 +211,10 @@ export const obtenerLeadsContactadosAsesorDashboard = async ({
 
         if (fechaFin) {
             params.fecha_fin = fechaFin;
+        }
+
+        if (idAsesor !== undefined && idAsesor !== null) {
+            params.id_asesor = idAsesor;
         }
 
         const { data } = await automatizateApiNest.get(
@@ -230,9 +251,10 @@ export const obtenerLeadsContactadosAsesorDashboard = async ({
 export const contarTotalLeadsDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -240,6 +262,10 @@ export const contarTotalLeadsDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(

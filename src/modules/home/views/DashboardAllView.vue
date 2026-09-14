@@ -7,7 +7,7 @@
       </h1>
     </div>
     <!-- ================================================= -->
-    <!-- FILTRO DE FECHAS -->
+    <!-- FILTRO DE FECHAS + ASESOR -->
     <!-- ================================================= -->
     <div
       class="mb-[18px] flex flex-wrap items-end gap-[10px] rounded-[16px] border border-slate-200 bg-white p-[14px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
@@ -31,6 +31,25 @@
           class="h-[36px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[11px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20" />
       </div>
 
+      <!-- ASESOR -->
+      <div v-if="!esAgent" class="flex min-w-[190px] flex-col gap-[5px]">
+        <label class="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">
+          Asesor
+        </label>
+
+        <select v-model="idAsesor" :disabled="cargandoAsesores"
+          class="h-[36px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[11px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20 disabled:cursor-not-allowed disabled:opacity-60"
+          @change="aplicarFiltroFechas">
+          <option value="">
+            {{ cargandoAsesores ? 'Cargando asesores...' : 'Todos los asesores' }}
+          </option>
+
+          <option v-for="asesor in asesores" :key="asesor.id_asesor" :value="String(asesor.id_asesor)">
+            {{ asesor.asesor }}
+          </option>
+        </select>
+      </div>
+
       <!-- APLICAR -->
       <button type="button" :disabled="cargando"
         class="flex h-[36px] items-center gap-[7px] rounded-[9px] bg-[#2d8c4a] px-[15px] text-[10px] font-bold text-white shadow-[0_3px_10px_rgba(45,140,74,0.2)] transition hover:bg-[#24763d] disabled:cursor-not-allowed disabled:opacity-60"
@@ -43,7 +62,7 @@
       </button>
 
       <!-- LIMPIAR -->
-      <button type="button" :disabled="cargando || (!fechaInicio && !fechaFin)"
+      <button type="button" :disabled="cargando || (!fechaInicio && !fechaFin && (!esAgent && !idAsesor))"
         class="flex h-[36px] items-center rounded-[9px] border border-slate-200 bg-white px-[13px] text-[10px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
         @click="limpiarFiltroFechas">
         Limpiar
@@ -95,7 +114,7 @@
     <!-- ================================================= -->
     <!-- GENERAL -->
     <!-- ================================================= -->
-     <template v-if="activeTab === 'general'">
+    <template v-if="activeTab === 'general'">
 
       <!-- KPIs -->
       <div class="mb-[14px] grid grid-cols-3 gap-[14px] max-[900px]:grid-cols-2 max-[650px]:grid-cols-1">
@@ -125,7 +144,7 @@
               </svg>
             </div>
 
-           
+
           </div>
 
           <div class="mt-[14px] flex flex-col">
@@ -196,7 +215,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.atendidos)}%` }"></div>
               </div>
               <strong class="w-[28px] shrink-0 text-right text-[13px] font-bold text-slate-700">{{ candidatos.atendidos
-                }}</strong>
+              }}</strong>
             </div>
 
             <div class="mb-[8px] flex items-center gap-[8px]">
@@ -206,7 +225,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.sinAtender)}%` }"></div>
               </div>
               <strong class="w-[28px] shrink-0 text-right text-[13px] font-bold text-slate-700">{{ candidatos.sinAtender
-                }}</strong>
+              }}</strong>
             </div>
 
             <div class="ml-[93px] mr-[10px] flex justify-between text-[11px] text-slate-400">
@@ -459,17 +478,19 @@
     <!-- ================================================= -->
     <!-- COMERCIAL -->
     <!-- ================================================= -->
-    <DashboardComercial v-else-if="activeTab === 'comercial'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin" />
+    <DashboardComercial v-else-if="activeTab === 'comercial'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin"
+      :id-asesor="idAsesorNumerico" />
     <!-- ================================================= -->
     <!-- CONTACTABILIDAD -->
     <!-- ================================================= -->
     <DashboardContactabilidad v-else-if="activeTab === 'contactabilidad'" :fecha-inicio="fechaInicio"
-      :fecha-fin="fechaFin" />
+      :fecha-fin="fechaFin" :id-asesor="idAsesorNumerico" />
 
     <!-- ================================================= -->
     <!-- CIERRES -->
     <!-- ================================================= -->
-    <DashboardCierre v-else-if="activeTab === 'cierres'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin" />
+    <DashboardCierre v-else-if="activeTab === 'cierres'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin"
+      :id-asesor="idAsesorNumerico" />
   </div>
 </template>
 

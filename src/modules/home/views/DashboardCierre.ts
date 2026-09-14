@@ -4,6 +4,7 @@ import {
   onMounted,
   ref,
   watch,
+  type PropType,
 } from 'vue';
 import {
   contarLeadsNegociacionDashboard,
@@ -59,6 +60,12 @@ export default defineComponent({
       type: String,
       default: null,
     },
+
+    // Asesor controlado por el componente padre (DashboardAllView)
+    idAsesor: {
+      type: [Number, null] as PropType<number | null>,
+      default: null,
+    },
   },
 
   setup(props) {
@@ -93,6 +100,7 @@ const busquedaCliente = ref('');
         const filtro = {
           fechaInicio: props.fechaInicio || null,
           fechaFin: props.fechaFin || null,
+          idAsesor: props.idAsesor ?? null,
         };
 
         const [
@@ -416,6 +424,7 @@ const busquedaCliente = ref('');
       () => [
         props.fechaInicio,
         props.fechaFin,
+        props.idAsesor,
       ],
       () => {
         cargarDashboard();

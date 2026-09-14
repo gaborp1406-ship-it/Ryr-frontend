@@ -4,6 +4,7 @@ import {
   onMounted,
   ref,
   watch,
+  type PropType,
 } from 'vue';
 import {
   obtenerContactoPorAsesorDashboard,
@@ -145,6 +146,12 @@ export default defineComponent({
       type: String,
       default: null,
     },
+
+    // Asesor controlado por el componente padre (DashboardAllView)
+    idAsesor: {
+      type: [Number, null] as PropType<number | null>,
+      default: null,
+    },
   },
 
   setup(props) {
@@ -189,21 +196,25 @@ export default defineComponent({
           obtenerContactoPorAsesorDashboard({
             fechaInicio: props.fechaInicio,
             fechaFin: props.fechaFin,
+            idAsesor: props.idAsesor,
           }),
 
           obtenerRangosContactoDashboard({
             fechaInicio: props.fechaInicio,
             fechaFin: props.fechaFin,
+            idAsesor: props.idAsesor,
           }),
 
           obtenerResumenContactoDashboard({
             fechaInicio: props.fechaInicio,
             fechaFin: props.fechaFin,
+            idAsesor: props.idAsesor,
           }),
 
           obtenerLeadsContactadosAsesorDashboard({
             fechaInicio: props.fechaInicio,
             fechaFin: props.fechaFin,
+            idAsesor: props.idAsesor,
           }),
         ]);
 
@@ -426,11 +437,11 @@ export default defineComponent({
 
 
     // ========================================================
-    // RECARGAR CUANDO CAMBIAN LAS FECHAS
+    // RECARGAR CUANDO CAMBIAN LAS FECHAS O EL ASESOR
     // ========================================================
 
     watch(
-      () => [props.fechaInicio, props.fechaFin],
+      () => [props.fechaInicio, props.fechaFin, props.idAsesor],
       () => {
         cargarDashboard();
       },

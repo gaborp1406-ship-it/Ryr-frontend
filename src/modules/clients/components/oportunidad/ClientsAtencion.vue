@@ -198,7 +198,7 @@
               'bg-indigo-50 text-indigo-600': item.tipo === 'email',
               'bg-amber-50 text-amber-600': item.tipo === 'llamada',
             }">
-              <IconWhatsapp v-if="item.tipo === 'whatsapp'" class="w-4 h-4" />
+              <IconWhatsapp v-if="item.tipo === 'whatsapp'" class="w-6 h-5" />
               <svg v-else-if="item.tipo === 'email'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" class="w-4 h-4">
                 <path d="M22 6 12 13 2 6" />

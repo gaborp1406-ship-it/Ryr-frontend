@@ -16,6 +16,9 @@ import {
   contarLeadsPorEtapa,
   contarLeadsPorFase,
 } from '../actions/home.actions';
+import { obtenerLeadsContactadosAsesorDashboard } from '../actions/dashboardContabilidad.js';
+import { useAuthStore } from '@/modules/auth/stores/auth.store.js';
+
 
 type DashboardTab =
   | 'general'
@@ -62,6 +65,11 @@ interface LeadAtendido {
   cantidad: number;
 }
 
+interface AsesorOpcion {
+  id_asesor: number;
+  asesor: string;
+}
+
 type ActividadGraficoKey =
   | 'visitas_pendientes'
   | 'videollamadas_pendientes'
@@ -96,6 +104,13 @@ export default defineComponent({
   },
 
   setup() {
+    // =========================================================
+    // AUTH STORE
+    // =========================================================
+    const authStore = useAuthStore();
+    const esAgent = computed(() => authStore.isAgent);
+    const idEmpleadoDelAgent = computed(() => authStore.idEmploye);
+
     const activeTab = ref<DashboardTab>('general');
 
     const tabs = [
@@ -134,6 +149,62 @@ export default defineComponent({
 
     const fechaInicio = ref<string>('');
     const fechaFin = ref<string>('');
+
+    // =========================================================
+    // FILTRO DE ASESOR
+    // =========================================================
+
+    // Se guarda como string porque así lo maneja el <select v-model>
+    const idAsesor = ref<string>('');
+
+    const asesores = ref<AsesorOpcion[]>([]);
+
+    const cargandoAsesores = ref(false);
+
+    // Valor numérico (o null) listo para pasar a las APIs / props
+    const idAsesorNumerico = computed<number | null>(() => {
+      if (!idAsesor.value) {
+        return null;
+      }
+
+      const valor = Number(idAsesor.value);
+
+      return Number.isInteger(valor) ? valor : null;
+    });
+
+    const cargarAsesores = async () => {
+      try {
+        cargandoAsesores.value = true;
+
+        const response =
+          await obtenerLeadsContactadosAsesorDashboard();
+
+        const lista = Array.isArray(response)
+          ? response
+          : [];
+
+        asesores.value = lista
+          .filter(
+            (x: any) =>
+              x?.id_asesor !== undefined &&
+              x?.id_asesor !== null,
+          )
+          .map((x: any) => ({
+            id_asesor: Number(x.id_asesor),
+            asesor: String(x.asesor ?? `Asesor ${x.id_asesor}`),
+          }))
+          .sort((a: AsesorOpcion, b: AsesorOpcion) =>
+            a.asesor.localeCompare(b.asesor),
+          );
+      } catch (error) {
+        console.error(
+          'Error al cargar la lista de asesores:',
+          error,
+        );
+      } finally {
+        cargandoAsesores.value = false;
+      }
+    };
 
     // =========================================================
     // ESTADOS
@@ -666,34 +737,40 @@ export default defineComponent({
         const fin =
           fechaFin.value || null;
 
+        const asesor = idAsesorNumerico.value;
+
         const [
           etapasResponse,
           actividadesResponse,
           desistimientosResponse,
           atendidosResponse,
         ] = await Promise.all([
-          // FECHA
+          // FECHA + ASESOR
           contarLeadsPorEtapa({
             fechaInicio: inicio,
             fechaFin: fin,
+            idAsesor: asesor,
           }),
 
-          // ACTIVIDADES
+          // ACTIVIDADES + ASESOR
           contarActividadesDashboard({
             fechaInicio: inicio,
             fechaFin: fin,
+            idAsesor: asesor,
           }),
-          // FECHA
+          // FECHA + ASESOR
           contarDesistimientosDashboard(
             desistimientoEtapa.value,
             inicio,
             fin,
+            asesor,
           ),
 
-          // FECHA
+          // FECHA + ASESOR
           contarLeadsAtendidosDashboard({
             fechaInicio: inicio,
             fechaFin: fin,
+            idAsesor: asesor,
           }),
         ]);
 
@@ -750,7 +827,7 @@ export default defineComponent({
     };
 
     // =========================================================
-    // APLICAR FILTRO DE FECHAS
+    // APLICAR FILTRO DE FECHAS / ASESOR
     // =========================================================
 
     const aplicarFiltroFechas = async () => {
@@ -772,6 +849,11 @@ export default defineComponent({
     const limpiarFiltroFechas = async () => {
       fechaInicio.value = '';
       fechaFin.value = '';
+      
+      // ✅ Si es agent, mantiene su ID. Si no, limpia.
+      if (!esAgent.value) {
+        idAsesor.value = '';
+      }
 
       await cargarDashboard();
     };
@@ -795,6 +877,7 @@ export default defineComponent({
               null,
               fechaFin.value ||
               null,
+              idAsesorNumerico.value,
             );
 
           desistimientos.value =
@@ -814,6 +897,15 @@ export default defineComponent({
     // =========================================================
 
     onMounted(() => {
+      // ✅ SI ES AGENT: ASIGNA SU ID AUTOMÁTICAMENTE
+      if (esAgent.value) {
+        idAsesor.value = String(idEmpleadoDelAgent.value);
+      } else {
+        // ✅ SI NO ES AGENT: CARGA LA LISTA DE ASESORES
+        cargarAsesores();
+      }
+
+      // ✅ CARGA EL DASHBOARD (con el ID del agent si aplica)
       cargarDashboard();
     });
 
@@ -824,11 +916,20 @@ export default defineComponent({
       kpis,
       cargando,
 
+      // ✅ RETORNA PARA SABER SI ES AGENT EN EL TEMPLATE
+      esAgent,
+
       // Filtro fechas
       fechaInicio,
       fechaFin,
       aplicarFiltroFechas,
       limpiarFiltroFechas,
+
+      // Filtro asesor
+      idAsesor,
+      idAsesorNumerico,
+      asesores,
+      cargandoAsesores,
 
       // Etapas
       leadsPorEtapa:
@@ -851,10 +952,6 @@ export default defineComponent({
       obtenerMaximoActividad,
 
       // Desistimientos
-      // =========================================================
-      // DESISTIMIENTOS
-      // =========================================================
-
       desistimientoEtapa,
       desistimientosFiltrados,
       totalDesistimientos,

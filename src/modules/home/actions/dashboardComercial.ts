@@ -7,6 +7,7 @@ import { isAxiosError } from 'axios';
 interface IFiltroFechasDashboard {
   fechaInicio?: string | null;
   fechaFin?: string | null;
+  idAsesor?: number | null;
 }
 // ============================================================
 // 1. CONTAR LEADS EN CIERRE
@@ -19,9 +20,10 @@ interface IFiltroFechasDashboard {
 export const contarLeadsCierreDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -29,6 +31,10 @@ export const contarLeadsCierreDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(
@@ -67,9 +73,10 @@ export const contarLeadsCierreDashboard = async ({
 export const contarTotalLeadsDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -77,6 +84,10 @@ export const contarTotalLeadsDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(
@@ -116,9 +127,10 @@ export const contarTotalLeadsDashboard = async ({
 export const contarCierresPorProyectoDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -126,6 +138,10 @@ export const contarCierresPorProyectoDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(
@@ -165,9 +181,10 @@ export const contarCierresPorProyectoDashboard = async ({
 export const contarCierresPorFuenteDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -175,6 +192,10 @@ export const contarCierresPorFuenteDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(
@@ -214,9 +235,10 @@ export const contarCierresPorFuenteDashboard = async ({
 export const contarCierresPorAsesorDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -224,6 +246,10 @@ export const contarCierresPorAsesorDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(
@@ -262,9 +288,10 @@ export const contarCierresPorAsesorDashboard = async ({
 export const contarTotalLeadsPorFuenteDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -272,6 +299,10 @@ export const contarTotalLeadsPorFuenteDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(
@@ -313,9 +344,10 @@ export const contarTotalLeadsPorFuenteDashboard = async ({
 export const contarTasaCierreDashboard = async ({
   fechaInicio,
   fechaFin,
+  idAsesor,
 }: IFiltroFechasDashboard = {}) => {
   try {
-    const params: Record<string, string> = {};
+    const params: Record<string, string | number> = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -323,6 +355,10 @@ export const contarTasaCierreDashboard = async ({
 
     if (fechaFin) {
       params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
     }
 
     const { data } = await automatizateApiNest.get(

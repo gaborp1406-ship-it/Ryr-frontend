@@ -12,7 +12,7 @@
                             </svg>
                         </div>
                         <h3 class="text-sm font-semibold text-slate-900 uppercase tracking-wide">
-                            Reunión por WhatsApp
+                            WhatsApp
                         </h3>
                     </div>
 
@@ -26,7 +26,7 @@
                 <div class="px-6 py-6 space-y-4">
 
                     <p class="text-sm text-slate-500">
-                        Registra la fecha y hora en que se realizó la reunión por WhatsApp.
+                        Registra la fecha y hora en que se realizó el mensaje por WhatsApp.
                     </p>
 
                     <div class="grid grid-cols-2 gap-3">

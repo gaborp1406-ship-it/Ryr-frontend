@@ -45,7 +45,7 @@
         <span class="profile-menu__name">{{ authStore.username }}</span>
       </a>
 
-      <div class="notif-bell" ref="notifRef "v-if="authStore.isAgent">
+      <div class="notif-bell" ref="notifRef">
         <button type="button" class="notif-bell__trigger" @click="toggleNotificaciones"
           aria-label="Notificaciones de leads">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -115,7 +115,7 @@ import {
   eliminarTodasNotificacion,
   listarNotificaciones,
   marcarNotificacionLeida,
-  
+
 } from '@/modules/leads/actions/notificaciones.action';
 
 interface Parametros {
@@ -237,13 +237,17 @@ async function abrirNotificacion(notif: INotificacion) {
     router.push(`/clients/details/${notif.id_lead}`);
     return;
   }
+  if (notif.titulo === 'Cliente preguntando nuevamente') {
+  router.push(`/clients/details/${notif.id_lead}`);
+  return;
+}
 
-  // Caso general: como antes
-  if (router.currentRoute.value.path === '/clients') {
-    eventBus.emit('refrescar-leads', notif.id_lead);
-  } else {
-    router.push('/clients');
-  }
+// Caso general: como antes
+if (router.currentRoute.value.path === '/clients') {
+  eventBus.emit('refrescar-leads', notif.id_lead);
+} else {
+  router.push('/clients');
+}
 }
 
 async function borrarNotificacion(notif: INotificacion, event: MouseEvent) {

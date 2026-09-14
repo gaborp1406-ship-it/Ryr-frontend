@@ -182,10 +182,6 @@ const onLogin = async () => {
     toast.error(resp.message);
     return;
   }
-  if (authStore.isAgent) {
-    await router.push({ name: 'clients' });
-    return;
-  }
 
   await router.push({ name: 'homeDashboardAll' });
 };
