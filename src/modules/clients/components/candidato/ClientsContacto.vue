@@ -47,25 +47,31 @@
         </div>
 
         <!-- Card: Historial de estados (posee toda la lógica de fetch de historial) -->
-        <ClientsContactoHistorial v-if="idEstadoContacto" ref="historialRef" :id-lead="idLead"
-            :id-estado-contacto="idEstadoContacto" :id-etapa="idEtapa" />
+      <ClientsContactoHistorial
+  v-if="idEstadoContacto"
+  ref="historialRef"
+  :id-lead="idLead"
+  :id-estado-contacto="idEstadoContacto"
+  :id-etapa="idEtapa"
+  @total-actualizado="onTotalHistorialActualizado"
+/>
 
         <!-- Card: Historial de mensajes -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
             <div class="flex items-center gap-2 px-6 py-5 border-b border-slate-100">
                 <span class="w-1.5 h-1.5 rounded-full bg-[#2d8c4a]"></span>
                 <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wide">
-                    Historial de Mensajes
+                    Historial de comentarios
                 </h2>
             </div>
 
             <div class="px-6 py-6 space-y-3">
                 <textarea v-model="nuevoMensaje" rows="4" placeholder="Escribe un mensaje..."
-                    :disabled="enviandoMensaje"
-                    class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none disabled:opacity-60"></textarea>
+                    :disabled="enviandoMensaje || !puedeInteractuar"
+                    class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none disabled:opacity-60 disabled:cursor-not-allowed"></textarea>
                 <div class="flex justify-end">
                     <button v-if="puedeContactar" @click="enviarMensaje"
-                        :disabled="enviandoMensaje || !nuevoMensaje.trim()"
+                        :disabled="enviandoMensaje || !nuevoMensaje.trim() || !puedeInteractuar"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg v-if="enviandoMensaje" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"
                             fill="none">
@@ -141,20 +147,22 @@
 
             <div v-else class="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex flex-wrap gap-2">
-                    <button v-if="puedeContactar" @click="abrirModalWhatsapp"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">
+                    <button v-if="puedeContactar" @click="abrirModalWhatsapp" :disabled="!puedeInteractuar"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
+
                         <IconWhatsapp class="w-6 h-6" /> WhatsApp
                     </button>
-                    <button v-if="puedeContactar" @click="abrirModalEmail"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">
+                    <button v-if="puedeContactar" @click="abrirModalEmail" :disabled="!puedeInteractuar"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <path d="M22 6 12 13 2 6" />
                             <path d="M2 6h20v12H2z" />
                         </svg>
                         Email
                     </button>
-                    <button v-if="puedeContactar" :disabled="cargandoTelefono" @click="abrirModalLlamada"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button v-if="puedeContactar" :disabled="cargandoTelefono || !puedeInteractuar"
+                        @click="abrirModalLlamada"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
                             <path
@@ -167,7 +175,8 @@
 
                     <!-- Solo aparece si estado es FALSE -->
                     <button v-if="!estadoContacto && puedeContactar" @click="abrirModalDesistio"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors duration-200">
+                        :disabled="!puedeInteractuar"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-50">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <circle cx="12" cy="12" r="9" />
                             <path d="M9 9l6 6M15 9l-6 6" />
@@ -179,8 +188,8 @@
 
                     <!-- Solo aparece si estado es FALSE -->
                     <button v-if="!estadoContacto && puedeContactar" @click="agendarReunion"
-                        :disabled="historialMensajes.length === 0"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        :disabled="!puedeAgendarReunion || !puedeInteractuar"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-900">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <rect x="3" y="4" width="18" height="18" rx="2" />
                             <path d="M16 2v4M8 2v4M3 10h18" />

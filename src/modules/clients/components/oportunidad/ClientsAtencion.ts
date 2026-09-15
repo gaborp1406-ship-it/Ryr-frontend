@@ -20,6 +20,7 @@ import { finalizarEtapaAtencion } from "../../actions/clients.atencion.action";
 import { useSipPhone } from "./atencion/llamada/composables/useSipPhone";
 import { useLlamadaSaliente } from "./atencion/llamada/composables/useLlamadaSaliente";
 import { conectarEventosLlamada } from "./atencion/llamada/actions/Gestioninteraction.action";
+import { obtenerEtapaActualLead } from "../../actions/clients.action";
 
 const ITEMS_POR_PAGINA = 3;
 
@@ -43,7 +44,62 @@ export default defineComponent({
   setup(props, { emit }) {
     const toast = useToast();
     const authStore = useAuthStore();
+    const etapaActual = ref<number | null>(null);
+    const cargandoEtapa = ref(true);
+    const etapaActualRealizada = ref<boolean>(false);
+    const ETAPAS_BLOQUEO_TOTAL = [8];
+    const ETAPAS_BLOQUEO_SI_REALIZADA = [7];
 
+    const etapaBloqueada = computed(() => {
+      const etapa = Number(etapaActual.value);
+      if (ETAPAS_BLOQUEO_TOTAL.includes(etapa)) return true;
+      if (ETAPAS_BLOQUEO_SI_REALIZADA.includes(etapa) && etapaActualRealizada.value) return true;
+      return false;
+    });
+
+    const puedeInteractuar = computed(() => {
+      if (cargandoEtapa.value) return false;
+      if (etapaActual.value === null) return false;
+
+      return !etapaBloqueada.value;
+    });
+    const cargarEtapaActual = async () => {
+      cargandoEtapa.value = true;
+
+      try {
+        const respuesta: any = await obtenerEtapaActualLead(
+          Number(props.idLead)
+        );
+
+        let etapaActualId: number | null = null;
+        let realizada = false;
+
+        if (Array.isArray(respuesta)) {
+          const etapaActualEncontrada = respuesta.find(
+            (etapa: any) => etapa.estado_actual === true
+          );
+
+          if (etapaActualEncontrada) {
+            etapaActualId = Number(etapaActualEncontrada.id_etapa);
+            realizada = Boolean(etapaActualEncontrada.realizada); // 👈 nuevo
+          }
+        } else if (respuesta?.id_etapa != null) {
+          etapaActualId = Number(respuesta.id_etapa);
+          realizada = Boolean(respuesta.realizada); // 👈 nuevo
+        }
+
+        etapaActual.value = etapaActualId;
+        etapaActualRealizada.value = realizada; // 👈 nuevo
+
+        console.log("Etapa REAL Atención:", etapaActual.value, "Realizada:", etapaActualRealizada.value);
+      } catch (error) {
+        console.error("Error cargando etapa actual:", error);
+        etapaActual.value = null;
+        etapaActualRealizada.value = false; // 👈 nuevo
+      } finally {
+        cargandoEtapa.value = false;
+      }
+    };
     // Composables de datos
     const reunion = useReunionData(props.idLead);
     const reprogramacion = useReprogramacion(props.idLead);
@@ -67,6 +123,40 @@ export default defineComponent({
 
     const modalLlamadaAbierto = ref(false);
 
+
+    const micSilenciado = ref(false);
+    const altavozSilenciado = ref(false);
+    const remoteAudioRef = ref<HTMLAudioElement | null>(null);
+
+    // ✅ AGREGAR ESTOS MÉTODOS
+    const toggleMicrophone = async () => {
+      try {
+        if (remoteAudioRef.value) {
+          const audioTracks = remoteAudioRef.value.srcObject ?
+            (remoteAudioRef.value.srcObject as MediaStream).getAudioTracks() : [];
+
+          audioTracks.forEach(track => {
+            track.enabled = micSilenciado.value;
+          });
+          micSilenciado.value = !micSilenciado.value;
+          toast.info(micSilenciado.value ? "🔇 Micrófono silenciado" : "🔊 Micrófono activado");
+        }
+      } catch (error) {
+        console.error("Error al silenciar micrófono:", error);
+      }
+    };
+
+    const toggleSpeaker = () => {
+      try {
+        if (remoteAudioRef.value) {
+          remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
+          altavozSilenciado.value = !altavozSilenciado.value;
+          toast.info(altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado");
+        }
+      } catch (error) {
+        console.error("Error al silenciar altavoz:", error);
+      }
+    };
     watch(estadoLlamada, (nuevoEstado, estadoAnterior) => {
       if (nuevoEstado === "idle" && estadoAnterior !== "idle") {
         modalLlamadaAbierto.value = false;
@@ -158,7 +248,19 @@ export default defineComponent({
       return reunion.historialReuniones.value.slice(inicio, inicio + ITEMS_POR_PAGINA);
     });
     const puedeNegociar = computed(() => {
-      return reunion.estado.value !== true; // se oculta cuando estado === true
+      const estadoReunion = Number(
+        (reunion.reunion.value as any)?.estado
+      );
+
+      const tieneHistorialContacto =
+        Array.isArray(reunion.historialContacto.value) &&
+        reunion.historialContacto.value.length > 0;
+
+      return (
+        reunion.estado.value !== true &&
+        estadoReunion === 14 &&
+        tieneHistorialContacto
+      );
     });
     const paginasVisiblesReuniones = computed(() => {
       const total = totalPaginasReuniones.value;
@@ -213,27 +315,27 @@ export default defineComponent({
       });
     }
 
-  async function onConfirmarDesistimiento(
-  motivo: number,
-  motivo_otro?: string
-) {
-  desistimiento.motivoSeleccionado.value = motivo;
+    async function onConfirmarDesistimiento(
+      motivo: number,
+      motivo_otro?: string
+    ) {
+      desistimiento.motivoSeleccionado.value = motivo;
 
-  await desistimiento.confirmar({
-    motivo_otro,
-    onSuccess: async () => {
-      await reunion.cargarInfoEstadoReunion();
+      await desistimiento.confirmar({
+        motivo_otro,
+        onSuccess: async () => {
+          await reunion.cargarInfoEstadoReunion();
 
-      await Promise.all([
-        reunion.cargarReunion(),
-        reunion.cargarHistorialContacto(),
-        reunion.cargarHistorialReuniones(),
-      ]);
+          await Promise.all([
+            reunion.cargarReunion(),
+            reunion.cargarHistorialContacto(),
+            reunion.cargarHistorialReuniones(),
+          ]);
 
-      emit("etapa-finalizada");
-    },
-  });
-}
+          emit("etapa-finalizada");
+        },
+      });
+    }
     async function marcarComoRealizada() {
       await finalizarActividadState.confirmar(reunion.reunion.value, {
         onSuccess: async () => {
@@ -289,6 +391,7 @@ export default defineComponent({
     }
 
     onMounted(async () => {
+      await cargarEtapaActual();
       await Promise.all([
         reunion.cargarInfoEstadoReunion(),
         reunion.cargarReunion(),
@@ -398,6 +501,8 @@ export default defineComponent({
       const s = Math.floor(seconds % 60);
       return `${m}:${s.toString().padStart(2, '0')}`;
     }
+
+
     onUnmounted(() => {
       if (eventSource.value) {
         eventSource.value.close();
@@ -456,8 +561,13 @@ export default defineComponent({
       irPaginaAnterior,
       irPaginaSiguiente,
       irAPagina,
-
+      puedeInteractuar,
       modalEvidenciaVisible,
+      micSilenciado,
+      altavozSilenciado,
+      toggleMicrophone,
+      toggleSpeaker,
+      remoteAudioRef,
       evidenciaUrlActual,
       tipoEvidenciaActual,
       abrirEvidencia,

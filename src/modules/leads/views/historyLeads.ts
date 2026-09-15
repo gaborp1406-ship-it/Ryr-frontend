@@ -2,6 +2,7 @@ import { defineComponent, ref, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 
+import { useRouter } from 'vue-router';
 import type {
   ILeadPorEtapaActual,
 
@@ -29,7 +30,14 @@ export default defineComponent({
     // =========================================================
     // FILTROS
     // =========================================================
+const router = useRouter();
 
+const verLead = (idLead: number) => {
+  router.push({
+    name: 'client-details',
+    params: { id: idLead },
+  });
+};
     const idAsesorSeleccionado = ref<number | undefined>(undefined);
 
     const fechaInicio = ref<string>('');
@@ -174,7 +182,7 @@ export default defineComponent({
 
       leads,
       asesores,
-
+verLead,
       cargandoLeads,
       cargandoAsesores,
       reabriendoId,

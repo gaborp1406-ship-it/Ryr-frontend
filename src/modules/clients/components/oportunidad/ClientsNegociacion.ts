@@ -7,7 +7,7 @@ import {
   obtenerChecklistNegociacion,
 } from "../../actions/clientsNegociacion";
 import type { IListarOpcionesResponse } from "../../interfaces/clients.interface";
-import { listarOpciones } from "../../actions/clients.action";
+import { listarOpciones, obtenerEtapaActualLead } from "../../actions/clients.action";
 import { finalizarEtapaOportunidadDesistio } from "../../actions/clients.atencion.action";
 import Swal from "sweetalert2";
 import { useAuthStore } from "@/modules/auth/stores/auth.store";
@@ -50,6 +50,52 @@ export default defineComponent({
     const idEtapaNegociacion = ref<number | null>(null);
     const seleccionandoTipoCredito = ref(false);
     const guardandoTipoCredito = ref(false);
+
+    const etapaActual = ref<number | null>(null);
+    const cargandoEtapa = ref(true);
+
+    const etapaBloqueada = computed(() => {
+      return [7,8].includes(Number(etapaActual.value));
+    });
+
+    const puedeInteractuar = computed(() => {
+      if (cargandoEtapa.value) return false;
+      if (etapaActual.value === null) return false;
+
+      return !etapaBloqueada.value;
+    });
+    const cargarEtapaActual = async () => {
+      cargandoEtapa.value = true;
+
+      try {
+        const respuesta: any = await obtenerEtapaActualLead(
+          Number(props.idLead)
+        );
+
+        let etapaActualId: number | null = null;
+
+        if (Array.isArray(respuesta)) {
+          const etapaActualEncontrada = respuesta.find(
+            (etapa: any) => etapa.estado_actual === true
+          );
+
+          if (etapaActualEncontrada) {
+            etapaActualId = Number(etapaActualEncontrada.id_etapa);
+          }
+        } else if (respuesta?.id_etapa != null) {
+          etapaActualId = Number(respuesta.id_etapa);
+        }
+
+        etapaActual.value = etapaActualId;
+
+        console.log("Etapa REAL Atención:", etapaActual.value);
+      } catch (error) {
+        console.error("Error cargando etapa actual:", error);
+        etapaActual.value = null;
+      } finally {
+        cargandoEtapa.value = false;
+      }
+    };
     const TIPOS_CREDITO = {
       HIPOTECARIO: 35,
       DIRECTO: 34,
@@ -140,6 +186,14 @@ export default defineComponent({
         flujoCompletado.value
       );
     });
+
+    const mostrarAcciones2 = computed(() => {
+      return (
+        checklistData.value?.estado !== true &&
+        tieneTipoCredito.value
+      );
+    });
+
     const aprobacionBancaria = computed(() =>
       pasos.value.find((p) => p.id === "aprobacion_bancaria")
     );
@@ -180,9 +234,9 @@ export default defineComponent({
     const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
 
-      const authStore = useAuthStore();
-        const puedeContactar = computed(() => authStore.isAgent);
-     
+    const authStore = useAuthStore();
+    const puedeContactar = computed(() => authStore.isAgent);
+
     async function abrirModalDesistio() {
       mostrarModalDesistio.value = true;
       motivoSeleccionado.value = null;
@@ -268,8 +322,7 @@ export default defineComponent({
 
     const completados = computed(() => {
       if (esCreditoContado.value) {
-        // Crédito al contado no tiene pasos: se considera completo
-        // al seleccionarlo, por lo que se muestra 1/1.
+
         return 1;
       }
 
@@ -320,8 +373,6 @@ export default defineComponent({
       }
 
       if (esCreditoContado.value) {
-        // No tiene pasos: queda listo de inmediato para
-        // pasar a cierre o marcar como desistido.
         return true;
       }
 
@@ -330,11 +381,26 @@ export default defineComponent({
       }
 
       if (esCreditoHipotecario.value) {
+        const tienePrecalificacion =
+          precalificacion.value?.completado === true;
+
+        const tieneCarta =
+          cartaAprobacion.value?.completado === true;
+
+        const cartaAprobada =
+          checklistData.value.carta_aprobacion_aprobado === true;
+
+        const cartaDenegada =
+          checklistData.value.carta_aprobacion_denegado === true;
+
+        // Si la carta fue DENEGADA, nunca puede pasar a cierre
+        if (cartaDenegada) {
+          return false;
+        }
+
         return (
           proforma.value?.completado === true &&
-          precalificacion.value?.completado === true &&
-          docsBanco.value.completado === true &&
-          cartaAprobacion.value?.completado === true
+          (tienePrecalificacion || (tieneCarta && cartaAprobada))
         );
       }
 
@@ -424,6 +490,7 @@ export default defineComponent({
         errores.value = "No se encontró el ID de la etapa de negociación.";
         return;
       }
+      if (!idLeadEtapa.value) return;
 
       const archivo = input.files[0];
 
@@ -433,25 +500,32 @@ export default defineComponent({
 
         const base64 = await archivoABase64(archivo);
 
+        // 1. Subir documento
         await actualizarDocumentoNegociacion({
           id: idEtapaNegociacion.value,
           campo,
           archivo: base64,
         });
 
+
+        if (campo === "url_precalificacion") {
+          await actualizarChecklistNegociacion({
+            id_lead_etapa: idLeadEtapa.value,
+            campo: "aprobacion_bancaria_precalififacion",
+            valor: true,
+          });
+        }
+
         await cargarChecklist();
 
       } catch (error) {
-
         errores.value =
           error instanceof Error
             ? error.message
             : "Error al subir el documento.";
 
         console.error("Error subiendo documento:", error);
-
       } finally {
-
         actualizando.value = false;
         input.value = "";
       }
@@ -459,9 +533,6 @@ export default defineComponent({
     function sincronizarDatos(data: IChecklistNegociacion) {
       const tipoCredito = Number(data.tipo_credito);
 
-      // ==========================================
-      // PROFORMA
-      // ==========================================
 
       if (proforma.value) {
         proforma.value.completado = data.proforma_enviada;
@@ -470,38 +541,30 @@ export default defineComponent({
           : null;
       }
 
-      // ==========================================
-      // CRÉDITO HIPOTECARIO
-      // ==========================================
 
       if (tipoCredito === TIPOS_CREDITO.HIPOTECARIO) {
-        // ----------------------------------------
-        // APROBACIÓN BANCARIA
-        // ----------------------------------------
+
 
         if (aprobacionBancaria.value) {
+
           aprobacionBancaria.value.bloqueado =
             !data.proforma_enviada;
 
           aprobacionBancaria.value.completado =
-            data.aprobacion_bancaria_precalififacion &&
-            data.aprobacion_bancaria_carta_aprobacion &&
+            data.aprobacion_bancaria_precalififacion === true &&
+            data.aprobacion_bancaria_carta_aprobacion === true &&
             (
-              data.carta_aprobacion_aprobado ||
-              data.carta_aprobacion_denegado
+              data.carta_aprobacion_aprobado === true ||
+              data.carta_aprobacion_denegado === true
             );
         }
 
-        // ----------------------------------------
-        // PRECALIFICACIÓN
-        // ----------------------------------------
-
         if (precalificacion.value) {
           precalificacion.value.completado =
-            data.aprobacion_bancaria_precalififacion;
+            data.aprobacion_bancaria_precalififacion === true;
 
           precalificacion.value.fecha =
-            data.aprobacion_bancaria_precalififacion
+            precalificacion.value.completado
               ? formatearFecha()
               : null;
 
@@ -509,27 +572,21 @@ export default defineComponent({
             !data.proforma_enviada;
         }
 
-        // ----------------------------------------
-        // CARTA DE APROBACIÓN
-        // ----------------------------------------
 
         if (cartaAprobacion.value) {
           cartaAprobacion.value.completado =
-            data.carta_aprobacion_aprobado ||
-            data.carta_aprobacion_denegado;
+            data.carta_aprobacion_aprobado === true ||
+            data.carta_aprobacion_denegado === true;
 
           cartaAprobacion.value.fecha =
             cartaAprobacion.value.completado
               ? formatearFecha()
               : null;
 
-          cartaAprobacion.value.bloqueado =
-            !data.aprobacion_bancaria_precalififacion;
-        }
 
-        // ----------------------------------------
-        // DECISIÓN
-        // ----------------------------------------
+          cartaAprobacion.value.bloqueado =
+            !data.proforma_enviada;
+        }
 
         if (data.carta_aprobacion_aprobado) {
           decision.value = "Aprobación";
@@ -539,20 +596,20 @@ export default defineComponent({
           decision.value = null;
         }
 
-        // ----------------------------------------
-        // ENVÍO DE DOCUMENTOS AL BANCO
-        // ----------------------------------------
-
         docsBanco.value.completado =
-          data.aprobacion_bancaria_carta_aprobacion;
+          data.aprobacion_bancaria_carta_aprobacion === true;
 
         docsBanco.value.fecha =
-          data.aprobacion_bancaria_carta_aprobacion
+          docsBanco.value.completado
             ? formatearFecha()
             : null;
 
+
         docsBanco.value.bloqueado =
-          !data.aprobacion_bancaria_precalififacion;
+          !(
+            data.url_carta_aprobacion &&
+            String(data.url_carta_aprobacion).trim() !== ""
+          );
       }
 
       // ==========================================
@@ -673,10 +730,16 @@ export default defineComponent({
     }
 
     async function completarDocsBanco() {
-      if (docsBanco.value.bloqueado) return;
+      if (docsBanco.value.bloqueado) {
+        return;
+      }
 
       const nuevoValor = !docsBanco.value.completado;
-      await actualizarCampo("aprobacion_bancaria_carta_aprobacion", nuevoValor);
+
+      await actualizarCampo(
+        "aprobacion_bancaria_carta_aprobacion",
+        nuevoValor
+      );
     }
 
     async function registrarDecision(valor: "Aprobación" | "Denegación") {
@@ -840,6 +903,7 @@ export default defineComponent({
 
     onMounted(() => {
       cargarChecklist();
+      cargarEtapaActual(); // 👈 faltaba esto, si no, etapaActual nunca se carga
     });
 
     return {
@@ -847,6 +911,9 @@ export default defineComponent({
       errores,
       actualizando,
       checklistData,
+      puedeInteractuar,   // 👈 agregar
+      etapaBloqueada,     // 👈 agregar
+      cargandoEtapa,      // 👈 opcional, si quieres mostrar loading de etapa
       pasos,
       proforma,
       acuerdoDirecto,
@@ -874,9 +941,11 @@ export default defineComponent({
       registrarDecision,
       pasarACierre,
       mostrarAcciones,
+      mostrarAcciones2,
       subirDocumento,
       mostrarModalDesistio,
       opcionesDesistio,
+     
       motivoSeleccionado,
       cargandoOpciones,
       actualizarCampo,

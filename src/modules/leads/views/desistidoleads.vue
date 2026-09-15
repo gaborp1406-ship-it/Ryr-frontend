@@ -23,7 +23,7 @@
 
         <!-- FECHA INICIO -->
         <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             Fecha inicio
           </label>
 
@@ -33,7 +33,7 @@
 
         <!-- FECHA FIN -->
         <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             Fecha fin
           </label>
 

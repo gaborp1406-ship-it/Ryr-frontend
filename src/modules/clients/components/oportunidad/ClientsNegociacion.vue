@@ -171,7 +171,7 @@
             <!-- DIRECTO -->
             <!-- ============================================= -->
             <button type="button" @click="seleccionarTipoCredito(TIPOS_CREDITO.DIRECTO)"
-              :disabled="guardandoTipoCredito"
+              :disabled="guardandoTipoCredito || !puedeInteractuar"
               class="group relative p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#2d8c4a] hover:shadow-md hover:bg-[#2d8c4a]/5 transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed">
 
               <div class="flex items-start gap-4">
@@ -218,7 +218,7 @@
             <!-- HIPOTECARIO -->
             <!-- ============================================= -->
             <button type="button" @click="seleccionarTipoCredito(TIPOS_CREDITO.HIPOTECARIO)"
-              :disabled="guardandoTipoCredito"
+              :disabled="guardandoTipoCredito || !puedeInteractuar"
               class="group relative p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#2d8c4a] hover:shadow-md hover:bg-[#2d8c4a]/5 transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed">
 
               <div class="flex items-start gap-4">
@@ -264,7 +264,7 @@
             <!-- AL CONTADO -->
             <!-- ============================================= -->
             <button type="button" @click="seleccionarTipoCredito(TIPOS_CREDITO.CONTADO)"
-              :disabled="guardandoTipoCredito"
+              :disabled="guardandoTipoCredito || !puedeInteractuar"
               class="group relative p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#2d8c4a] hover:shadow-md hover:bg-[#2d8c4a]/5 transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed">
 
               <div class="flex items-start gap-4">
@@ -382,7 +382,7 @@
             <!-- ============================================= -->
             <!-- PROFORMA -->
             <!-- ============================================= -->
-            <button type="button" @click="completarProforma" :disabled="actualizando"
+            <button type="button" @click="completarProforma" :disabled="actualizando || !puedeInteractuar"
               class="w-full flex items-center gap-3 px-4 py-4 rounded-xl border transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
               :class="proforma?.completado
                 ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
@@ -461,7 +461,7 @@
               <div v-if="proforma?.completado" class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                 <!-- DE ACUERDO -->
-                <button type="button" :disabled="actualizando"
+                <button type="button" :disabled="actualizando || !puedeInteractuar"
                   @click="actualizarCampo('proforma_enviada_decuerdo', true)"
                   class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all disabled:opacity-50"
                   :class="checklistData?.proforma_enviada_decuerdo
@@ -486,7 +486,7 @@
                 </button>
 
                 <!-- DESACUERDO -->
-                <button type="button" :disabled="actualizando"
+                <button type="button" :disabled="actualizando || !puedeInteractuar"
                   @click="actualizarCampo('proforma_enviada_descuerdo', true)"
                   class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all disabled:opacity-50"
                   :class="checklistData?.proforma_enviada_descuerdo
@@ -525,7 +525,7 @@
             <!-- ============================================= -->
             <!-- 1. PROFORMA -->
             <!-- ============================================= -->
-            <button type="button" @click="completarProforma" :disabled="actualizando"
+            <button type="button" @click="completarProforma" :disabled="actualizando || !puedeInteractuar"
               class="w-full flex items-center gap-3 px-4 py-4 rounded-xl border transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
               :class="proforma?.completado
                 ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
@@ -616,53 +616,48 @@
                   ">
 
                   <div class="flex items-center gap-3 px-4 py-3">
+                    <!-- ESTADO PRECALIFICACIÓN -->
+                    <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="precalificacion?.completado
+                      ? 'border-[#2d8c4a] bg-[#2d8c4a]'
+                      : 'border-slate-300 bg-white'
+                      ">
+                      <svg v-if="precalificacion?.completado" viewBox="0 0 24 24" fill="none" stroke="white"
+                        stroke-width="3" class="w-2.5 h-2.5">
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    </span>
 
-                    <button type="button" @click="completarPrecalificacion" :disabled="precalificacion?.bloqueado || actualizando
-                      "
-                      class="flex items-center gap-3 flex-1 min-w-0 text-left disabled:opacity-40 disabled:cursor-not-allowed">
-
-                      <span class="w-4 h-4 rounded-full border flex items-center justify-center shrink-0" :class="precalificacion?.completado
-                        ? 'border-[#2d8c4a] bg-[#2d8c4a]'
-                        : 'border-slate-300'
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium" :class="precalificacion?.completado
+                        ? 'text-[#2d8c4a]'
+                        : 'text-slate-700'
                         ">
+                        Precalificación
+                      </p>
 
-                        <svg v-if="precalificacion?.completado" viewBox="0 0 24 24" fill="none" stroke="white"
-                          stroke-width="3" class="w-2.5 h-2.5">
-                          <path d="M20 6 9 17l-5-5" />
-                        </svg>
-
-                      </span>
-
-                      <span>
-
-                        <p class="text-sm font-medium text-slate-700">
-                          Precalificación
-                        </p>
-
-
-                      </span>
-
-                    </button>
+                      <p class="text-xs text-slate-400 mt-0.5">
+                        {{
+                          precalificacion?.completado
+                            ? "Documento cargado"
+                            : "Sube el documento para completar este paso"
+                        }}
+                      </p>
+                    </div>
 
                     <!-- DOCUMENTO -->
                     <div class="flex items-center gap-2 shrink-0">
-
                       <a v-if="checklistData?.url_precalificacion" :href="checklistData.url_precalificacion"
                         target="_blank" rel="noopener noreferrer"
                         class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#2d8c4a] hover:bg-[#2d8c4a]/10">
-
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
                           <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
-
                         Ver
-
                       </a>
 
                       <label for="archivo-precalificacion"
                         class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-medium text-slate-600">
-
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
                           <path
                             d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95L9.53 18.72a2 2 0 0 1-2.83-2.83l7.78-7.78" />
@@ -673,7 +668,6 @@
                             ? "Reemplazar"
                             : "Subir"
                         }}
-
                       </label>
 
                       <input id="archivo-precalificacion" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp"
@@ -682,10 +676,8 @@
                             $event,
                             'url_precalificacion'
                           )
-                          " />
-
+                          " :disabled="!puedeInteractuar" />
                     </div>
-
                   </div>
 
                 </div>
@@ -760,7 +752,7 @@
 
                       </label>
 
-                      <input id="archivo-carta-aprobacion" type="file" class="hidden"
+                      <input id="archivo-carta-aprobacion" type="file" class="hidden" :disabled="!puedeInteractuar"
                         accept=".pdf,.jpg,.jpeg,.png,.webp" @change="
                           subirDocumento(
                             $event,
@@ -775,11 +767,9 @@
                   <!-- CONTENIDO -->
                   <div v-if="!cartaAprobacion?.bloqueado" class="p-4 space-y-3">
 
-                    <!-- ===================================== -->
-                    <!-- ENVÍO DE DOCUMENTOS -->
-                    <!-- ===================================== -->
-                    <button type="button" @click="completarDocsBanco" :disabled="docsBanco.bloqueado || actualizando
-                      "
+
+                    <button type="button" @click="completarDocsBanco"
+                      :disabled="docsBanco.bloqueado || actualizando || !puedeInteractuar"
                       class="w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       :class="docsBanco.completado
                         ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
@@ -820,7 +810,8 @@
                       </p>
 
                       <!-- APROBACIÓN -->
-                      <button type="button" @click="registrarDecision('Aprobación')" :disabled="actualizando"
+                      <button type="button" @click="registrarDecision('Aprobación')"
+                        :disabled="actualizando || !puedeInteractuar"
                         class="w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         :class="decision === 'Aprobación'
                           ? 'border-[#2d8c4a] bg-[#2d8c4a]/5'
@@ -859,7 +850,8 @@
                       </button>
 
                       <!-- DENEGACIÓN -->
-                      <button type="button" @click="registrarDecision('Denegación')" :disabled="actualizando"
+                      <button type="button" @click="registrarDecision('Denegación')"
+                        :disabled="actualizando || !puedeInteractuar"
                         class="w-full flex items-center gap-3 px-3 py-3 rounded-lg border text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         :class="decision === 'Denegación'
                           ? 'border-rose-500 bg-rose-50'
@@ -945,12 +937,13 @@
         <!-- ================================================= -->
         <!-- ACCIONES GENERALES -->
         <!-- ================================================= -->
-        <div v-if="mostrarAcciones && tieneTipoCredito" class="mt-6 pt-5 border-t border-slate-100">
+        <div v-if="tieneTipoCredito" class="mt-6 pt-5 border-t border-slate-100">
 
           <div class="flex flex-wrap gap-2 sm:justify-end">
 
             <!-- DESISTIÓ -->
-            <button v-if="puedeContactar" type="button" @click="abrirModalDesistio" :disabled="actualizando"
+            <button v-if="puedeContactar && mostrarAcciones2 && puedeInteractuar" type="button"
+              @click="abrirModalDesistio" :disabled="actualizando"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
@@ -963,7 +956,8 @@
             </button>
 
             <!-- PASAR A CIERRE -->
-            <button v-if="puedeContactar" type="button" @click="pasarACierre" :disabled="actualizando"
+            <button v-if="puedeContactar && mostrarAcciones && puedeInteractuar" type="button" @click="pasarACierre"
+              :disabled="actualizando"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">

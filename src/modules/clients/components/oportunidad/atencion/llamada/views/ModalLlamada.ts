@@ -21,6 +21,14 @@ export default defineComponent({
     const eventSource = ref<EventSource | null>(null);
     const { sipCredentials, sipRegistrado, conectarTelefono } = useSipPhone();
 
+    // ✅ AGREGAR: Estados para micrófono y altavoz
+    const micSilenciado = ref(false);
+    const altavozSilenciado = ref(false);
+
+    // ✅ AGREGAR: Referencias a elementos de audio
+    const remoteAudioRef = ref<HTMLAudioElement | null>(null);
+    const localStreamRef = ref<MediaStream | null>(null);
+
     const {
       currentCallId,
       isCalling,
@@ -32,9 +40,49 @@ export default defineComponent({
       makeCall: realizarLlamadaSaliente,
       hangup,
     } = useLlamadaSaliente();
+
     const modalLlamadaVisible = computed(() => {
       return estadoLlamada.value !== "idle";
     });
+
+    /**
+     * ✅ AGREGAR: Silenciar/reactivar micrófono
+     */
+    const toggleMicrophone = async () => {
+      try {
+        if (localStreamRef.value) {
+          localStreamRef.value.getAudioTracks().forEach(track => {
+            track.enabled = micSilenciado.value; // Si estaba silenciado, reactivar
+          });
+          micSilenciado.value = !micSilenciado.value;
+          
+          const mensaje = micSilenciado.value ? "🔇 Micrófono silenciado" : "🔊 Micrófono activado";
+          toast.info(mensaje);
+        }
+      } catch (error) {
+        console.error("❌ Error al silenciar micrófono:", error);
+        toast.error("Error al silenciar micrófono");
+      }
+    };
+
+    /**
+     * ✅ AGREGAR: Silenciar/reactivar altavoz
+     */
+    const toggleSpeaker = () => {
+      try {
+        if (remoteAudioRef.value) {
+          remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
+          altavozSilenciado.value = !altavozSilenciado.value;
+          
+          const mensaje = altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado";
+          toast.info(mensaje);
+        }
+      } catch (error) {
+        console.error("❌ Error al silenciar altavoz:", error);
+        toast.error("Error al silenciar altavoz");
+      }
+    };
+
     /**
      * INICIALIZAR: Conectar SIP al montar el componente
      */
@@ -53,6 +101,9 @@ export default defineComponent({
             procesarEventoLlamada
           );
         }
+
+        // ✅ AGREGAR: Obtener el elemento de audio remoto
+        remoteAudioRef.value = document.getElementById("remoteAudio") as HTMLAudioElement;
 
         toast.success("📱 Telefonía inicializada");
       } catch (error: any) {
@@ -82,11 +133,14 @@ export default defineComponent({
         return;
       }
 
+      // ✅ AGREGAR: Resetear estados de audio
+      micSilenciado.value = false;
+      altavozSilenciado.value = false;
+
       await realizarLlamadaSaliente(externalNumber, {
         agentExtension: sipCredentials.value.agentExtension,
         idTrabajador: authStore.idEmploye,
         id_etapa_lead: idEtapaLead,
-
       });
     };
 
@@ -94,6 +148,10 @@ export default defineComponent({
      * COLGAR LLAMADA
      */
     const handleHangup = async () => {
+      // ✅ AGREGAR: Limpiar estados de audio
+      micSilenciado.value = false;
+      altavozSilenciado.value = false;
+      
       await hangup();
     };
 
@@ -119,9 +177,15 @@ export default defineComponent({
       duracionSegundos,
       modalLlamadaVisible,
 
+      // ✅ AGREGAR: Estados de audio
+      micSilenciado,
+      altavozSilenciado,
+
       // Métodos
       makeCall,
       handleHangup,
+      toggleMicrophone,  // ✅ AGREGAR
+      toggleSpeaker,     // ✅ AGREGAR
     };
   },
 });

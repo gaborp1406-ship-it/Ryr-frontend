@@ -152,7 +152,6 @@
             <strong class="mt-[3px] text-[34px] font-bold leading-none tracking-[-0.04em]">{{ card.value }}</strong>
           </div>
 
-          <div class="mt-[12px] text-[11px] text-slate-400">{{ card.description }}</div>
         </div>
       </div>
 
@@ -204,7 +203,7 @@
                   stroke-linecap="round" />
               </svg>
             </div>
-            <span class="text-[14px] font-bold text-white">Candidatos</span>
+            <span class="text-[14px] font-bold text-white">Leads</span>
           </div>
 
           <div class="p-[20px]">
@@ -381,77 +380,38 @@
 
           <!-- GRÁFICO -->
           <div class="relative mt-[6px]">
-
-            <!-- ESCALA -->
-            <div class="absolute left-0 top-[5px] bottom-[25px] flex w-[26px] flex-col justify-between">
-
-              <span v-for="valor in obtenerEscalaActividad(
-                grafico.tipo,
-                grafico.estado
-              )" :key="valor" class="text-[10px] leading-none text-slate-400">
-                {{ valor }}
-              </span>
-
-            </div>
-
             <!-- SVG -->
-            <div class="ml-[33px]">
+            <div class="ml-[20px]">
+<svg viewBox="0 0 300 105" preserveAspectRatio="none" class="h-[130px] w-full">
 
-              <svg viewBox="0 0 300 145" preserveAspectRatio="none" class="h-[130px] w-full">
+  <!-- LÍNEAS DE REFERENCIA -->
+  <line v-for="(valor, index) in obtenerEscalaActividad(grafico.tipo, grafico.estado)"
+    :key="`line-${grafico.key}-${valor}`"
+    x1="0" x2="300"
+    :y1="22 + index * (73 / Math.max(obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1, 1))"
+    :y2="22 + index * (73 / Math.max(obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1, 1))"
+    stroke="#e5e7eb" stroke-width="1" />
 
-                <!-- LÍNEAS HORIZONTALES -->
+  <!-- LÍNEA DEL GRÁFICO -->
+  <polyline :points="obtenerPuntosActividad(grafico.tipo, grafico.estado)"
+    fill="none" :stroke="grafico.color" stroke-width="2.5"
+    stroke-linecap="round" stroke-linejoin="round" />
 
-                <line v-for="(valor, index) in obtenerEscalaActividad(
-                  grafico.tipo,
-                  grafico.estado
-                )" :key="`line-${grafico.key}-${valor}`" x1="0" x2="300" :y1="8 +
-                  index *
-                  (
-                    97 /
-                    Math.max(
-                      obtenerEscalaActividad(
-                        grafico.tipo,
-                        grafico.estado
-                      ).length - 1,
-                      1
-                    )
-                  )
-                  " :y2="8 +
-                    index *
-                    (
-                      97 /
-                      Math.max(
-                        obtenerEscalaActividad(
-                          grafico.tipo,
-                          grafico.estado
-                        ).length - 1,
-                        1
-                      )
-                    )
-                    " stroke="#e5e7eb" stroke-width="1" />
+  <!-- PUNTOS + NÚMERO ARRIBA -->
+  <g v-for="(punto, index) in obtenerPuntosCirculosActividad(grafico.tipo, grafico.estado)" :key="index">
+    <circle :cx="punto.x" :cy="punto.y" r="4" :fill="grafico.color"
+      class="cursor-pointer transition-all duration-150 hover:opacity-80">
+      <title>{{ punto.dia }}: {{ punto.cantidad }}</title>
+    </circle>
 
-                <!-- LÍNEA DEL GRÁFICO -->
+    <text :x="punto.x" :y="punto.y - 10"
+      text-anchor="middle" font-size="10" font-weight="700"
+      :fill="grafico.color">
+      {{ punto.cantidad }}
+    </text>
+  </g>
 
-                <polyline :points="obtenerPuntosActividad(
-                  grafico.tipo,
-                  grafico.estado
-                )
-                  " fill="none" :stroke="grafico.color" stroke-width="2.5" stroke-linecap="round"
-                  stroke-linejoin="round" />
-
-                <!-- PUNTOS -->
-
-                <circle v-for="(punto, index) in obtenerPuntosCirculosActividad(
-                  grafico.tipo,
-                  grafico.estado
-                )" :key="index" :cx="punto.x" :cy="punto.y" r="4" :fill="grafico.color"
-                  class="cursor-pointer transition-all duration-150 hover:opacity-80">
-                  <title>
-                    {{ punto.dia }}: {{ punto.cantidad }}
-                  </title>
-                </circle>
-
-              </svg>
+</svg>
 
               <!-- DÍAS -->
 

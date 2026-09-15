@@ -4,7 +4,7 @@
         <div class="flex items-center gap-2 px-6 py-5 border-b border-slate-100">
             <span class="w-1.5 h-1.5 rounded-full bg-[#2d8c4a]"></span>
             <h2 class="text-sm font-semibold text-slate-900 uppercase tracking-wide">
-                Historial de Estados
+                Historial de contactos
             </h2>
         </div>
 

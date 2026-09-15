@@ -21,11 +21,13 @@ import { useAuthStore } from "@/modules/auth/stores/auth.store";
 import { useSipPhone } from "@/modules/clients/components/candidato/llamada/composables/useSipPhone.js";
 import { useLlamadaSaliente } from "@/modules/clients/components/candidato/llamada/composables/useLlamadaSaliente.js";
 import { conectarEventosLlamada } from "@/modules/clients/components/candidato/llamada/actions/Gestioninteraction.action.js";
+import { obtenerEtapaActualLead } from "../../actions/clients.action.js";
 
 interface HistorialRefExpuesto {
   cargarHistorial: () => Promise<void>;
   agregarItem: (item: HistorialItem) => void;
   idEstadoContacto: { value: number | null };
+  totalHistorial: { value: number }; // 👈 nuevo
 }
 
 const MENSAJES_POR_PAGINA = 2;
@@ -56,7 +58,80 @@ export default defineComponent({
     const idEstadoContacto = ref<number | null>(null);
     const idEtapa = ref<number | null>(null);
     const telefonoLead = ref<string | null>(null);
+    const etapaActual = ref<number | null>(null);
+    const cargandoEtapa = ref(true);
+    const etapasLead = ref<any[]>([]);
+    const ETAPAS_QUE_BLOQUEAN_DIRECTAMENTE = [3,5, 7, 8];
+    const RANGO_ETAPAS_CIERRE = [5, 6, 7, 8];
 
+    // 👇 nuevo: true si CUALQUIER etapa entre 5 y 8 ya fue realizada
+    const algunaEtapaCierreRealizada = computed(() => {
+      return etapasLead.value.some(
+        (etapa: any) =>
+          RANGO_ETAPAS_CIERRE.includes(Number(etapa.id_etapa)) &&
+          etapa.realizada === true
+      );
+    });
+    // Reemplaza tieneHistorialContacto por un ref local
+    const totalHistorialContacto = ref(0);
+
+    function onTotalHistorialActualizado(total: number) {
+      totalHistorialContacto.value = total;
+    }
+
+    const puedeAgendarReunion = computed(() => {
+      const tieneMensaje = historialMensajes.value.length > 0;
+      return tieneMensaje && totalHistorialContacto.value > 0;
+    });
+    const etapaBloqueada = computed(() => {
+      if (ETAPAS_QUE_BLOQUEAN_DIRECTAMENTE.includes(Number(etapaActual.value))) {
+        return true;
+      }
+
+      if (algunaEtapaCierreRealizada.value) {
+        return true;
+      }
+
+      return false;
+    });
+
+    const puedeInteractuar = computed(() => {
+      return !cargandoEtapa.value && !etapaBloqueada.value;
+    });
+    const cargarEtapaActual = async () => {
+      cargandoEtapa.value = true;
+
+      try {
+        const respuesta: any = await obtenerEtapaActualLead(props.idLead);
+
+        let etapaActualId: number | null = null;
+
+        if (Array.isArray(respuesta)) {
+          etapasLead.value = respuesta; // 👈 nuevo: guarda el array completo
+
+          const etapaActualEncontrada = respuesta.find(
+            (etapa: any) => etapa.estado_actual === true
+          );
+
+          if (etapaActualEncontrada) {
+            etapaActualId = Number(etapaActualEncontrada.id_etapa);
+          }
+        } else if (respuesta?.id_etapa != null) {
+          etapasLead.value = [respuesta]; // 👈 nuevo
+          etapaActualId = Number(respuesta.id_etapa);
+        }
+
+        etapaActual.value = etapaActualId;
+
+        console.log("Etapa REAL:", etapaActual.value);
+      } catch (error) {
+        console.error("Error cargando etapa actual:", error);
+        etapaActual.value = null;
+        etapasLead.value = []; // 👈 nuevo
+      } finally {
+        cargandoEtapa.value = false;
+      }
+    };
     const cargando = ref(true);
     const historialRef = ref<HistorialRefExpuesto | null>(null);
 
@@ -271,40 +346,40 @@ export default defineComponent({
       tiempo: "-",
     });
 
- function formatTiempoContacto(
-  valor:
-    | string
-    | {
-        hours?: number;
-        minutes?: number;
-        seconds?: number;
-        milliseconds?: number;
+    function formatTiempoContacto(
+      valor:
+        | string
+        | {
+          hours?: number;
+          minutes?: number;
+          seconds?: number;
+          milliseconds?: number;
+        }
+        | null
+        | undefined
+    ): string {
+      if (!valor) return "-";
+
+      let horas = 0;
+      let minutos = 0;
+      let segundos = 0;
+
+      if (typeof valor === "object") {
+        horas = Number(valor.hours ?? 0);
+        minutos = Number(valor.minutes ?? 0);
+        segundos = Math.floor(Number(valor.seconds ?? 0));
+      } else {
+        const match = valor.match(/^(\d+):(\d{2}):(\d{2})/);
+
+        if (!match) return valor;
+
+        horas = Number(match[1]);
+        minutos = Number(match[2]);
+        segundos = Number(match[3]);
       }
-    | null
-    | undefined
-): string {
-  if (!valor) return "-";
 
-  let horas = 0;
-  let minutos = 0;
-  let segundos = 0;
-
-  if (typeof valor === "object") {
-    horas = Number(valor.hours ?? 0);
-    minutos = Number(valor.minutes ?? 0);
-    segundos = Math.floor(Number(valor.seconds ?? 0));
-  } else {
-    const match = valor.match(/^(\d+):(\d{2}):(\d{2})/);
-
-    if (!match) return valor;
-
-    horas = Number(match[1]);
-    minutos = Number(match[2]);
-    segundos = Number(match[3]);
-  }
-
-  return `${horas} h ${minutos} min ${segundos} s`;
-}
+      return `${horas} h ${minutos} min ${segundos} s`;
+    }
     function onPrimerContactoCargado(payload: {
       fecha: string;
       hora: string;
@@ -503,8 +578,9 @@ export default defineComponent({
       modalLlamadaAbierto.value = false;
     }
 
-    onMounted(() => {
-      cargarEstadoContacto();
+    onMounted(async () => {
+      await cargarEtapaActual();
+      await cargarEstadoContacto();
     });
 
     onUnmounted(() => {
@@ -539,7 +615,7 @@ export default defineComponent({
       llamadaActiva,
       numeroDestino,
       duracionSegundos,
-
+onTotalHistorialActualizado,
       modalDesistioAbierto,
 
       estadoContacto,
@@ -547,7 +623,7 @@ export default defineComponent({
       onReunionAgendada,
       cerrarModalDesistio,
       onConfirmarDesistio,
-
+      puedeInteractuar,
       // Historial de mensajes
       nuevoMensaje,
       enviandoMensaje,
@@ -560,7 +636,7 @@ export default defineComponent({
       irPaginaAnterior,
       irPaginaSiguiente,
       formatFechaHoraCompleta,
-
+      puedeAgendarReunion,
       idEstadoContacto,
       cargandoTelefono,
 

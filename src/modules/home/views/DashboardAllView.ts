@@ -224,34 +224,9 @@ export default defineComponent({
     // KPIs
     // =========================================================
 
-    const totalCandidatos = computed(() => {
-      return leadsPorEtapa.value
-        .filter(
-          (x) =>
-            Number(x.id_etapa) >= 1 &&
-            Number(x.id_etapa) <= 4,
-        )
-        .reduce(
-          (total, x) =>
-            total + Number(x.cantidad || 0),
-          0,
-        );
-    });
+    const totalCandidatos = computed(() => { return leadsPorEtapa.value.filter((x) => [1, 2, 4].includes(Number(x.id_etapa))).reduce((total, x) => total + Number(x.cantidad || 0), 0,); });
 
-    const totalOportunidades = computed(() => {
-      return leadsPorEtapa.value
-        .filter(
-          (x) =>
-            Number(x.id_etapa) >= 5 &&
-            Number(x.id_etapa) <= 8,
-        )
-        .reduce(
-          (total, x) =>
-            total + Number(x.cantidad || 0),
-          0,
-        );
-    });
-
+    const totalOportunidades = computed(() => { return leadsPorEtapa.value.filter((x) => [5, 6].includes(Number(x.id_etapa))).reduce((total, x) => total + Number(x.cantidad || 0), 0,); });
     const totalCierres = computed(() => {
       const cierre = leadsPorEtapa.value.find(
         (x) => Number(x.id_etapa) === 7,
@@ -512,95 +487,54 @@ export default defineComponent({
       );
     };
 
-    const obtenerPuntosActividad = (
-      tipo: number,
-      estado: number,
-    ) => {
+    // =========================================================
+    // CONFIG DEL GRÁFICO (debe coincidir con el viewBox del <svg>)
+    // =========================================================
+    const ANCHO_GRAFICO = 300;
+    const ALTO_GRAFICO = 105;
+    const PADDING_TOP = 22;    // espacio para el numerito arriba del punto
+    const PADDING_BOTTOM = 10;
+    const ALTO_UTIL = ALTO_GRAFICO - PADDING_TOP - PADDING_BOTTOM;
+
+    const obtenerPuntosActividad = (tipo: number, estado: number) => {
       const datos = obtenerDatosActividad(tipo, estado);
+      if (!datos.length) return '';
 
-      if (!datos.length) {
-        return '';
-      }
-
-      const maximo = Math.max(
-        ...datos.map((x) => Number(x.cantidad || 0)),
-        0,
-      );
-
-      const ancho = 260;
-      const alto = 105;
-
-      const paddingX = 10;
-      const paddingY = 8;
-
-      const anchoUtil = ancho - paddingX * 2;
-      const altoUtil = alto - paddingY * 2;
+      const maximo = Math.max(...datos.map((x) => Number(x.cantidad || 0)), 0);
+      const anchoColumna = ANCHO_GRAFICO / datos.length;
 
       return datos
         .map((dato, index) => {
           const cantidad = Number(dato.cantidad || 0);
 
-          const x =
-            datos.length === 1
-              ? ancho / 2
-              : paddingX +
-              (index / (datos.length - 1)) *
-              anchoUtil;
+          // ✅ centrado exacto en medio de la columna del día
+          const x = (index + 0.5) * anchoColumna;
 
           const y =
             maximo === 0
-              ? alto - paddingY
-              : alto -
-              paddingY -
-              (cantidad / maximo) *
-              altoUtil;
+              ? ALTO_GRAFICO - PADDING_BOTTOM
+              : ALTO_GRAFICO - PADDING_BOTTOM - (cantidad / maximo) * ALTO_UTIL;
 
           return `${x},${y}`;
         })
         .join(' ');
     };
 
-    const obtenerPuntosCirculosActividad = (
-      tipo: number,
-      estado: number,
-    ) => {
+    const obtenerPuntosCirculosActividad = (tipo: number, estado: number) => {
       const datos = obtenerDatosActividad(tipo, estado);
+      if (!datos.length) return [];
 
-      if (!datos.length) {
-        return [];
-      }
-
-      const maximo = Math.max(
-        ...datos.map((x) => Number(x.cantidad || 0)),
-        0,
-      );
-
-      const ancho = 260;
-      const alto = 105;
-
-      const paddingX = 10;
-      const paddingY = 8;
-
-      const anchoUtil = ancho - paddingX * 2;
-      const altoUtil = alto - paddingY * 2;
+      const maximo = Math.max(...datos.map((x) => Number(x.cantidad || 0)), 0);
+      const anchoColumna = ANCHO_GRAFICO / datos.length;
 
       return datos.map((dato, index) => {
         const cantidad = Number(dato.cantidad || 0);
-
-        const x =
-          datos.length === 1
-            ? ancho / 2
-            : paddingX +
-            (index / (datos.length - 1)) *
-            anchoUtil;
+        const x = (index + 0.5) * anchoColumna;
 
         const y =
           maximo === 0
-            ? alto - paddingY
-            : alto -
-            paddingY -
-            (cantidad / maximo) *
-            altoUtil;
+            ? ALTO_GRAFICO - PADDING_BOTTOM
+            : ALTO_GRAFICO - PADDING_BOTTOM - (cantidad / maximo) * ALTO_UTIL;
 
         return {
           x,
@@ -612,37 +546,20 @@ export default defineComponent({
         };
       });
     };
-    const obtenerEscalaActividad = (
-      tipo: number,
-      estado: number,
-    ) => {
-      const maximo = obtenerMaximoActividad(
-        tipo,
-        estado,
-      );
 
-      if (maximo === 0) {
-        return [40, 30, 20, 10, 0];
-      }
+    const obtenerEscalaActividad = (tipo: number, estado: number) => {
+      const maximo = obtenerMaximoActividad(tipo, estado);
+      if (maximo === 0) return [40, 30, 20, 10, 0];
 
-      const step = Math.max(
-        Math.ceil(maximo / 4 / 10) * 10,
-        1,
-      );
-
+      const step = Math.max(Math.ceil(maximo / 4 / 10) * 10, 1);
       const escala: number[] = [];
 
-      for (
-        let valor = 0;
-        valor <= maximo + step;
-        valor += step
-      ) {
+      for (let valor = 0; valor <= maximo + step; valor += step) {
         escala.push(valor);
       }
 
       return escala.reverse();
     };
-
     // =========================================================
     // DESISTIMIENTOS (GRÁFICO DE PASTEL)
     // =========================================================
@@ -849,7 +766,7 @@ export default defineComponent({
     const limpiarFiltroFechas = async () => {
       fechaInicio.value = '';
       fechaFin.value = '';
-      
+
       // ✅ Si es agent, mantiene su ID. Si no, limpia.
       if (!esAgent.value) {
         idAsesor.value = '';

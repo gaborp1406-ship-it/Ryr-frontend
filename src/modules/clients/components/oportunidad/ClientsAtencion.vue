@@ -11,11 +11,16 @@
           </h2>
         </div>
         <div class="flex items-center gap-2">
-          <button v-if="puedeContactar" @click="marcarComoRealizada"
-            :disabled="!puedeMarcarRealizada || finalizarActividadState.guardando.value"
-            :title="!puedeMarcarRealizada ? 'No disponible en esta etapa' : ''"
+          <button v-if="puedeContactar" @click="marcarComoRealizada" :disabled="!puedeMarcarRealizada ||
+            finalizarActividadState.guardando.value ||
+            !puedeInteractuar
+            " :title="!puedeInteractuar
+              ? 'No disponible porque el lead se encuentra en una etapa cerrada'
+              : !puedeMarcarRealizada
+                ? 'No disponible en esta etapa'
+                : ''
+              "
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm">
-
             <svg v-if="finalizarActividadState.guardando.value" class="w-4 h-4 animate-spin"
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -96,14 +101,14 @@
           <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3">
             <!-- Botones de Contacto -->
             <div v-if="puedeContactar" class="flex flex-wrap items-center gap-2">
-              <button  v-if="puedeContactar" @click="abrirModalWhatsapp"
-                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 text-sm font-semibold transition-all duration-200">
+              <button v-if="puedeContactar" @click="abrirModalWhatsapp" :disabled="!puedeInteractuar"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
                 <IconWhatsapp class="w-6 h-5" />
                 <span class="hidden sm:inline">WhatsApp</span>
               </button>
 
-              <button v-if="puedeContactar" @click="abrirModalEmail"
-                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 text-sm font-semibold transition-all duration-200">
+              <button v-if="puedeContactar" @click="abrirModalEmail" :disabled="!puedeInteractuar"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M22 6 12 13 2 6" />
                   <path d="M2 6h20v12H2z" />
@@ -111,8 +116,9 @@
                 <span class="hidden sm:inline">Email</span>
               </button>
 
-              <button v-if="puedeContactar" @click="abrirModalLlamada"
-                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-amber-300 hover:bg-amber-50 text-slate-700 text-sm font-semibold transition-all duration-200">
+              <button v-if="puedeContactar" @click="abrirModalLlamada" :disabled="!puedeInteractuar || cargandoTelefono"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-amber-300 hover:bg-amber-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
+
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path
                     d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.08 4.18 2 2 0 0 1 5.08 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.61a2 2 0 0 1-.45 2.11L9.09 9.91a16 16 0 0 0 5 5l1.47-1.19a2 2 0 0 1 2.11-.45c.83.31 1.71.53 2.61.65A2 2 0 0 1 22 16.92z" />
@@ -125,8 +131,8 @@
 
             <!-- Botones de Acción -->
             <div class="flex flex-wrap items-center gap-2">
-              <button v-if="puedeContactar" @click="abrirReprogramar"
-                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 text-sm font-semibold transition-all duration-200">
+              <button v-if="puedeContactar" @click="abrirReprogramar" :disabled="!puedeInteractuar"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M21 12a9 9 0 1 1-2.64-6.36" />
                   <path d="M21 3v6h-6" />
@@ -134,16 +140,22 @@
                 <span class="hidden sm:inline">Reprogramar</span>
               </button>
 
-              <button v-if="puedeNegociar && puedeContactar"  @click="desistimiento.abrir()"
-                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold transition-all duration-200">
+              <button v-if="puedeNegociar && puedeContactar" @click="desistimiento.abrir()"
+                :disabled="!puedeInteractuar"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M12 9v6m4-10H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />
                 </svg>
                 <span class="hidden sm:inline">Desistir</span>
               </button>
 
-              <button @click="puedeCrearReunion ? abrirModalReunion() : null" :disabled="!puedeCrearReunion"
-                :title="!puedeCrearReunion ? 'Solo disponible cuando la actividad está en estado 14' : ''"
+              <button @click="puedeCrearReunion && puedeInteractuar ? abrirModalReunion() : null"
+                :disabled="!puedeCrearReunion || !puedeInteractuar" :title="!puedeInteractuar
+                  ? 'No disponible porque el lead se encuentra en una etapa cerrada'
+                  : !puedeCrearReunion
+                    ? 'Solo disponible cuando la actividad está en estado 14'
+                    : ''
+                  "
                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                   <path d="M12 9v6m4-10H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />
@@ -151,8 +163,8 @@
                 <span class="hidden sm:inline">Crear Reunión</span>
               </button>
 
-
-              <button v-if="puedeNegociar" @click="pasarANegociacion" :disabled="pasandoNegociacion"
+              <button v-if="puedeNegociar" @click="pasarANegociacion"
+                :disabled="pasandoNegociacion || !puedeInteractuar"
                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#2d8c4a] hover:bg-[#256e3c] text-white text-sm font-semibold transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">
                 <svg v-if="!pasandoNegociacion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                   class="w-4 h-4">
@@ -221,7 +233,7 @@
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-        
+
           </button>
         </li>
       </ul>
@@ -336,8 +348,9 @@
   <ModalAgendarReu :visible="modalReunionAbierto" :id-lead="Number(idLead)" @close="cerrarModalReunion"
     @reunion-agendada="onReunionAgendada" />
   <ModalLlamada :visible="modalLlamadaAbierto" :estado-llamada="estadoLlamada" :llamada-activa="llamadaActiva"
-    :numero-destino="numeroDestino" :duracion-segundos="duracionSegundos" @close="cerrarModalLlamada"
-    @hangup="cerrarModalLlamada" />
+    :numero-destino="numeroDestino" :duracion-segundos="duracionSegundos" :mic-silenciado="micSilenciado"
+    :altavoz-silenciado="altavozSilenciado" @close="cerrarModalLlamada" @hangup="cerrarModalLlamada"
+    @toggle-mic="toggleMicrophone" @toggle-speaker="toggleSpeaker" />
 
   <transition>
     <div v-if="modalEvidenciaVisible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -375,7 +388,7 @@
                 <div class="flex items-center gap-2 mb-1.5">
                   <span class="text-[11px] font-mono text-slate-500 tabular-nums w-9">{{
                     formatAudioTime(audioCurrentTime)
-                    }}</span>
+                  }}</span>
                   <input type="range" min="0" :max="audioDuration || 0" step="0.01" v-model.number="audioCurrentTime"
                     @input="seekAudio" class="flex-1 accent-[#2d8c4a] h-1.5 rounded-lg cursor-pointer" />
                   <span class="text-[11px] font-mono text-slate-500 tabular-nums w-9 text-right">{{

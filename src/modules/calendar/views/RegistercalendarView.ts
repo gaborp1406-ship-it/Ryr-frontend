@@ -253,7 +253,7 @@ export default defineComponent({
 
     // ── VISTA DÍA ────────────────────────────────────────────────
     const currentDateStr = computed(() => toDateStr(cursor.value));
-    const dayHours = Array.from({ length: 14 }, (_, i) => `${pad(i + 7)}:00`); // 07:00–20:00
+    const dayHours = Array.from({ length: 24 }, (_, i) => `${pad(i)}:00`); // 00:00–23:00
     const dayLabel = computed(() =>
       cursor.value.toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
     );

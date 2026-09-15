@@ -48,13 +48,12 @@ export default defineComponent({
         },
         idEtapa: { type: Number, required: false, default: null },
     },
-    emits: ["ver-detalle-llamada", "primer-contacto-cargado"],
+    emits: ["ver-detalle-llamada", "primer-contacto-cargado", "total-actualizado"],
     setup(props, { emit, expose }) {
         const historial = ref<HistorialItem[]>([]);
         const cargando = ref(false);
         const error = ref<string | null>(null);
-
-        // ---------- Modal de evidencia ----------
+        const totalHistorial = computed(() => historial.value.length);
         const modalEvidenciaVisible = ref(false);
         const evidenciaUrlActual = ref("");
 
@@ -77,7 +76,13 @@ export default defineComponent({
             evidenciaUrlActual.value = item.url_evidencia;
             modalEvidenciaVisible.value = true;
         }
-
+        watch(
+            totalHistorial,
+            (nuevoTotal) => {
+                emit("total-actualizado", nuevoTotal);
+            },
+            { immediate: true } // 👈 para que dispare el 0 inicial también
+        );
         function cerrarEvidencia() {
             if (audioRef.value) audioRef.value.pause();
             audioPlaying.value = false;
@@ -309,6 +314,7 @@ export default defineComponent({
         expose({
             cargarHistorial,
             agregarItem,
+            totalHistorial
         });
 
         return {

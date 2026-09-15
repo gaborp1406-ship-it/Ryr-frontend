@@ -44,6 +44,8 @@ export default defineComponent({
     const checklistData = ref<IChecklistCierre | null>(null);
     const idLeadEtapa = ref<number | null>(null);
     const authStore = useAuthStore();
+
+
     const cierreFinalizado = computed(() => checklistData.value?.estado === true);
     const pasos = ref<Paso[]>([
       {
@@ -95,8 +97,17 @@ export default defineComponent({
       if (authStore.isAdmin) return true;
       return !cierreFinalizado.value;
     });
+    const flujoCompletado = computed(() => {
+      return (
+        pasos.value.every((paso) => paso.completado === true)
+      );
+    });
+
     const mostrarAcciones = computed(() => {
-      return checklistData.value?.estado !== true;
+      return (
+        checklistData.value?.estado !== true &&
+        flujoCompletado.value
+      );
     });
 
     // ==== Documentos de cierre ====
@@ -106,7 +117,9 @@ export default defineComponent({
     const eliminandoDocumentoId = ref<number | null>(null);
 
     const idEtapaCierre = computed(() => checklistData.value?.id ?? null);
-
+    const puedeSubirDocumentos = computed(() => {
+      return authStore.isAdmin || !cierreFinalizado.value;
+    });
     function formatearFecha() {
       const ahora = new Date();
       return (
@@ -380,91 +393,91 @@ export default defineComponent({
     const finalizandoRealizado = ref(false);
     const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
-     
-        const puedeContactar = computed(() => authStore.isAgent);
-     
- async function abrirModalDesistio() {
-  mostrarModalDesistio.value = true;
-  motivoSeleccionado.value = null;
-  motivoOtro.value = "";
-  errores.value = null;
 
-  try {
-    cargandoOpciones.value = true;
-    opcionesDesistio.value = await listarOpciones(
-      ID_LISTADO_MOTIVOS_DESISTIO
-    );
-  } catch (error) {
-    errores.value =
-      error instanceof Error
-        ? error.message
-        : "Error al cargar los motivos de desistimiento";
+    const puedeContactar = computed(() => authStore.isAgent);
 
-    console.error(
-      "Error cargando opciones de desistimiento:",
-      error
-    );
-  } finally {
-    cargandoOpciones.value = false;
-  }
-}
+    async function abrirModalDesistio() {
+      mostrarModalDesistio.value = true;
+      motivoSeleccionado.value = null;
+      motivoOtro.value = "";
+      errores.value = null;
 
- function cerrarModalDesistio() {
-  if (enviandoDesistio.value) return;
+      try {
+        cargandoOpciones.value = true;
+        opcionesDesistio.value = await listarOpciones(
+          ID_LISTADO_MOTIVOS_DESISTIO
+        );
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al cargar los motivos de desistimiento";
 
-  mostrarModalDesistio.value = false;
-  motivoSeleccionado.value = null;
-  motivoOtro.value = "";
-  opcionesDesistio.value = [];
-}
-async function confirmarDesistio() {
-  if (!motivoSeleccionado.value) return;
+        console.error(
+          "Error cargando opciones de desistimiento:",
+          error
+        );
+      } finally {
+        cargandoOpciones.value = false;
+      }
+    }
 
-  if (
-    motivoSeleccionado.value === ID_MOTIVO_OTRO &&
-    !motivoOtro.value.trim()
-  ) {
-    errores.value = "Debes especificar el motivo del desistimiento.";
-    return;
-  }
+    function cerrarModalDesistio() {
+      if (enviandoDesistio.value) return;
 
-  try {
-    enviandoDesistio.value = true;
-    errores.value = null;
+      mostrarModalDesistio.value = false;
+      motivoSeleccionado.value = null;
+      motivoOtro.value = "";
+      opcionesDesistio.value = [];
+    }
+    async function confirmarDesistio() {
+      if (!motivoSeleccionado.value) return;
 
-    const textoOtro =
-      motivoSeleccionado.value === ID_MOTIVO_OTRO
-        ? motivoOtro.value.trim()
-        : undefined;
+      if (
+        motivoSeleccionado.value === ID_MOTIVO_OTRO &&
+        !motivoOtro.value.trim()
+      ) {
+        errores.value = "Debes especificar el motivo del desistimiento.";
+        return;
+      }
 
-    await finalizarEtapaCierreDesistio(
-      props.idLead,
-      motivoSeleccionado.value,
-      textoOtro
-    );
+      try {
+        enviandoDesistio.value = true;
+        errores.value = null;
 
-    mostrarModalDesistio.value = false;
-    motivoSeleccionado.value = null;
-    motivoOtro.value = "";
-    opcionesDesistio.value = [];
+        const textoOtro =
+          motivoSeleccionado.value === ID_MOTIVO_OTRO
+            ? motivoOtro.value.trim()
+            : undefined;
 
-    await cargarChecklist();
+        await finalizarEtapaCierreDesistio(
+          props.idLead,
+          motivoSeleccionado.value,
+          textoOtro
+        );
 
-    emit("etapa-finalizada");
-  } catch (error) {
-    errores.value =
-      error instanceof Error
-        ? error.message
-        : "Error al registrar el desistimiento";
+        mostrarModalDesistio.value = false;
+        motivoSeleccionado.value = null;
+        motivoOtro.value = "";
+        opcionesDesistio.value = [];
 
-    console.error(
-      "Error registrando desistimiento:",
-      error
-    );
-  } finally {
-    enviandoDesistio.value = false;
-  }
-}
+        await cargarChecklist();
+
+        emit("etapa-finalizada");
+      } catch (error) {
+        errores.value =
+          error instanceof Error
+            ? error.message
+            : "Error al registrar el desistimiento";
+
+        console.error(
+          "Error registrando desistimiento:",
+          error
+        );
+      } finally {
+        enviandoDesistio.value = false;
+      }
+    }
 
 
     async function marcarRealizado() {
@@ -527,16 +540,19 @@ async function confirmarDesistio() {
       abrirModalDesistio,
       cerrarModalDesistio,
       confirmarDesistio,
+      puedeSubirDocumentos,
       // realizado / celebracion
       marcarRealizado,
       finalizandoRealizado,
       mostrarCelebracion,
       confetti,
       cerrarCelebracion,
+      cierreFinalizado,
       esMotivoOtro,
-motivoOtro,
+      motivoOtro,
       puedeEliminarDocumento,
-      puedeContactar
+      puedeContactar,
+      flujoCompletado
     };
   },
 });
