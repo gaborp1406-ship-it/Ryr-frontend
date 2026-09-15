@@ -13,17 +13,17 @@
       class="mb-[18px] flex flex-wrap items-end gap-[10px] rounded-[16px] border border-slate-200 bg-white p-[14px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
       <!-- FECHA INICIO -->
       <div class="flex min-w-[170px] flex-col gap-[5px]">
-        <label class="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">
-          Fecha inicio
-        </label>
+      <label class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+  Fecha inicio
+</label>
 
-        <input v-model="fechaInicio" type="date"
-          class="h-[36px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[11px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20" />
+       <input v-model="fechaInicio" type="date"
+  class="h-[40px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[13px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20" />
       </div>
 
       <!-- FECHA FIN -->
       <div class="flex min-w-[170px] flex-col gap-[5px]">
-        <label class="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">
+        <label class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
           Fecha fin
         </label>
 
@@ -37,9 +37,9 @@
           Asesor
         </label>
 
-        <select v-model="idAsesor" :disabled="cargandoAsesores"
-          class="h-[36px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[11px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20 disabled:cursor-not-allowed disabled:opacity-60"
-          @change="aplicarFiltroFechas">
+  <select v-model="idAsesor" :disabled="cargandoAsesores"
+  class="h-[40px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[13px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20 disabled:cursor-not-allowed disabled:opacity-60"
+  @change="aplicarFiltroFechas">
           <option value="">
             {{ cargandoAsesores ? 'Cargando asesores...' : 'Todos los asesores' }}
           </option>
@@ -51,9 +51,9 @@
       </div>
 
       <!-- APLICAR -->
-      <button type="button" :disabled="cargando"
-        class="flex h-[36px] items-center gap-[7px] rounded-[9px] bg-[#2d8c4a] px-[15px] text-[10px] font-bold text-white shadow-[0_3px_10px_rgba(45,140,74,0.2)] transition hover:bg-[#24763d] disabled:cursor-not-allowed disabled:opacity-60"
-        @click="aplicarFiltroFechas">
+     <button type="button" :disabled="cargando"
+  class="flex h-[40px] items-center gap-[7px] rounded-[9px] bg-[#2d8c4a] px-[15px] text-[12px] font-bold text-white shadow-[0_3px_10px_rgba(45,140,74,0.2)] transition hover:bg-[#24763d] disabled:cursor-not-allowed disabled:opacity-60"
+  @click="aplicarFiltroFechas">
         <svg viewBox="0 0 24 24" fill="none" class="h-[14px] w-[14px]">
           <path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
         </svg>
@@ -62,9 +62,9 @@
       </button>
 
       <!-- LIMPIAR -->
-      <button type="button" :disabled="cargando || (!fechaInicio && !fechaFin && (!esAgent && !idAsesor))"
-        class="flex h-[36px] items-center rounded-[9px] border border-slate-200 bg-white px-[13px] text-[10px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-        @click="limpiarFiltroFechas">
+ <button type="button" :disabled="cargando || (!fechaInicio && !fechaFin && (!esAgent && !idAsesor))"
+  class="flex h-[40px] items-center rounded-[9px] border border-slate-200 bg-white px-[13px] text-[12px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+  @click="limpiarFiltroFechas">
         Limpiar
       </button>
     </div>
