@@ -49,21 +49,7 @@
                             </svg>
                         </button>
 
-                        <!-- Botón Altavoz -->
-                        <button @click="$emit('toggle-speaker')" :class="[
-                            'w-12 h-12 rounded-full flex items-center justify-center transition-all',
-                            altavozSilenciado
-                                ? 'bg-red-600 hover:bg-red-700'
-                                : 'bg-slate-700 hover:bg-slate-600'
-                        ]" title="Silenciar altavoz">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                class="w-5 h-5 text-white">
-                                <path d="M11 5 6 9H2v6h4l5 4V5Z" />
-                                <path v-if="!altavozSilenciado"
-                                    d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                                <path v-else d="M22 4 2 20" />
-                            </svg>
-                        </button>
+          
                     </div>
 
                     <!-- Botón Colgar -->

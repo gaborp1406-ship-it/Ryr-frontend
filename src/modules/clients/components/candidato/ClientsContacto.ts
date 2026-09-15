@@ -61,7 +61,7 @@ export default defineComponent({
     const etapaActual = ref<number | null>(null);
     const cargandoEtapa = ref(true);
     const etapasLead = ref<any[]>([]);
-    const ETAPAS_QUE_BLOQUEAN_DIRECTAMENTE = [3,5, 7, 8];
+    const ETAPAS_QUE_BLOQUEAN_DIRECTAMENTE = [3, 5, 7, 8];
     const RANGO_ETAPAS_CIERRE = [5, 6, 7, 8];
 
     // 👇 nuevo: true si CUALQUIER etapa entre 5 y 8 ya fue realizada
@@ -222,7 +222,9 @@ export default defineComponent({
 
     // ---------- Llamada (SIP + SSE + estado de la llamada) ----------
     const eventSource = ref<EventSource | null>(null);
-    const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono } = useSipPhone();
+    const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
+    
+    
     const {
       currentCallId,
       isCalling,
@@ -230,6 +232,7 @@ export default defineComponent({
       llamadaActiva,
       numeroDestino,
       duracionSegundos,
+
       procesarEventoLlamada,
       makeCall: realizarLlamadaSaliente,
       hangup,
@@ -607,6 +610,8 @@ export default defineComponent({
       cerrarModalEmail,
       onGuardarEmail,
       idEtapa,
+      micSilenciado,
+      toggleMic,
       // Llamada
       modalLlamadaAbierto,
       abrirModalLlamada,
@@ -615,7 +620,7 @@ export default defineComponent({
       llamadaActiva,
       numeroDestino,
       duracionSegundos,
-onTotalHistorialActualizado,
+      onTotalHistorialActualizado,
       modalDesistioAbierto,
 
       estadoContacto,
@@ -633,6 +638,7 @@ onTotalHistorialActualizado,
       paginaActual,
       totalPaginas,
       enviarMensaje,
+
       irPaginaAnterior,
       irPaginaSiguiente,
       formatFechaHoraCompleta,

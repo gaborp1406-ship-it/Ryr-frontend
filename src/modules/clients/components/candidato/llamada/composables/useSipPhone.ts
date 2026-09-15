@@ -38,13 +38,11 @@ function configurarAudioRemoto(invitation: any) {
 
     pc.getReceivers().forEach((receiver: RTCRtpReceiver) => {
       if (receiver.track) {
-      
         remoteStream.addTrack(receiver.track);
       }
     });
 
     pc.ontrack = (event: RTCTrackEvent) => {
-     
       remoteStream.addTrack(event.track);
       audio.srcObject = remoteStream;
       audio.play()
@@ -59,12 +57,11 @@ function configurarAudioRemoto(invitation: any) {
       .then(() => console.log("🔊 Audio remoto reproduciéndose (inicial)"))
       .catch((error) => console.warn("⚠️ No se pudo reproducir audio (inicial):", error));
 
-
-
   } catch (error) {
     console.error("❌ Error configurando audio remoto:", error);
   }
 }
+
 // Maneja el registro del softphone (SIP.js) y las llamadas entrantes (bridge del agente)
 export function useSipPhone() {
   const toast = useToast();
@@ -77,28 +74,65 @@ export function useSipPhone() {
   const sipRegistrado = ref(false);
   const sipCredentials = ref<ISipCredentials | null>(null);
 
-  const manejarLlamadaEntrante = async (invitation: any) => {
+  // Estado del micrófono
+  const micSilenciado = ref(false);
 
+  // Silencia/reactiva el micrófono local de la llamada activa
+  function toggleMic() {
+    const session = currentSession.value;
+
+    if (!session || !session.sessionDescriptionHandler) {
+      toast.warning("No hay una llamada activa para silenciar.");
+      return;
+    }
+
+    const pc = session.sessionDescriptionHandler.peerConnection;
+    if (!pc) {
+      toast.warning("No se pudo acceder al audio de la llamada.");
+      return;
+    }
+
+    const audioSenders = pc
+      .getSenders()
+      .filter((sender: RTCRtpSender) => sender.track && sender.track.kind === "audio");
+
+    if (audioSenders.length === 0) {
+      toast.warning("No se encontró el micrófono en la llamada activa.");
+      return;
+    }
+
+    micSilenciado.value = !micSilenciado.value;
+
+    audioSenders.forEach((sender: RTCRtpSender) => {
+      sender.track!.enabled = !micSilenciado.value;
+    });
+  }
+
+  // Por si cambia de llamada, resetea el estado visual del mic
+  const resetMic = () => {
+    micSilenciado.value = false;
+  };
+
+  const manejarLlamadaEntrante = async (invitation: any) => {
     currentSession.value = invitation;
+    resetMic();
 
     invitation.stateChange.addListener((state: any) => {
-  
       if (state === SIP.SessionState.Establishing) {
-       
+        // no-op
       }
 
       if (state === SIP.SessionState.Established) {
-       
+        // no-op
       }
 
       if (state === SIP.SessionState.Terminated) {
-      
         currentSession.value = null;
+        resetMic();
       }
     });
 
     try {
- 
       await invitation.accept({
         sessionDescriptionHandlerOptions: {
           constraints: {
@@ -107,7 +141,6 @@ export function useSipPhone() {
           },
         },
       });
-
 
       configurarAudioRemoto(invitation);
 
@@ -118,7 +151,6 @@ export function useSipPhone() {
 
   const registrarUserAgent = async (credentials: ISipCredentials) => {
     if (userAgent.value) {
-  
       return;
     }
 
@@ -150,8 +182,6 @@ export function useSipPhone() {
       }, 10000);
 
       registerer.value.stateChange.addListener((state: SIP.RegistererState) => {
-       
-
         if (state === SIP.RegistererState.Registered) {
           clearTimeout(timeout);
           resolve();
@@ -169,7 +199,6 @@ export function useSipPhone() {
       });
     });
 
-  
     toast.success(`Agente ${credentials.agentExtension} conectado`);
   };
 
@@ -182,13 +211,11 @@ export function useSipPhone() {
       const credenciales = await obtenerCredencialesSip();
 
       sipCredentials.value = {
-        agentExtension: credenciales.sipUsername,   // ✅ corregido
+        agentExtension: credenciales.sipUsername,
         sipServer: credenciales.sipServer,
         sipPort: credenciales.sipPort,
-        agentPassword: credenciales.sipPassword,     // ✅ corregido
+        agentPassword: credenciales.sipPassword,
       };
-
-
 
       await registrarUserAgent(sipCredentials.value);
 
@@ -202,7 +229,7 @@ export function useSipPhone() {
       userAgent.value = null;
       registerer.value = null;
       currentSession.value = null;
-      sipRegistrado.value = false; // 👈 asegurate de resetear esto también
+      sipRegistrado.value = false;
 
       toast.error("Error registrando el teléfono");
       throw error;
@@ -216,5 +243,7 @@ export function useSipPhone() {
     sipRegistrado,
     cargandoTelefono,
     conectarTelefono,
+    micSilenciado,
+    toggleMic,
   };
 }

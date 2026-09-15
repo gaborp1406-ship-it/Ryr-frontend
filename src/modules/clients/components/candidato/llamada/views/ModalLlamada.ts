@@ -22,8 +22,7 @@ export default defineComponent({
     const eventSource = ref<EventSource | null>(null);
 
     // Composables
-    const { sipCredentials, sipRegistrado, conectarTelefono } = useSipPhone();
-
+    const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
     const {
       currentCallId,
       isCalling,
@@ -57,7 +56,7 @@ export default defineComponent({
             credenciales.agentExtension,
             procesarEventoLlamada
           );
-      
+
         }
 
         toast.success("📱 Telefonía inicializada");
@@ -88,7 +87,7 @@ export default defineComponent({
         return;
       }
 
-  
+
 
       await realizarLlamadaSaliente(externalNumber, {
         agentExtension: sipCredentials.value.agentExtension,
@@ -102,7 +101,7 @@ export default defineComponent({
      * COLGAR LLAMADA
      */
     const handleHangup = async () => {
-    
+
       await hangup();
     };
 
@@ -122,6 +121,8 @@ export default defineComponent({
       // Estados
       isCalling,
       currentCallId,
+      micSilenciado,   // 👈 agregar
+      toggleMic,       // 👈 agregar
       estadoLlamada,
       llamadaActiva,
       numeroDestino,
