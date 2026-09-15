@@ -38,7 +38,7 @@
       <div class="profile-menu__divider" v-if="authStore.isAgent"></div>
 
       <a href="#" type="button" class="profile-menu__link">
-        <span class="profile-menu__avatar-ring">
+        <span class="profile-menu__avatar-ring" @click.stop.prevent="openAvatarPreview">
           <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
             class="profile-menu__avatar" />
         </span>
@@ -92,6 +92,27 @@
         </transition>
       </div>
     </div>
+
+    <!-- ══ PREVIEW DE FOTO DE PERFIL ══ -->
+    <Teleport to="body">
+      <Transition name="avatar-fade">
+        <div v-if="showAvatarPreview" class="avatar-preview-overlay" @click.self="closeAvatarPreview">
+          <div class="avatar-preview-card">
+            <button class="avatar-preview-close" @click="closeAvatarPreview" aria-label="Cerrar">✕</button>
+
+            <div class="avatar-preview-ring">
+              <div class="avatar-preview-ring__spin"></div>
+              <div class="avatar-preview-ring__inner">
+                <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
+                  class="avatar-preview-img" />
+              </div>
+            </div>
+
+            <p class="avatar-preview-name">{{ authStore.username }}</p>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </header>
 </template>
 
@@ -151,6 +172,17 @@ const estadosDisponibles = ref<IEstadoConexion[]>([]);
 const currentStatus = ref<IEstadoActualTrabajador | null>(null);
 const isLoadingStatus = ref(false);
 const isUpdatingStatus = ref(false);
+
+// ========== PREVIEW DE AVATAR ==========
+const showAvatarPreview = ref(false);
+
+function openAvatarPreview() {
+  showAvatarPreview.value = true;
+}
+
+function closeAvatarPreview() {
+  showAvatarPreview.value = false;
+}
 
 const emit = defineEmits<{
   (e: 'toggle-menu'): void;
@@ -238,16 +270,16 @@ async function abrirNotificacion(notif: INotificacion) {
     return;
   }
   if (notif.titulo === 'Cliente preguntando nuevamente') {
-  router.push(`/clients/details/${notif.id_lead}`);
-  return;
-}
+    router.push(`/clients/details/${notif.id_lead}`);
+    return;
+  }
 
-// Caso general: como antes
-if (router.currentRoute.value.path === '/clients') {
-  eventBus.emit('refrescar-leads', notif.id_lead);
-} else {
-  router.push('/clients');
-}
+  // Caso general: como antes
+  if (router.currentRoute.value.path === '/clients') {
+    eventBus.emit('refrescar-leads', notif.id_lead);
+  } else {
+    router.push('/clients');
+  }
 }
 
 async function borrarNotificacion(notif: INotificacion, event: MouseEvent) {
@@ -375,8 +407,8 @@ onBeforeUnmount(() => {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 1000;   /* antes 30 — por encima de cualquier header interno de las vistas */
-  height: 75px;
+  z-index: 1000;
+  height: 64px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -437,7 +469,7 @@ onBeforeUnmount(() => {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
-  z-index: 1001;   /* antes 50 */
+  z-index: 1001;
 }
 
 .notif-bell__header {
@@ -628,12 +660,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;      /* antes 36px */
-  height: 50px;      /* antes 36px */
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   padding: 2px;
   background: #2d8c4a;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .profile-menu__avatar {
@@ -752,7 +785,7 @@ onBeforeUnmount(() => {
   padding: 6px;
   margin: 0;
   list-style: none;
-  z-index: 1001;   /* antes 40 */
+  z-index: 1001;
 }
 
 .status-selector__item {
@@ -787,5 +820,129 @@ onBeforeUnmount(() => {
 .status-fade-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* ══════════════ PREVIEW DE AVATAR ══════════════ */
+
+.avatar-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 15, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.avatar-preview-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 40px;
+}
+
+.avatar-preview-close {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease;
+}
+
+.avatar-preview-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: rotate(90deg);
+}
+
+.avatar-preview-ring {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-preview-ring__spin {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+      #2d8c4a,
+      #7c5cf0,
+      #6d3fd6,
+      #2d8c4a);
+  animation: avatar-ring-spin 4s linear infinite;
+  filter: blur(0.5px);
+}
+
+.avatar-preview-ring__spin::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: #0a0a0f;
+}
+
+.avatar-preview-ring__inner {
+  position: relative;
+  width: 236px;
+  height: 236px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #ffffff;
+  box-shadow: 0 0 40px rgba(124, 92, 240, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 1;
+}
+
+.avatar-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-preview-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -.01em;
+}
+
+@keyframes avatar-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.avatar-fade-enter-active,
+.avatar-fade-leave-active {
+  transition: opacity .2s ease;
+}
+
+.avatar-fade-enter-from,
+.avatar-fade-leave-to {
+  opacity: 0;
+}
+
+.avatar-fade-enter-active .avatar-preview-card,
+.avatar-fade-leave-active .avatar-preview-card {
+  transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease;
+}
+
+.avatar-fade-enter-from .avatar-preview-card,
+.avatar-fade-leave-to .avatar-preview-card {
+  transform: scale(0.85);
+  opacity: 0;
 }
 </style>
