@@ -201,132 +201,139 @@ export default defineComponent({
 
 
 
-const guardarLead = async () => {
-  if (guardando.value) return;
+    const guardarLead = async () => {
+      if (guardando.value) return;
 
-  if (!authStore.idEmploye) {
-    toast.error('No se encontró el usuario de sesión');
-    return;
-  }
+      if (!authStore.idEmploye) {
+        toast.error('No se encontró el usuario de sesión');
+        return;
+      }
 
-  if (!nuevoLead.proyecto) {
-    toast.warning('Seleccione un proyecto');
-    return;
-  }
+      if (!nuevoLead.proyecto) {
+        toast.warning('Seleccione un proyecto');
+        return;
+      }
 
-  if (!nuevoLead.nombre) {
-    toast.warning('Ingrese nombre del cliente');
-    return;
-  }
+      if (!nuevoLead.nombre) {
+        toast.warning('Ingrese nombre del cliente');
+        return;
+      }
 
-  if (!nuevoLead.dni) {
-    toast.warning('Ingrese DNI');
-    return;
-  }
+      if (!nuevoLead.dni) {
+        toast.warning('Ingrese DNI');
+        return;
+      }
 
-  if (!nuevoLead.telefono) {
-    toast.warning('Ingrese teléfono');
-    return;
-  }
+      if (!nuevoLead.telefono) {
+        toast.warning('Ingrese teléfono');
+        return;
+      }
 
-  if (!validarFormulario()) return;
+      if (!validarFormulario()) return;
 
-  guardando.value = true;
+      guardando.value = true;
 
-  try {
-    const payload = {
-      id_asesor: authStore.idEmploye,
-      id_proyecto: Number(nuevoLead.proyecto),
-      nombre_cliente: nuevoLead.nombre,
-      dni_cliente: nuevoLead.dni,
-      telefono_cliente: nuevoLead.telefono,
-      id_fuente: Number(nuevoLead.fuente),
-      usuario_creacion: authStore.idEmploye,
+      try {
+        const payload = {
+          id_asesor: authStore.idEmploye,
+          id_proyecto: Number(nuevoLead.proyecto),
+          nombre_cliente: nuevoLead.nombre,
+          dni_cliente: nuevoLead.dni,
+          telefono_cliente: nuevoLead.telefono,
+          id_fuente: Number(nuevoLead.fuente),
+          usuario_creacion: authStore.idEmploye,
+        };
+
+        const result = await crearLead(payload);
+
+        switch (result.accion) {
+          // =====================================================
+          // 1. MISMO PROYECTO - YA EXISTE LEAD ACTIVO
+          // =====================================================
+          case 'ALERTA':
+            toast.warning(
+              result.mensaje ||
+              'Este cliente ya tiene un lead activo para este proyecto.'
+            );
+
+            // NO limpiar formulario
+            // NO recargar porque no se creó nada
+            break;
+
+          // =====================================================
+          // 2. OTRO PROYECTO - SE CREÓ EL NUEVO LEAD
+          // =====================================================
+          case 'CREADO_NUEVO_PROYECTO':
+            toast.info(
+              result.mensaje ||
+              'Lead creado. El cliente ya tenía otra oportunidad activa.'
+            );
+
+            // Sí se creó
+            nuevoLead.proyecto = '';
+            nuevoLead.nombre = '';
+            nuevoLead.dni = '';
+            nuevoLead.telefono = '';
+            nuevoLead.fuente = '';
+
+            await cargarLeads();
+            break;
+
+          // =====================================================
+          // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ
+          // =====================================================
+          case 'PENDIENTE_ASESOR_NO_ACTIVO':
+            toast.warning(
+              result.mensaje ||
+              'El asesor que atiende actualmente al cliente no se encuentra activo. El lead queda pendiente de registro.'
+            );
+
+            // IMPORTANTE:
+            // NO limpiar formulario
+            // NO recargar leads
+            // NO mostrar "Lead creado correctamente"
+            break;
+
+          case 'SIN_ASESOR_ACTIVO':
+            toast.warning(
+              result.mensaje ||
+              'No hay asesores activos en este momento.'
+            );
+            break;
+
+          // =====================================================
+          // 4. NUEVO LEAD NORMAL
+          // =====================================================
+          case 'CREADO':
+            toast.success(
+              result.mensaje || 'Lead creado correctamente'
+            );
+
+            nuevoLead.proyecto = '';
+            nuevoLead.nombre = '';
+            nuevoLead.dni = '';
+            nuevoLead.telefono = '';
+            nuevoLead.fuente = '';
+
+            await cargarLeads();
+            break;
+
+          default:
+            toast.warning(
+              result.mensaje || 'No se pudo determinar el resultado del registro.'
+            );
+            break;
+        }
+      } catch (error: any) {
+        console.error('Error al guardar lead:', error);
+
+        toast.error(
+          error?.message || 'Error al procesar el lead'
+        );
+      } finally {
+        guardando.value = false;
+      }
     };
-
-    const result = await crearLead(payload);
-
-    switch (result.accion) {
-      // =====================================================
-      // 1. MISMO PROYECTO - YA EXISTE LEAD ACTIVO
-      // =====================================================
-      case 'ALERTA':
-        toast.warning(
-          result.mensaje ||
-            'Este cliente ya tiene un lead activo para este proyecto.'
-        );
-
-        // NO limpiar formulario
-        // NO recargar porque no se creó nada
-        break;
-
-      // =====================================================
-      // 2. OTRO PROYECTO - SE CREÓ EL NUEVO LEAD
-      // =====================================================
-      case 'CREADO_NUEVO_PROYECTO':
-        toast.info(
-          result.mensaje ||
-            'Lead creado. El cliente ya tenía otra oportunidad activa.'
-        );
-
-        // Sí se creó
-        nuevoLead.proyecto = '';
-        nuevoLead.nombre = '';
-        nuevoLead.dni = '';
-        nuevoLead.telefono = '';
-        nuevoLead.fuente = '';
-
-        await cargarLeads();
-        break;
-
-      // =====================================================
-      // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ
-      // =====================================================
-      case 'PENDIENTE_ASESOR_NO_ACTIVO':
-        toast.warning(
-          result.mensaje ||
-            'El asesor que atiende actualmente al cliente no se encuentra activo. El lead queda pendiente de registro.'
-        );
-
-        // IMPORTANTE:
-        // NO limpiar formulario
-        // NO recargar leads
-        // NO mostrar "Lead creado correctamente"
-        break;
-
-      // =====================================================
-      // 4. NUEVO LEAD NORMAL
-      // =====================================================
-      case 'CREADO':
-        toast.success(
-          result.mensaje || 'Lead creado correctamente'
-        );
-
-        nuevoLead.proyecto = '';
-        nuevoLead.nombre = '';
-        nuevoLead.dni = '';
-        nuevoLead.telefono = '';
-        nuevoLead.fuente = '';
-
-        await cargarLeads();
-        break;
-
-      default:
-        toast.warning(
-          result.mensaje || 'No se pudo determinar el resultado del registro.'
-        );
-        break;
-    }
-  } catch (error: any) {
-    console.error('Error al guardar lead:', error);
-
-    toast.error(
-      error?.message || 'Error al procesar el lead'
-    );
-  } finally {
-    guardando.value = false;
-  }
-};
 
 
 

@@ -40,8 +40,25 @@ export interface ICrearLead {
 
 
 // RESPUESTA CREAR LEAD
-export interface ICrearLeadResponse { id_lead: number | null; id_cliente: number; id_asesor: number | null; fecha_creacion: string | null; accion: | 'ALERTA' | 'CREADO_NUEVO_PROYECTO' | 'CREADO' | 'PENDIENTE_ASESOR_NO_ACTIVO'; debe_notificar: boolean; id_lead_anterior: number | null; id_asesor_anterior: number | null; id_usuario_notificacion: number | null; mensaje: string; }
+export interface ICrearLeadResponse {
+  id_lead: number | null;
+  id_cliente: number;
+  id_asesor: number | null;
+  fecha_creacion: string | null;
 
+  accion:
+    | 'ALERTA'
+    | 'CREADO_NUEVO_PROYECTO'
+    | 'CREADO'
+    | 'PENDIENTE_ASESOR_NO_ACTIVO'
+    | 'SIN_ASESOR_ACTIVO';
+
+  debe_notificar: boolean;
+  id_lead_anterior: number | null;
+  id_asesor_anterior: number | null;
+  id_usuario_notificacion: number | null;
+  mensaje: string;
+}
 
 export interface IValidarLeadDuplicadoRequest {
   dni: string;
