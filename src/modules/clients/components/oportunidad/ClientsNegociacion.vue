@@ -165,7 +165,7 @@
           </div>
 
           <!-- OPCIONES -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
 
             <!-- ============================================= -->
             <!-- DIRECTO -->
@@ -260,6 +260,52 @@
 
             </button>
 
+            <!-- ============================================= -->
+            <!-- AL CONTADO -->
+            <!-- ============================================= -->
+            <button type="button" @click="seleccionarTipoCredito(TIPOS_CREDITO.CONTADO)"
+              :disabled="guardandoTipoCredito"
+              class="group relative p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#2d8c4a] hover:shadow-md hover:bg-[#2d8c4a]/5 transition-all duration-200 text-left disabled:opacity-50 disabled:cursor-not-allowed">
+
+              <div class="flex items-start gap-4">
+
+                <div
+                  class="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-[#2d8c4a]/10 flex items-center justify-center shrink-0 transition-colors">
+
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    class="w-6 h-6 text-slate-600 group-hover:text-[#2d8c4a]">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M9.5 9.5c0-1.1.9-2 2.5-2s2.5.9 2.5 2-1 1.7-2.5 2.7-2.5 1.6-2.5 2.8h5" />
+                  </svg>
+
+                </div>
+
+                <div>
+
+                  <p class="text-base font-semibold text-slate-800">
+                    Al Contado
+                  </p>
+
+                  <p class="text-sm text-slate-500 mt-1">
+                    Pago al contado, sin pasos adicionales.
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  class="w-5 h-5 text-[#2d8c4a]">
+                  <path d="M5 12h14" />
+                  <path d="m13 6 6 6-6 6" />
+                </svg>
+
+              </div>
+
+            </button>
+
           </div>
 
         </div>
@@ -285,6 +331,12 @@
                   <path d="M9 21v-6h6v6" />
                 </svg>
 
+                <svg v-else-if="tipoCreditoSeleccionado === TIPOS_CREDITO.CONTADO" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8" class="w-5 h-5 text-[#2d8c4a]">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M9.5 9.5c0-1.1.9-2 2.5-2s2.5.9 2.5 2-1 1.7-2.5 2.7-2.5 1.6-2.5 2.8h5" />
+                </svg>
+
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                   class="w-5 h-5 text-[#2d8c4a]">
                   <rect x="4" y="3" width="16" height="18" rx="2" />
@@ -304,7 +356,9 @@
                   {{
                     tipoCreditoSeleccionado === TIPOS_CREDITO.HIPOTECARIO
                       ? "Crédito Hipotecario"
-                      : "Crédito Directo"
+                      : tipoCreditoSeleccionado === TIPOS_CREDITO.CONTADO
+                        ? "Al Contado"
+                        : "Crédito Directo"
                   }}
 
                 </p>
@@ -855,6 +909,37 @@
 
           </div>
 
+          <!-- ================================================= -->
+          <!-- ================================================ -->
+          <!-- FLUJO AL CONTADO (sin pasos) -->
+          <!-- ================================================ -->
+          <div v-else-if="tipoCreditoSeleccionado === TIPOS_CREDITO.CONTADO"
+            class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-5 flex items-start gap-3">
+
+            <span class="w-8 h-8 rounded-full bg-[#2d8c4a]/10 flex items-center justify-center shrink-0">
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                class="w-4 h-4 text-[#2d8c4a]">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+
+            </span>
+
+            <div>
+
+              <p class="text-sm font-semibold text-slate-800">
+                Sin pasos adicionales
+              </p>
+
+              <p class="text-sm text-slate-500 mt-1">
+                El crédito al contado no requiere checklist. Puedes pasar
+                directamente a cierre o marcar la oportunidad como desistida.
+              </p>
+
+            </div>
+
+          </div>
+
         </template>
 
         <!-- ================================================= -->
@@ -865,7 +950,7 @@
           <div class="flex flex-wrap gap-2 sm:justify-end">
 
             <!-- DESISTIÓ -->
-            <button  v-if="puedeContactar" type="button" @click="abrirModalDesistio" :disabled="actualizando"
+            <button v-if="puedeContactar" type="button" @click="abrirModalDesistio" :disabled="actualizando"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
@@ -878,7 +963,7 @@
             </button>
 
             <!-- PASAR A CIERRE -->
-            <button   v-if="puedeContactar" type="button" @click="pasarACierre" :disabled="actualizando"
+            <button v-if="puedeContactar" type="button" @click="pasarACierre" :disabled="actualizando"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">

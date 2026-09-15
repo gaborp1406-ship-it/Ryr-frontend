@@ -255,6 +255,7 @@ export default defineComponent({
         contacto.value = {
           fecha: formatFechaSimple(estado.fecha_primer_contacto),
           hora: formatHoraSimple(estado.hora_primer_contacto),
+          tiempo: formatTiempoContacto(estado.tiempo_contacto),
         };
       } catch (error) {
         console.error("Error cargando estado contacto", error);
@@ -267,10 +268,53 @@ export default defineComponent({
     const contacto = ref({
       fecha: "-",
       hora: "-",
+      tiempo: "-",
     });
 
-    function onPrimerContactoCargado(payload: { fecha: string; hora: string }) {
-      contacto.value = payload;
+ function formatTiempoContacto(
+  valor:
+    | string
+    | {
+        hours?: number;
+        minutes?: number;
+        seconds?: number;
+        milliseconds?: number;
+      }
+    | null
+    | undefined
+): string {
+  if (!valor) return "-";
+
+  let horas = 0;
+  let minutos = 0;
+  let segundos = 0;
+
+  if (typeof valor === "object") {
+    horas = Number(valor.hours ?? 0);
+    minutos = Number(valor.minutes ?? 0);
+    segundos = Math.floor(Number(valor.seconds ?? 0));
+  } else {
+    const match = valor.match(/^(\d+):(\d{2}):(\d{2})/);
+
+    if (!match) return valor;
+
+    horas = Number(match[1]);
+    minutos = Number(match[2]);
+    segundos = Number(match[3]);
+  }
+
+  return `${horas} h ${minutos} min ${segundos} s`;
+}
+    function onPrimerContactoCargado(payload: {
+      fecha: string;
+      hora: string;
+      tiempo?: string;
+    }) {
+      contacto.value = {
+        fecha: payload.fecha,
+        hora: payload.hora,
+        tiempo: payload.tiempo ?? "-",
+      };
     }
 
     // Cargar historial de mensajes en cuanto tengamos el id de estado de contacto
@@ -449,7 +493,7 @@ export default defineComponent({
         );
       }
     }
-  const puedeContactar = computed(() => authStore.isAgent);
+    const puedeContactar = computed(() => authStore.isAgent);
 
     async function onReunionAgendada() {
       cerrarModalAgendarReunion();

@@ -159,6 +159,10 @@ export const useAuthStore = defineStore('auth', () => {
       authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Agente),
     ),
 
+      isSuper: computed(() =>
+      authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Supervisor),
+    ),
+
 
     login,
     checkAuthStatus,

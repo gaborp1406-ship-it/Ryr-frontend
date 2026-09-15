@@ -8,19 +8,41 @@
                     Primer Contacto
                 </h2>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 px-6 py-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5 px-6 py-6">
+
+                <!-- Fecha -->
                 <div>
                     <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
                         Fecha de primer contacto
                     </p>
-                    <p class="text-sm font-semibold text-slate-800">{{ contacto.fecha }}</p>
+
+                    <p class="text-sm font-semibold text-slate-800">
+                        {{ contacto.fecha }}
+                    </p>
                 </div>
+
+                <!-- Hora -->
                 <div>
                     <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
                         Hora de primer contacto
                     </p>
-                    <p class="text-sm font-semibold text-slate-800">{{ contacto.hora }}</p>
+
+                    <p class="text-sm font-semibold text-slate-800">
+                        {{ contacto.hora }}
+                    </p>
                 </div>
+
+                <!-- Tiempo de contacto -->
+                <div>
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
+                        Tiempo de contacto
+                    </p>
+
+                    <p class="text-sm font-semibold text-slate-800">
+                        {{ contacto.tiempo }}
+                    </p>
+                </div>
+
             </div>
         </div>
 
@@ -42,13 +64,14 @@
                     :disabled="enviandoMensaje"
                     class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none disabled:opacity-60"></textarea>
                 <div class="flex justify-end">
-                    <button   v-if="puedeContactar" @click="enviarMensaje" :disabled="enviandoMensaje || !nuevoMensaje.trim()"
+                    <button v-if="puedeContactar" @click="enviarMensaje"
+                        :disabled="enviandoMensaje || !nuevoMensaje.trim()"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg v-if="enviandoMensaje" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"
                             fill="none">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
                         {{ enviandoMensaje ? 'Guardando...' : 'Guardar' }}
                     </button>
@@ -118,7 +141,7 @@
 
             <div v-else class="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex flex-wrap gap-2">
-                    <button v-if="puedeContactar"  @click="abrirModalWhatsapp"
+                    <button v-if="puedeContactar" @click="abrirModalWhatsapp"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors duration-200">
                         <IconWhatsapp class="w-6 h-6" /> WhatsApp
                     </button>
@@ -143,7 +166,7 @@
                 <div class="flex flex-wrap gap-2 sm:justify-end">
 
                     <!-- Solo aparece si estado es FALSE -->
-                    <button v-if="!estadoContacto  && puedeContactar" @click="abrirModalDesistio"
+                    <button v-if="!estadoContacto && puedeContactar" @click="abrirModalDesistio"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-sm font-semibold transition-colors duration-200">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <circle cx="12" cy="12" r="9" />
@@ -155,7 +178,8 @@
 
 
                     <!-- Solo aparece si estado es FALSE -->
-                    <button v-if="!estadoContacto  && puedeContactar" @click="agendarReunion" :disabled="historialMensajes.length === 0"
+                    <button v-if="!estadoContacto && puedeContactar" @click="agendarReunion"
+                        :disabled="historialMensajes.length === 0"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                             <rect x="3" y="4" width="18" height="18" rx="2" />

@@ -53,6 +53,7 @@ export default defineComponent({
     const TIPOS_CREDITO = {
       HIPOTECARIO: 35,
       DIRECTO: 34,
+      CONTADO: 39,
     } as const;
     const pasos = ref<PasoPrincipal[]>([
       {
@@ -266,6 +267,12 @@ export default defineComponent({
     }
 
     const completados = computed(() => {
+      if (esCreditoContado.value) {
+        // Crédito al contado no tiene pasos: se considera completo
+        // al seleccionarlo, por lo que se muestra 1/1.
+        return 1;
+      }
+
       if (esCreditoDirecto.value) {
         let total = 0;
         let completado = 0;
@@ -312,6 +319,12 @@ export default defineComponent({
         return false;
       }
 
+      if (esCreditoContado.value) {
+        // No tiene pasos: queda listo de inmediato para
+        // pasar a cierre o marcar como desistido.
+        return true;
+      }
+
       if (esCreditoDirecto.value) {
         return acuerdoDirecto.value !== null;
       }
@@ -328,6 +341,10 @@ export default defineComponent({
       return false;
     });
     const totalPasos = computed(() => {
+      if (esCreditoContado.value) {
+        return 1;
+      }
+
       return esCreditoDirecto.value ? 2 : 4;
     });
     const progreso = computed(() => {
@@ -561,6 +578,30 @@ export default defineComponent({
         docsBanco.value.bloqueado = true;
         docsBanco.value.completado = false;
       }
+
+      // ==========================================
+      // CRÉDITO AL CONTADO (sin pasos)
+      // ==========================================
+
+      if (tipoCredito === TIPOS_CREDITO.CONTADO) {
+        if (aprobacionBancaria.value) {
+          aprobacionBancaria.value.bloqueado = true;
+          aprobacionBancaria.value.completado = false;
+        }
+
+        if (precalificacion.value) {
+          precalificacion.value.bloqueado = true;
+          precalificacion.value.completado = false;
+        }
+
+        if (cartaAprobacion.value) {
+          cartaAprobacion.value.bloqueado = true;
+          cartaAprobacion.value.completado = false;
+        }
+
+        docsBanco.value.bloqueado = true;
+        docsBanco.value.completado = false;
+      }
     }
 
 
@@ -573,10 +614,15 @@ export default defineComponent({
       return tipoCreditoSeleccionado.value === TIPOS_CREDITO.DIRECTO;
     });
 
+    const esCreditoContado = computed(() => {
+      return tipoCreditoSeleccionado.value === TIPOS_CREDITO.CONTADO;
+    });
+
     const tieneTipoCredito = computed(() => {
       return (
         tipoCreditoSeleccionado.value === TIPOS_CREDITO.HIPOTECARIO ||
-        tipoCreditoSeleccionado.value === TIPOS_CREDITO.DIRECTO
+        tipoCreditoSeleccionado.value === TIPOS_CREDITO.DIRECTO ||
+        tipoCreditoSeleccionado.value === TIPOS_CREDITO.CONTADO
       );
     });
 
@@ -813,6 +859,7 @@ export default defineComponent({
       TIPOS_CREDITO,
       esCreditoDirecto,
       esCreditoHipotecario,
+      esCreditoContado,
       seleccionarTipoCredito,
       guardandoTipoCredito,
       docsBanco,

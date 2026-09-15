@@ -45,7 +45,7 @@
         <span class="profile-menu__name">{{ authStore.username }}</span>
       </a>
 
-      <div class="notif-bell" ref="notifRef">
+      <div v-if="!authStore.isSuper" class="notif-bell" ref="notifRef">
         <button type="button" class="notif-bell__trigger" @click="toggleNotificaciones"
           aria-label="Notificaciones de leads">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -375,8 +375,8 @@ onBeforeUnmount(() => {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 30;
-  height: 64px;
+  z-index: 1000;   /* antes 30 — por encima de cualquier header interno de las vistas */
+  height: 75px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -437,7 +437,7 @@ onBeforeUnmount(() => {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
-  z-index: 50;
+  z-index: 1001;   /* antes 50 */
 }
 
 .notif-bell__header {
@@ -628,8 +628,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 50px;      /* antes 36px */
+  height: 50px;      /* antes 36px */
   border-radius: 50%;
   padding: 2px;
   background: #2d8c4a;
@@ -752,7 +752,7 @@ onBeforeUnmount(() => {
   padding: 6px;
   margin: 0;
   list-style: none;
-  z-index: 40;
+  z-index: 1001;   /* antes 40 */
 }
 
 .status-selector__item {

@@ -3,6 +3,7 @@ export interface IEstadoContactoLeadResponse {
   id_etapa: number;
   fecha_primer_contacto: string | null;
   hora_primer_contacto: string | null;
+  tiempo_contacto: string | null;
   estado: boolean;
   telefono: number
   mensaje: string;

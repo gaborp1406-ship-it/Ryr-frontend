@@ -51,23 +51,32 @@
                     </span>
                 </div>
 
+
                 <div>
-                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">Fecha de ingreso</p>
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
+                        Fecha de ingreso
+                    </p>
+
                     <p class="text-sm font-semibold text-slate-800">
-                        {{ lead?.fecha_ingreso }}
+                        {{ formatFechaSimple(lead?.fecha_ingreso) }}
                     </p>
                 </div>
 
                 <div>
-                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">Hora de ingreso</p>
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
+                        Hora de ingreso
+                    </p>
+
                     <p class="text-sm font-semibold text-slate-800">
-                        {{ lead?.hora_ingreso }}
+                        {{ formatHoraSimple(lead?.hora_ingreso) }}
                     </p>
                 </div>
+
 
             </div>
 
-            <div v-if="lead && !lead.estado && puedeContactar" class="border-t border-slate-100 px-6 py-4 flex justify-end">
+            <div v-if="lead && !lead.estado && puedeContactar"
+                class="border-t border-slate-100 px-6 py-4 flex justify-end">
                 <button @click="contactarLead" :disabled="loadingContactar"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-[#2d8c4a] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors duration-200">
 
