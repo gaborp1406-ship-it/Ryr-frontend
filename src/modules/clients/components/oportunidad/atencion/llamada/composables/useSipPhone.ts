@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { useToast } from "vue-toastification";
 import * as SIP from "sip.js";
-import { obtenerCredencialesSip } from "../actions/Gestioninteraction.action.js";
+import { obtenerCredencialesSip } from "../actions/Gestioninteraction.action";
 
 export interface ISipCredentials {
   agentExtension: string;
@@ -43,7 +43,6 @@ function configurarAudioRemoto(invitation: any) {
     });
 
     pc.ontrack = (event: RTCTrackEvent) => {
-    
       remoteStream.addTrack(event.track);
       audio.srcObject = remoteStream;
       audio.play()
@@ -53,17 +52,15 @@ function configurarAudioRemoto(invitation: any) {
 
     audio.srcObject = remoteStream;
 
-    // 👇 FIX: forzar play() también acá, no solo dentro de ontrack
     audio.play()
       .then(() => console.log("🔊 Audio remoto reproduciéndose (inicial)"))
       .catch((error) => console.warn("⚠️ No se pudo reproducir audio (inicial):", error));
-
-  
 
   } catch (error) {
     console.error("❌ Error configurando audio remoto:", error);
   }
 }
+
 // Maneja el registro del softphone (SIP.js) y las llamadas entrantes (bridge del agente)
 export function useSipPhone() {
   const toast = useToast();
@@ -76,28 +73,56 @@ export function useSipPhone() {
   const sipRegistrado = ref(false);
   const sipCredentials = ref<ISipCredentials | null>(null);
 
-  const manejarLlamadaEntrante = async (invitation: any) => {
+  // Estado del micrófono
+  const micSilenciado = ref(false);
 
+  // Silencia/reactiva el MICRÓFONO LOCAL (lo que el agente envía) de la llamada activa
+  function toggleMic() {
+    const session = currentSession.value;
+
+    if (!session || !session.sessionDescriptionHandler) {
+      toast.warning("No hay una llamada activa para silenciar.");
+      return;
+    }
+
+    const pc = session.sessionDescriptionHandler.peerConnection;
+    if (!pc) {
+      toast.warning("No se pudo acceder al audio de la llamada.");
+      return;
+    }
+
+    const audioSenders = pc
+      .getSenders()
+      .filter((sender: RTCRtpSender) => sender.track && sender.track.kind === "audio");
+
+    if (audioSenders.length === 0) {
+      toast.warning("No se encontró el micrófono en la llamada activa.");
+      return;
+    }
+
+    micSilenciado.value = !micSilenciado.value;
+
+    audioSenders.forEach((sender: RTCRtpSender) => {
+      sender.track!.enabled = !micSilenciado.value;
+    });
+  }
+
+  const resetMic = () => {
+    micSilenciado.value = false;
+  };
+
+  const manejarLlamadaEntrante = async (invitation: any) => {
     currentSession.value = invitation;
+    resetMic();
 
     invitation.stateChange.addListener((state: any) => {
-  
-      if (state === SIP.SessionState.Establishing) {
-        
-      }
-
-      if (state === SIP.SessionState.Established) {
-      
-      }
-
       if (state === SIP.SessionState.Terminated) {
-      
         currentSession.value = null;
+        resetMic();
       }
     });
 
     try {
-
       await invitation.accept({
         sessionDescriptionHandlerOptions: {
           constraints: {
@@ -106,7 +131,6 @@ export function useSipPhone() {
           },
         },
       });
-
 
       configurarAudioRemoto(invitation);
 
@@ -141,14 +165,12 @@ export function useSipPhone() {
 
     await userAgent.value.start();
 
-    // 👇 FIX: esperar el estado "Registered" real, no solo el envío del REGISTER
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error("Timeout esperando confirmación de registro SIP"));
       }, 10000);
 
       registerer.value.stateChange.addListener((state: SIP.RegistererState) => {
-
         if (state === SIP.RegistererState.Registered) {
           clearTimeout(timeout);
           resolve();
@@ -169,8 +191,6 @@ export function useSipPhone() {
     toast.success(`Agente ${credentials.agentExtension} conectado`);
   };
 
-  // Obtiene las credenciales SIP y registra el softphone.
-  // Devuelve las credenciales para que quien la llame pueda abrir el SSE de eventos.
   const conectarTelefono = async (): Promise<ISipCredentials> => {
     cargandoTelefono.value = true;
 
@@ -178,17 +198,14 @@ export function useSipPhone() {
       const credenciales = await obtenerCredencialesSip();
 
       sipCredentials.value = {
-        agentExtension: credenciales.sipUsername,   // ✅ corregido
+        agentExtension: credenciales.sipUsername,
         sipServer: credenciales.sipServer,
         sipPort: credenciales.sipPort,
-        agentPassword: credenciales.sipPassword,     // ✅ corregido
+        agentPassword: credenciales.sipPassword,
       };
-
-
 
       await registrarUserAgent(sipCredentials.value);
 
-      // 👇 Ahora sí es seguro marcarlo true: ya llegó el 200 OK del REGISTER
       sipRegistrado.value = true;
 
       return sipCredentials.value;
@@ -198,7 +215,7 @@ export function useSipPhone() {
       userAgent.value = null;
       registerer.value = null;
       currentSession.value = null;
-      sipRegistrado.value = false; // 👈 asegurate de resetear esto también
+      sipRegistrado.value = false;
 
       toast.error("Error registrando el teléfono");
       throw error;
@@ -212,5 +229,7 @@ export function useSipPhone() {
     sipRegistrado,
     cargandoTelefono,
     conectarTelefono,
+    micSilenciado,
+    toggleMic,
   };
 }

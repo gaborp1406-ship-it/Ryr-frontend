@@ -108,7 +108,7 @@ export default defineComponent({
 
     // ---------- Llamada (SIP + SSE) ----------
     const eventSource = ref<EventSource | null>(null);
-    const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono } = useSipPhone();
+   const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
     const {
       currentCallId,
       isCalling,
@@ -124,39 +124,28 @@ export default defineComponent({
     const modalLlamadaAbierto = ref(false);
 
 
-    const micSilenciado = ref(false);
-    const altavozSilenciado = ref(false);
-    const remoteAudioRef = ref<HTMLAudioElement | null>(null);
 
-    // ✅ AGREGAR ESTOS MÉTODOS
-    const toggleMicrophone = async () => {
-      try {
-        if (remoteAudioRef.value) {
-          const audioTracks = remoteAudioRef.value.srcObject ?
-            (remoteAudioRef.value.srcObject as MediaStream).getAudioTracks() : [];
+const altavozSilenciado = ref(false);
+const remoteAudioRef = ref<HTMLAudioElement | null>(null);
 
-          audioTracks.forEach(track => {
-            track.enabled = micSilenciado.value;
-          });
-          micSilenciado.value = !micSilenciado.value;
-          toast.info(micSilenciado.value ? "🔇 Micrófono silenciado" : "🔊 Micrófono activado");
-        }
-      } catch (error) {
-        console.error("Error al silenciar micrófono:", error);
-      }
-    };
+// 👇 ahora solo delega al mute real del composable (silencia lo que el agente envía)
+const toggleMicrophone = () => {
+  toggleMic();
+};
 
-    const toggleSpeaker = () => {
-      try {
-        if (remoteAudioRef.value) {
-          remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
-          altavozSilenciado.value = !altavozSilenciado.value;
-          toast.info(altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado");
-        }
-      } catch (error) {
-        console.error("Error al silenciar altavoz:", error);
-      }
-    };
+const toggleSpeaker = () => {
+  try {
+    if (remoteAudioRef.value) {
+      remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
+      altavozSilenciado.value = !altavozSilenciado.value;
+      toast.info(altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado");
+    }
+  } catch (error) {
+    console.error("Error al silenciar altavoz:", error);
+  }
+};
+
+
     watch(estadoLlamada, (nuevoEstado, estadoAnterior) => {
       if (nuevoEstado === "idle" && estadoAnterior !== "idle") {
         modalLlamadaAbierto.value = false;

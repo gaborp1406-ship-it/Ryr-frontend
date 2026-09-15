@@ -19,14 +19,8 @@ export default defineComponent({
     const authStore = useAuthStore();
 
     const eventSource = ref<EventSource | null>(null);
-    const { sipCredentials, sipRegistrado, conectarTelefono } = useSipPhone();
+    const { sipCredentials, sipRegistrado, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
 
-    // ✅ AGREGAR: Estados para micrófono y altavoz
-    const micSilenciado = ref(false);
-    const altavozSilenciado = ref(false);
-
-    // ✅ AGREGAR: Referencias a elementos de audio
-    const remoteAudioRef = ref<HTMLAudioElement | null>(null);
     const localStreamRef = ref<MediaStream | null>(null);
 
     const {
@@ -40,40 +34,22 @@ export default defineComponent({
       makeCall: realizarLlamadaSaliente,
       hangup,
     } = useLlamadaSaliente();
+    const altavozSilenciado = ref(false);
+    const remoteAudioRef = ref<HTMLAudioElement | null>(null);
 
     const modalLlamadaVisible = computed(() => {
       return estadoLlamada.value !== "idle";
     });
 
-    /**
-     * ✅ AGREGAR: Silenciar/reactivar micrófono
-     */
-    const toggleMicrophone = async () => {
-      try {
-        if (localStreamRef.value) {
-          localStreamRef.value.getAudioTracks().forEach(track => {
-            track.enabled = micSilenciado.value; // Si estaba silenciado, reactivar
-          });
-          micSilenciado.value = !micSilenciado.value;
-          
-          const mensaje = micSilenciado.value ? "🔇 Micrófono silenciado" : "🔊 Micrófono activado";
-          toast.info(mensaje);
-        }
-      } catch (error) {
-        console.error("❌ Error al silenciar micrófono:", error);
-        toast.error("Error al silenciar micrófono");
-      }
+    const toggleMicrophone = () => {
+      toggleMic();
     };
 
-    /**
-     * ✅ AGREGAR: Silenciar/reactivar altavoz
-     */
     const toggleSpeaker = () => {
       try {
         if (remoteAudioRef.value) {
           remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
           altavozSilenciado.value = !altavozSilenciado.value;
-          
           const mensaje = altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado";
           toast.info(mensaje);
         }
@@ -82,7 +58,6 @@ export default defineComponent({
         toast.error("Error al silenciar altavoz");
       }
     };
-
     /**
      * INICIALIZAR: Conectar SIP al montar el componente
      */
@@ -151,7 +126,7 @@ export default defineComponent({
       // ✅ AGREGAR: Limpiar estados de audio
       micSilenciado.value = false;
       altavozSilenciado.value = false;
-      
+
       await hangup();
     };
 
