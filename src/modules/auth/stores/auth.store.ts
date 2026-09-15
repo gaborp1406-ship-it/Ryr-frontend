@@ -152,17 +152,21 @@ export const useAuthStore = defineStore('auth', () => {
     nameEmploye: computed(
       () => `${authCheckStatus.value?.nombre_trabajador ?? ''} ${authCheckStatus.value?.apellido_trabajador ?? ''}`.trim(),
     ),
-    isAdmin: computed(() =>
-      authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Administrador),
-    ),
-    isAgent: computed(() =>
-      authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Agente),
-    ),
+  isAdmin: computed(() =>
+  authCheckStatus.value?.roles?.[0]?.idrol === AuthRole.Administrador,
+),
 
-      isSuper: computed(() =>
-      authCheckStatus.value?.roles.some((role) => role.idrol === AuthRole.Supervisor),
-    ),
+isAgent: computed(() =>
+  authCheckStatus.value?.roles?.[0]?.idrol === AuthRole.Agente,
+),
 
+isSuper: computed(() =>
+  authCheckStatus.value?.roles?.[0]?.idrol === AuthRole.Supervisor,
+),
+
+isDerivador: computed(() =>
+  authCheckStatus.value?.roles?.[0]?.idrol === AuthRole.Derivador,
+),
 
     login,
     checkAuthStatus,

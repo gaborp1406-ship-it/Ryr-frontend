@@ -183,7 +183,11 @@ const onLogin = async () => {
     return;
   }
 
-  await router.push({ name: 'homeDashboardAll' });
+  if (authStore.isDerivador) {
+    await router.push({ name: 'leads' });
+  } else {
+    await router.push({ name: 'homeDashboardAll' });
+  }
 };
 
 
