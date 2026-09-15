@@ -94,25 +94,25 @@
     </div>
 
     <!-- ══ PREVIEW DE FOTO DE PERFIL ══ -->
-    <Teleport to="body">
-      <Transition name="avatar-fade">
-        <div v-if="showAvatarPreview" class="avatar-preview-overlay" @click.self="closeAvatarPreview">
-          <div class="avatar-preview-card">
-            <button class="avatar-preview-close" @click="closeAvatarPreview" aria-label="Cerrar">✕</button>
+<Teleport to="body">
+  <Transition name="avatar-fade">
+    <div v-if="showAvatarPreview" class="avatar-preview-overlay" @click.self="closeAvatarPreview">
+      <button class="avatar-preview-close" @click="closeAvatarPreview" aria-label="Cerrar">✕</button>
 
-            <div class="avatar-preview-ring">
-              <div class="avatar-preview-ring__spin"></div>
-              <div class="avatar-preview-ring__inner">
-                <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
-                  class="avatar-preview-img" />
-              </div>
-            </div>
-
-            <p class="avatar-preview-name">{{ authStore.username }}</p>
+      <div class="avatar-preview-card">
+        <div class="avatar-preview-ring">
+          <div class="avatar-preview-ring__spin"></div>
+          <div class="avatar-preview-ring__inner">
+            <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
+              class="avatar-preview-img" />
           </div>
         </div>
-      </Transition>
-    </Teleport>
+
+        <p class="avatar-preview-name">{{ authStore.username }}</p>
+      </div>
+    </div>
+  </Transition>
+</Teleport>
   </header>
 </template>
 
@@ -938,6 +938,16 @@ onBeforeUnmount(() => {
 .avatar-fade-enter-active .avatar-preview-card,
 .avatar-fade-leave-active .avatar-preview-card {
   transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease;
+}
+
+.avatar-fade-enter-active .avatar-preview-close,
+.avatar-fade-leave-active .avatar-preview-close {
+  transition: opacity .2s ease;
+}
+
+.avatar-fade-enter-from .avatar-preview-close,
+.avatar-fade-leave-to .avatar-preview-close {
+  opacity: 0;
 }
 
 .avatar-fade-enter-from .avatar-preview-card,
