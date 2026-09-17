@@ -405,9 +405,13 @@ export default defineComponent({
 
         return (
           proforma.value?.completado === true &&
+          tieneUrlCartaAprobacion &&
           (
             tienePrecalificacion ||
-            tieneUrlCartaAprobacion
+            (
+              tieneCarta &&
+              cartaAprobada
+            )
           )
         );
       }
