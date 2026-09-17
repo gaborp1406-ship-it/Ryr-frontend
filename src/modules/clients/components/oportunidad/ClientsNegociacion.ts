@@ -55,7 +55,7 @@ export default defineComponent({
     const cargandoEtapa = ref(true);
 
     const etapaBloqueada = computed(() => {
-      return [7,8].includes(Number(etapaActual.value));
+      return [7, 8].includes(Number(etapaActual.value));
     });
 
     const puedeInteractuar = computed(() => {
@@ -393,6 +393,11 @@ export default defineComponent({
         const cartaDenegada =
           checklistData.value.carta_aprobacion_denegado === true;
 
+
+        const tieneUrlCartaAprobacion =
+          checklistData.value.url_carta_aprobacion &&
+          String(checklistData.value.url_carta_aprobacion).trim() !== "";
+
         // Si la carta fue DENEGADA, nunca puede pasar a cierre
         if (cartaDenegada) {
           return false;
@@ -400,9 +405,13 @@ export default defineComponent({
 
         return (
           proforma.value?.completado === true &&
-          (tienePrecalificacion || (tieneCarta && cartaAprobada))
+          (
+            tienePrecalificacion ||
+            tieneUrlCartaAprobacion
+          )
         );
       }
+
 
       return false;
     });
@@ -596,6 +605,7 @@ export default defineComponent({
           decision.value = null;
         }
 
+
         docsBanco.value.completado =
           data.aprobacion_bancaria_carta_aprobacion === true;
 
@@ -603,13 +613,25 @@ export default defineComponent({
           docsBanco.value.completado
             ? formatearFecha()
             : null;
-
-
         docsBanco.value.bloqueado =
-          !(
-            data.url_carta_aprobacion &&
-            String(data.url_carta_aprobacion).trim() !== ""
-          );
+          !data.proforma_enviada;
+
+
+
+        // docsBanco.value.completado =
+        //   data.aprobacion_bancaria_carta_aprobacion === true;
+
+        // docsBanco.value.fecha =
+        //   docsBanco.value.completado
+        //     ? formatearFecha()
+        //     : null;
+
+
+        // docsBanco.value.bloqueado =
+        //   !(
+        //     data.url_carta_aprobacion &&
+        //     String(data.url_carta_aprobacion).trim() !== ""
+        //   );
       }
 
       // ==========================================
@@ -945,7 +967,7 @@ export default defineComponent({
       subirDocumento,
       mostrarModalDesistio,
       opcionesDesistio,
-     
+
       motivoSeleccionado,
       cargandoOpciones,
       actualizarCampo,
