@@ -13,12 +13,12 @@
       class="mb-[18px] flex flex-wrap items-end gap-[10px] rounded-[16px] border border-slate-200 bg-white p-[14px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
       <!-- FECHA INICIO -->
       <div class="flex min-w-[170px] flex-col gap-[5px]">
-      <label class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
-  Fecha inicio
-</label>
+        <label class="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+          Fecha inicio
+        </label>
 
-       <input v-model="fechaInicio" type="date"
-  class="h-[40px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[13px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20" />
+        <input v-model="fechaInicio" type="date"
+          class="h-[40px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[13px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20" />
       </div>
 
       <!-- FECHA FIN -->
@@ -37,9 +37,9 @@
           Asesor
         </label>
 
-  <select v-model="idAsesor" :disabled="cargandoAsesores"
-  class="h-[40px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[13px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20 disabled:cursor-not-allowed disabled:opacity-60"
-  @change="aplicarFiltroFechas">
+        <select v-model="idAsesor" :disabled="cargandoAsesores"
+          class="h-[40px] rounded-[9px] border border-slate-200 bg-slate-50 px-[10px] text-[13px] font-medium text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:bg-white focus:ring-1 focus:ring-[#2d8c4a]/20 disabled:cursor-not-allowed disabled:opacity-60"
+          @change="aplicarFiltroFechas">
           <option value="">
             {{ cargandoAsesores ? 'Cargando asesores...' : 'Todos los asesores' }}
           </option>
@@ -51,9 +51,9 @@
       </div>
 
       <!-- APLICAR -->
-     <button type="button" :disabled="cargando"
-  class="flex h-[40px] items-center gap-[7px] rounded-[9px] bg-[#2d8c4a] px-[15px] text-[12px] font-bold text-white shadow-[0_3px_10px_rgba(45,140,74,0.2)] transition hover:bg-[#24763d] disabled:cursor-not-allowed disabled:opacity-60"
-  @click="aplicarFiltroFechas">
+      <button type="button" :disabled="cargando"
+        class="flex h-[40px] items-center gap-[7px] rounded-[9px] bg-[#2d8c4a] px-[15px] text-[12px] font-bold text-white shadow-[0_3px_10px_rgba(45,140,74,0.2)] transition hover:bg-[#24763d] disabled:cursor-not-allowed disabled:opacity-60"
+        @click="aplicarFiltroFechas">
         <svg viewBox="0 0 24 24" fill="none" class="h-[14px] w-[14px]">
           <path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
         </svg>
@@ -62,9 +62,9 @@
       </button>
 
       <!-- LIMPIAR -->
- <button type="button" :disabled="cargando || (!fechaInicio && !fechaFin && (!esAgent && !idAsesor))"
-  class="flex h-[40px] items-center rounded-[9px] border border-slate-200 bg-white px-[13px] text-[12px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-  @click="limpiarFiltroFechas">
+      <button type="button" :disabled="cargando || (!fechaInicio && !fechaFin && (!esAgent && !idAsesor))"
+        class="flex h-[40px] items-center rounded-[9px] border border-slate-200 bg-white px-[13px] text-[12px] font-bold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+        @click="limpiarFiltroFechas">
         Limpiar
       </button>
     </div>
@@ -214,7 +214,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.atendidos)}%` }"></div>
               </div>
               <strong class="w-[28px] shrink-0 text-right text-[13px] font-bold text-slate-700">{{ candidatos.atendidos
-              }}</strong>
+                }}</strong>
             </div>
 
             <div class="mb-[8px] flex items-center gap-[8px]">
@@ -224,7 +224,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.sinAtender)}%` }"></div>
               </div>
               <strong class="w-[28px] shrink-0 text-right text-[13px] font-bold text-slate-700">{{ candidatos.sinAtender
-              }}</strong>
+                }}</strong>
             </div>
 
             <div class="ml-[93px] mr-[10px] flex justify-between text-[11px] text-slate-400">
@@ -380,55 +380,67 @@
 
           <!-- GRÁFICO -->
           <div class="relative mt-[6px]">
+
             <!-- SVG -->
-            <div class="ml-[20px]">
-<svg viewBox="0 0 300 105" preserveAspectRatio="none" class="h-[130px] w-full">
+            <div class="flex flex-col items-center">
+              <div class="w-[77%]">
+                <svg viewBox="0 0 300 105" preserveAspectRatio="none" class="h-[130px] w-full">
+                  <!-- LÍNEAS DE REFERENCIA -->
+                  <line v-for="(valor, index) in obtenerEscalaActividad(
+                    grafico.tipo,
+                    grafico.estado
+                  )" :key="`line-${grafico.key}-${valor}`" x1="0" x2="300" :y1="22 +
+                  index *
+                  (73 /
+                    Math.max(
+                      obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1,
+                      1
+                    ))
+                  " :y2="22 +
+            index *
+            (73 /
+              Math.max(
+                obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1,
+                1
+              ))
+            " stroke="#e5e7eb" stroke-width="0.7" />
 
-  <!-- LÍNEAS DE REFERENCIA -->
-  <line v-for="(valor, index) in obtenerEscalaActividad(grafico.tipo, grafico.estado)"
-    :key="`line-${grafico.key}-${valor}`"
-    x1="0" x2="300"
-    :y1="22 + index * (73 / Math.max(obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1, 1))"
-    :y2="22 + index * (73 / Math.max(obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1, 1))"
-    stroke="#e5e7eb" stroke-width="1" />
+                  <!-- LÍNEA DEL GRÁFICO -->
+                  <polyline :points="obtenerPuntosActividad(grafico.tipo, grafico.estado)" fill="none"
+                    :stroke="grafico.color" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
 
-  <!-- LÍNEA DEL GRÁFICO -->
-  <polyline :points="obtenerPuntosActividad(grafico.tipo, grafico.estado)"
-    fill="none" :stroke="grafico.color" stroke-width="2.5"
-    stroke-linecap="round" stroke-linejoin="round" />
+                  <!-- PUNTOS + NÚMERO -->
+                  <g v-for="(punto, index) in obtenerPuntosCirculosActividad(
+                    grafico.tipo,
+                    grafico.estado
+                  )" :key="index">
+                    <!-- PUNTO -->
+                    <circle :cx="punto.x" :cy="punto.y" r="2.5" :fill="grafico.color"
+                      class="cursor-pointer transition-all duration-150 hover:opacity-80">
+                      <title>
+                        {{ punto.dia }}: {{ punto.cantidad }}
+                      </title>
+                    </circle>
 
-  <!-- PUNTOS + NÚMERO ARRIBA -->
-  <g v-for="(punto, index) in obtenerPuntosCirculosActividad(grafico.tipo, grafico.estado)" :key="index">
-    <circle :cx="punto.x" :cy="punto.y" r="4" :fill="grafico.color"
-      class="cursor-pointer transition-all duration-150 hover:opacity-80">
-      <title>{{ punto.dia }}: {{ punto.cantidad }}</title>
-    </circle>
+                    <!-- NÚMERO -->
+                    <text :x="punto.x" :y="punto.y - 8" text-anchor="middle" font-size="9" font-weight="600"
+                      :fill="grafico.color">
+                      {{ punto.cantidad }}
+                    </text>
+                  </g>
 
-    <text :x="punto.x" :y="punto.y - 10"
-      text-anchor="middle" font-size="10" font-weight="700"
-      :fill="grafico.color">
-      {{ punto.cantidad }}
-    </text>
-  </g>
-
-</svg>
-
+                </svg>
+              </div>
               <!-- DÍAS -->
-
-              <div class="grid grid-flow-col auto-cols-fr">
-
+              <div class="grid grid-flow-col auto-cols-fr w-[77%]">
                 <span v-for="dato in obtenerDatosActividad(
                   grafico.tipo,
                   grafico.estado
-                )" :key="`${grafico.key}-${dato.fecha}`"
-                  class="truncate text-center text-[11px] font-medium text-slate-500">
+                )" :key="`${grafico.key}-${dato.fecha}`" class="truncate text-center text-[11px] font-medium text-slate-500">
                   {{ dato.dia_semana }}
                 </span>
-
               </div>
-
             </div>
-
           </div>
 
         </section>
