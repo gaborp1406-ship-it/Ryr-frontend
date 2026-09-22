@@ -47,20 +47,15 @@
              el historial de TODOS los trabajadores sin ningún filtro. -->
         <button
           class="flex items-center gap-2 px-4 py-[9px] rounded-[10px] border border-[#2d8c4a] bg-[#2d8c4a] text-white text-[0.85rem] font-semibold cursor-pointer transition-all duration-200 hover:not-disabled:bg-[#24763e] disabled:opacity-60 disabled:cursor-not-allowed"
-          :disabled="isExportando" @click="exportarExcel">
-          <svg v-if="!isExportando" class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+          :disabled="isExportando" @click="abrirModalExportar">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
             <path d="M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             <path d="m7 10 5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round" />
             <path d="M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
 
-          <svg v-else class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-opacity=".25" />
-            <path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
-
-          {{ isExportando ? 'Exportando...' : 'Exportar Excel' }}
+          Exportar Excel
         </button>
       </div>
     </div>
@@ -207,6 +202,211 @@
       </div>
     </transition>
   </div>
+
+  <!-- =========================================================
+     MODAL EXPORTAR EXCEL
+========================================================= -->
+
+  <transition enter-active-class="transition duration-200 ease-out" leave-active-class="transition duration-150 ease-in"
+    enter-from-class="opacity-0" enter-to-class="opacity-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+    <div v-if="mostrarModalExportar"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+      @click.self="cerrarModalExportar">
+      <div class="w-full max-w-[560px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+        <!-- HEADER -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+          <div>
+            <h2 class="text-[1.1rem] font-bold text-slate-900">
+              Exportar historial
+            </h2>
+
+            <p class="mt-1 text-[0.78rem] text-slate-400">
+              Selecciona los filtros que deseas exportar.
+            </p>
+          </div>
+
+          <button type="button"
+            class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 cursor-pointer transition-all duration-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+            :disabled="isExportando" @click="cerrarModalExportar">
+            ✕
+          </button>
+        </div>
+
+        <!-- BODY -->
+        <div class="p-6">
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- TRABAJADOR -->
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
+              <label class="text-[0.74rem] font-bold text-slate-500 uppercase tracking-wide">
+                Trabajador
+              </label>
+
+              <select v-model="exportFiltroTrabajador"
+                class="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-[0.85rem] text-slate-900 focus:outline-none focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10"
+                :disabled="isLoadingAsesoresExportacion || isExportando">
+                <option :value="null">
+                  Todos los trabajadores
+                </option>
+
+                <option v-for="asesor in asesoresExportacion" :key="asesor.id_asesor" :value="asesor.id_asesor">
+                  {{ asesor.nombre_abrev || asesor.nombre }}
+                </option>
+              </select>
+
+              <span v-if="isLoadingAsesoresExportacion" class="text-[0.72rem] text-slate-400">
+                Cargando trabajadores...
+              </span>
+            </div>
+
+            <!-- ESTADO -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.74rem] font-bold text-slate-500 uppercase tracking-wide">
+                Estado
+              </label>
+
+              <select v-model="exportFiltroEstado"
+                class="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-[0.85rem] text-slate-900 focus:outline-none focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10"
+                :disabled="isExportando">
+                <option :value="null">
+                  Todos los estados
+                </option>
+
+                <option v-for="estado in estados" :key="estado.id" :value="estado.id">
+                  {{ estado.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <!-- DESDE -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.74rem] font-bold text-slate-500 uppercase tracking-wide">
+                Desde
+              </label>
+
+              <input v-model="exportFechaDesde" type="date"
+                class="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-[0.85rem] text-slate-900 focus:outline-none focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10"
+                :disabled="isExportando" />
+            </div>
+
+            <!-- HASTA -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.74rem] font-bold text-slate-500 uppercase tracking-wide">
+                Hasta
+              </label>
+
+              <input v-model="exportFechaHasta" type="date"
+                class="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-[0.85rem] text-slate-900 focus:outline-none focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10"
+                :disabled="isExportando" />
+            </div>
+
+          </div>
+
+          <!-- RESUMEN DE FILTROS -->
+          <div class="mt-5 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-2 h-2 rounded-full bg-[#2d8c4a]"></span>
+
+              <span class="text-[0.75rem] font-bold text-slate-600 uppercase tracking-wide">
+                Filtros seleccionados
+              </span>
+            </div>
+
+            <div class="text-[0.8rem] text-slate-500 leading-6">
+              <div>
+                <span class="font-semibold text-slate-700">
+                  Trabajador:
+                </span>
+
+                {{
+                  exportFiltroTrabajador === null
+                    ? 'Todos'
+                    : (
+                      asesoresExportacion.find(
+                        a =>
+                          a.id_asesor ===
+                          exportFiltroTrabajador
+                      )?.nombre_abrev ||
+                      'Seleccionado'
+                    )
+                }}
+              </div>
+
+              <div>
+                <span class="font-semibold text-slate-700">
+                  Estado:
+                </span>
+
+                {{
+                  exportFiltroEstado === null
+                    ? 'Todos'
+                    : (
+                      estados.find(
+                        e =>
+                          e.id ===
+                          exportFiltroEstado
+                      )?.nombre ||
+                      'Seleccionado'
+                    )
+                }}
+              </div>
+
+              <div>
+                <span class="font-semibold text-slate-700">
+                  Fechas:
+                </span>
+
+                {{
+                  exportFechaDesde ||
+                    exportFechaHasta
+                    ? `${exportFechaDesde || 'Inicio'} → ${exportFechaHasta || 'Hoy'}`
+                    : 'Todas'
+                }}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-200 bg-slate-50">
+          <button type="button"
+            class="px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[0.82rem] font-semibold cursor-pointer transition-all hover:bg-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
+            :disabled="isExportando" @click="cerrarModalExportar">
+            Cancelar
+          </button>
+
+          <button type="button"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#2d8c4a] text-white text-[0.82rem] font-semibold cursor-pointer transition-all hover:bg-[#24763e] disabled:opacity-60 disabled:cursor-not-allowed"
+            :disabled="isExportando" @click="exportarExcel">
+            <svg v-if="isExportando" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-opacity=".25" />
+
+              <path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+
+            <svg v-else class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+
+              <path d="m7 10 5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+
+              <path d="M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+
+            {{
+              isExportando
+                ? 'Generando Excel...'
+                : 'Exportar Excel'
+            }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script src="./historialconexiones.ts" lang="ts"></script>

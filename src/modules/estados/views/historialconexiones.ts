@@ -21,6 +21,8 @@ import type {
 } from '@/modules/estados/interfaces/estados.interface';
 
 import ExcelJS from "exceljs";
+import type { IListarAsesoresResponse } from '@/modules/clients/interfaces/clients.interface';
+import { listarAsesores } from '@/modules/clients/actions/clients.action';
 
 export default defineComponent({
   setup() {
@@ -42,8 +44,19 @@ export default defineComponent({
     const asesorSeleccionado =
       ref<IEstadoActualTrabajador | null>(null);
 
-    // Filtros del historial (solo afectan el panel en pantalla,
-    // NUNCA la exportación a Excel)
+
+    const mostrarModalExportar = ref(false);
+
+    const asesoresExportacion =
+      ref<IListarAsesoresResponse[]>([]);
+
+    const isLoadingAsesoresExportacion = ref(false);
+
+    // Filtros EXCLUSIVOS para Excel
+    const exportFiltroTrabajador = ref<number | null>(null);
+    const exportFiltroEstado = ref<number | null>(null);
+    const exportFechaDesde = ref('');
+    const exportFechaHasta = ref('');
     const filtroTrabajador = ref<number | null>(null);
     const filtroHistorialEstado = ref<number | null>(null);
     const filtroFechaDesde = ref('');
@@ -110,7 +123,38 @@ export default defineComponent({
 
       return utcMs + 5 * 60 * 60 * 1000;
     }
+    async function abrirModalExportar() {
+      // Limpiar filtros anteriores
+      exportFiltroTrabajador.value = null;
+      exportFiltroEstado.value = null;
+      exportFechaDesde.value = '';
+      exportFechaHasta.value = '';
 
+      mostrarModalExportar.value = true;
+
+      // Cargar asesores
+      if (asesoresExportacion.value.length === 0) {
+        isLoadingAsesoresExportacion.value = true;
+
+        try {
+          asesoresExportacion.value =
+            await listarAsesores();
+        } catch (error) {
+          console.error(
+            'Error al cargar asesores para exportación:',
+            error,
+          );
+        } finally {
+          isLoadingAsesoresExportacion.value = false;
+        }
+      }
+    }
+
+    function cerrarModalExportar() {
+      if (isExportando.value) return;
+
+      mostrarModalExportar.value = false;
+    }
     function formatDuration(ms: number): string {
       const total = Math.max(0, Math.floor(ms / 1000));
 
@@ -466,8 +510,19 @@ export default defineComponent({
         // =========================================================
 
         const datosCompletos =
-          await historialEstadoTrabajador({});
+          await historialEstadoTrabajador({
+            id_trabajador:
+              exportFiltroTrabajador.value ?? undefined,
 
+            id_estado:
+              exportFiltroEstado.value ?? undefined,
+
+            fecha_desde:
+              exportFechaDesde.value || undefined,
+
+            fecha_hasta:
+              exportFechaHasta.value || undefined,
+          });
         if (!datosCompletos.length) {
           console.warn("No hay historial para exportar.");
           return;
@@ -479,8 +534,8 @@ export default defineComponent({
 
         const workbook = new ExcelJS.Workbook();
 
-        workbook.creator = "Automatízate";
-        workbook.lastModifiedBy = "Automatízate";
+        workbook.creator = "RYR";
+        workbook.lastModifiedBy = "RYR";
         workbook.created = new Date();
         workbook.modified = new Date();
 
@@ -1058,6 +1113,17 @@ export default defineComponent({
       limpiarFiltrosHistorial,
       cambiarPagina,
       siguientePagina,
+      mostrarModalExportar,
+      asesoresExportacion,
+      isLoadingAsesoresExportacion,
+
+      exportFiltroTrabajador,
+      exportFiltroEstado,
+      exportFechaDesde,
+      exportFechaHasta,
+
+      abrirModalExportar,
+      cerrarModalExportar,
       anteriorPagina,
       cambiarRegistrosPorPagina,
       exportarExcel,
