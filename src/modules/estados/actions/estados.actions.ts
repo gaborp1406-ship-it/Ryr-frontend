@@ -127,38 +127,30 @@ export const listarEstadoActualTrabajadores = async (
 };
 
 export const historialEstadoTrabajador = async (
-  id_trabajador: number,
   filtros?: {
+    id_trabajador?: number;
     id_estado?: number;
     fecha_desde?: string;
     fecha_hasta?: string;
   }
 ): Promise<IHistorialEstadoTrabajador[]> => {
-
   try {
-
     const { data } = await automatizateApiNest.get(
-      `/trabajador/${id_trabajador}/historial-estado`,
+      `/trabajador/historial-estado`,
       {
         params: filtros,
       }
     );
 
     return data;
-
   } catch (error) {
-
     if (isAxiosError(error)) {
-
       throw new Error(
         error.response?.data?.message ??
         "Error al obtener el historial de estados."
       );
-
     }
 
     throw error;
-
   }
-
 };
