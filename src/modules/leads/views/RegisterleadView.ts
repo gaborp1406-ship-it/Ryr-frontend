@@ -1,10 +1,13 @@
 import { computed, defineComponent, onMounted, reactive, ref } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
-import type { IAsesor, ILeadDiario, IListarOpcionesResponse, IListarProyectoResponse } from '../interfaces/lead.interface';
-import { crearLead, listarAsesores, listarLeadsDiarios, listarOpciones, listarProyectos, validarLeadDuplicado } from '../actions/lead.action';
+import type { ILeadDiario, IListarOpcionesResponse, IListarProyectoResponse } from '../interfaces/lead.interface';
+import { crearLead, listarLeadsDiarios, listarOpciones, listarProyectos } from '../actions/lead.action';
+import ModalImportacion from '../components/modalimportacion.vue';
 
 export default defineComponent({
+  components: { ModalImportacion },
+
   setup() {
     const toast = useToast();
     const authStore = useAuthStore();
@@ -17,8 +20,10 @@ export default defineComponent({
     const leads = ref<ILeadDiario[]>([]);
     const cargando = ref(true);
     const guardando = ref(false);
+    const mostrarModalImportacion = ref(false);
     const itemsPorPagina = 7;
     const paginaActual = ref(1);
+
     const leadsFiltrados = computed(() => {
       const termino = search.value.trim().toLowerCase();
 
@@ -117,7 +122,22 @@ export default defineComponent({
       }
     };
 
+    // Se ejecuta cuando el modal termina de importar leads
+    const onImportado = async () => {
+      await cargarLeads();
+    };
 
+    const abrirImportacion = () => {
+      mostrarModalImportacion.value = true;
+    };
+
+    const nuevoLead = reactive({
+      proyecto: '',
+      nombre: '',
+      dni: '',
+      telefono: '',
+      fuente: '',
+    });
 
     // Filtra el nombre: solo letras y espacios (nada de números)
     const onNombreInput = (event: Event) => {
@@ -163,13 +183,6 @@ export default defineComponent({
 
       return true;
     };
-    const nuevoLead = reactive({
-      proyecto: '',
-      nombre: '',
-      dni: '',
-      telefono: '',
-      fuente: '',
-    });
 
     const fechaHoy = computed(() => {
       return new Date().toLocaleDateString('es-PE');
@@ -193,13 +206,19 @@ export default defineComponent({
         opcionesFuente.value = opciones;
         proyectos.value = proyectosData;
 
-        await cargarLeads(); // ya no llamamos cargarAsesores()
+        await cargarLeads();
       } catch (error: any) {
         toast.error(error.message);
       }
     });
 
-
+    const limpiarFormulario = () => {
+      nuevoLead.proyecto = '';
+      nuevoLead.nombre = '';
+      nuevoLead.dni = '';
+      nuevoLead.telefono = '';
+      nuevoLead.fuente = '';
+    };
 
     const guardarLead = async () => {
       if (guardando.value) return;
@@ -247,51 +266,32 @@ export default defineComponent({
         const result = await crearLead(payload);
 
         switch (result.accion) {
-          // =====================================================
           // 1. MISMO PROYECTO - YA EXISTE LEAD ACTIVO
-          // =====================================================
           case 'ALERTA':
             toast.warning(
               result.mensaje ||
               'Este cliente ya tiene un lead activo para este proyecto.'
             );
-
-            // NO limpiar formulario
-            // NO recargar porque no se creó nada
+            // NO limpiar formulario ni recargar: no se creó nada
             break;
 
-          // =====================================================
           // 2. OTRO PROYECTO - SE CREÓ EL NUEVO LEAD
-          // =====================================================
           case 'CREADO_NUEVO_PROYECTO':
             toast.info(
               result.mensaje ||
               'Lead creado. El cliente ya tenía otra oportunidad activa.'
             );
-
-            // Sí se creó
-            nuevoLead.proyecto = '';
-            nuevoLead.nombre = '';
-            nuevoLead.dni = '';
-            nuevoLead.telefono = '';
-            nuevoLead.fuente = '';
-
+            limpiarFormulario();
             await cargarLeads();
             break;
 
-          // =====================================================
           // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ
-          // =====================================================
           case 'PENDIENTE_ASESOR_NO_ACTIVO':
             toast.warning(
               result.mensaje ||
               'El asesor que atiende actualmente al cliente no se encuentra activo. El lead queda pendiente de registro.'
             );
-
-            // IMPORTANTE:
-            // NO limpiar formulario
-            // NO recargar leads
-            // NO mostrar "Lead creado correctamente"
+            // NO limpiar formulario ni recargar leads
             break;
 
           case 'SIN_ASESOR_ACTIVO':
@@ -301,20 +301,12 @@ export default defineComponent({
             );
             break;
 
-          // =====================================================
           // 4. NUEVO LEAD NORMAL
-          // =====================================================
           case 'CREADO':
             toast.success(
               result.mensaje || 'Lead creado correctamente'
             );
-
-            nuevoLead.proyecto = '';
-            nuevoLead.nombre = '';
-            nuevoLead.dni = '';
-            nuevoLead.telefono = '';
-            nuevoLead.fuente = '';
-
+            limpiarFormulario();
             await cargarLeads();
             break;
 
@@ -334,9 +326,6 @@ export default defineComponent({
         guardando.value = false;
       }
     };
-
-
-
 
     return {
       toast,
@@ -366,6 +355,11 @@ export default defineComponent({
       nombreUsuarioActual,
       irPaginaAnterior,
       irPaginaSiguiente,
+
+      // importación masiva
+      mostrarModalImportacion,
+      abrirImportacion,
+      onImportado,
     };
   },
 });

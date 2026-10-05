@@ -1,26 +1,29 @@
 <template>
-
-
-
   <div class="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
 
-    <!-- lado izquierdo: BUSCAR -->
-    <div class="relative w-full lg:w-80 -translate-y-4">
-      <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
-        stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z" />
-      </svg>
+    <!-- Buscador + botón importar -->
+    <div class="flex w-full lg:w-auto items-center gap-3 -translate-y-4">
+      <div class="relative w-full lg:w-80">
+        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z" />
+        </svg>
 
-      <input v-model="search" type="text" placeholder="Buscar lead..."
-        class="w-full rounded-full border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10">
+        <input v-model="search" type="text" placeholder="Buscar lead..."
+          class="w-full rounded-full border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10">
+      </div>
+      <button v-if="authStore.isAdmin || authStore.isDerivador" type="button" @click="abrirImportacion"
+        class="flex shrink-0 items-center gap-2 rounded-full bg-[#2d8c4a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e6236] focus:outline-none focus:ring-4 focus:ring-[#2d8c4a]/20">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5" />
+        </svg>
+        Importar Excel
+      </button>
     </div>
 
-
-    <!-- lado derecho: total + asesor -->
     <div class="flex items-center gap-3">
-
-      <!-- total -->
       <div
         class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 min-w-[104px] text-center">
         <div class="rlv-mono text-xl font-semibold tabular-nums leading-none text-slate-800">
@@ -31,8 +34,6 @@
           Total hoy
         </div>
       </div>
-
-      <!-- asesor actual -->
       <div
         class="relative flex items-center gap-3 rounded-2xl border border-[#2d8c4a]/30 bg-[#2d8c4a]/5 pl-5 pr-5 py-3">
 
@@ -44,20 +45,15 @@
           </span>
         </span>
 
-
-        <!-- antes: mostraba "le toca ahora" con rotación -->
-     
-      
-
-          <!-- ✅ envuelve label + nombre en un mismo div -->
-          <div>
-            <div class="text-[10px] uppercase tracking-[0.18em] text-[#2d8c4a]">
-              Registrando como
-            </div>
-            <div class="rlv-mono font-semibold text-[15px] text-slate-800 leading-snug mt-0.5">
-              {{ nombreUsuarioActual }}
-            </div>
+        <div>
+          <div class="text-[10px] uppercase tracking-[0.18em] text-[#2d8c4a]">
+            Registrando como
           </div>
+          <div class="rlv-mono font-semibold text-[15px] text-slate-800 leading-snug mt-0.5">
+            {{ nombreUsuarioActual }}
+          </div>
+
+        </div>
 
       </div>
 
@@ -65,8 +61,6 @@
 
   </div>
 
-
-  <!-- ============ TABLA ============ -->
   <div
     class="mt-4 flex-1 overflow-auto rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
 
@@ -172,7 +166,7 @@
               <span
                 class="flex h-7 w-7 shrink-0 items-center text-xs justify-center rounded-full bg-[#2d8c4a] text-[11px] font-semibold text-white rlv-mono">
                 {{nombreUsuarioActual ? nombreUsuarioActual.trim().split(' ').filter(Boolean).map(w => w[0]).slice(0,
-                  2).join('').toUpperCase() : '—' }}
+                  2).join('').toUpperCase() : '—'}}
               </span>
               <span class="font-semibold text-xs text-slate-800">{{ nombreUsuarioActual }}</span>
             </div>
@@ -257,9 +251,11 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
       </svg>
     </button>
-
   </div>
 
+  <!-- ============ MODAL IMPORTACIÓN EXCEL ============ -->
+  <ModalImportacion v-model="mostrarModalImportacion" :proyectos="proyectos" :opciones-fuente="opcionesFuente"
+    @importado="onImportado" />
 
 </template>
 
