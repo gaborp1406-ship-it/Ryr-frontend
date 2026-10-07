@@ -77,6 +77,11 @@
                 <div class="notif-bell__content">
                   <p class="notif-bell__title">{{ notif.titulo }}</p>
                   <p class="notif-bell__msg">{{ notif.mensaje }}</p>
+
+                  <button v-if="esDerivable(notif)" type="button" class="notif-bell__derive"
+                    :disabled="derivandoId !== null" @click="derivarNotificacion(notif, $event)">
+                    {{ derivandoId === notif.id ? 'Derivando...' : 'Derivar lead' }}
+                  </button>
                 </div>
 
                 <button type="button" class="notif-bell__delete" @click="borrarNotificacion(notif, $event)"
@@ -94,30 +99,31 @@
     </div>
 
     <!-- ══ PREVIEW DE FOTO DE PERFIL ══ -->
-<Teleport to="body">
-  <Transition name="avatar-fade">
-    <div v-if="showAvatarPreview" class="avatar-preview-overlay" @click.self="closeAvatarPreview">
-      <button class="avatar-preview-close" @click="closeAvatarPreview" aria-label="Cerrar">✕</button>
+    <Teleport to="body">
+      <Transition name="avatar-fade">
+        <div v-if="showAvatarPreview" class="avatar-preview-overlay" @click.self="closeAvatarPreview">
+          <button class="avatar-preview-close" @click="closeAvatarPreview" aria-label="Cerrar">✕</button>
 
-      <div class="avatar-preview-card">
-        <div class="avatar-preview-ring">
-          <div class="avatar-preview-ring__spin"></div>
-          <div class="avatar-preview-ring__inner">
-            <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
-              class="avatar-preview-img" />
+          <div class="avatar-preview-card">
+            <div class="avatar-preview-ring">
+              <div class="avatar-preview-ring__spin"></div>
+              <div class="avatar-preview-ring__inner">
+                <img :src="authStore.url_foto || '/assets/images/users/TIGRE-CUADRADO-02.jpg'" alt="user-image"
+                  class="avatar-preview-img" />
+              </div>
+            </div>
+
+            <p class="avatar-preview-name">{{ authStore.username }}</p>
           </div>
         </div>
-
-        <p class="avatar-preview-name">{{ authStore.username }}</p>
-      </div>
-    </div>
-  </Transition>
-</Teleport>
+      </Transition>
+    </Teleport>
   </header>
 </template>
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import {
   listarEstadosConexion,
@@ -130,32 +136,24 @@ import type {
 } from '@/modules/estados/interfaces/estados.interface';
 import { useRouter } from 'vue-router';
 import { conectarSocket, desconectarSocket } from '@/modules/leads/actions/socket.service';
+import { crearLead } from '@/modules/leads/actions/lead.action';
 import { eventBus } from '../utils/eventBus';
 import {
   eliminarNotificacion,
   eliminarTodasNotificacion,
   listarNotificaciones,
   marcarNotificacionLeida,
-
+  type INotificacion,
 } from '@/modules/leads/actions/notificaciones.action';
 
 interface Parametros {
   title: string;
 }
 
-interface INotificacion {
-  id: number;
-  tipo: string;
-  titulo: string;
-  mensaje: string;
-  id_lead: number;
-  fecha_creacion: string;
-  leida: boolean;
-}
-
 const props = defineProps<Parametros>();
 const router = useRouter();
 const authStore = useAuthStore();
+const toast = useToast();
 
 // ========== NOTIFICACIONES ==========
 const notificaciones = ref<INotificacion[]>([]);
@@ -164,6 +162,16 @@ const isNotifOpen = ref(false);
 const isLimpiarLoading = ref(false);
 const isDeletingNotif = ref(false);
 const notifRef = ref<HTMLElement | null>(null);
+
+// Notificación que se está derivando (null = ninguna)
+const derivandoId = ref<number | null>(null);
+
+// Tipos de notificación que se resuelven con el botón "Derivar lead"
+const TIPOS_DERIVABLES = ['SIN_ASESOR_ACTIVO', 'LEAD_PENDIENTE_ASESOR_NO_ACTIVO'];
+
+function esDerivable(notif: INotificacion): boolean {
+  return TIPOS_DERIVABLES.includes(notif.tipo) && !!notif.datos;
+}
 
 // ========== ESTADO ==========
 const isStatusOpen = ref(false);
@@ -262,9 +270,13 @@ async function abrirNotificacion(notif: INotificacion) {
     }
   }
 
+  // Las notificaciones derivables se resuelven con el botón "Derivar lead":
+  // no navegan y el panel se queda abierto.
+  if (TIPOS_DERIVABLES.includes(notif.tipo)) return;
+
   isNotifOpen.value = false;
 
-  // ✅ Caso especial: cliente preguntando por otro proyecto -> ir al detalle del lead
+  // Caso especial: cliente preguntando por otro proyecto -> ir al detalle del lead
   if (notif.titulo === 'Cliente preguntando por otro proyecto') {
     router.push(`/clients/details/${notif.id_lead}`);
     return;
@@ -276,9 +288,65 @@ async function abrirNotificacion(notif: INotificacion) {
 
   // Caso general: como antes
   if (router.currentRoute.value.path === '/clients') {
-    eventBus.emit('refrescar-leads', notif.id_lead);
+    if (notif.id_lead !== null) {
+      eventBus.emit('refrescar-leads', notif.id_lead);
+    }
   } else {
     router.push('/clients');
+  }
+}
+
+/**
+ * Reintenta crear el lead con los datos guardados en la notificación.
+ * Si se resuelve, la notificación se elimina; si sigue sin asesor activo, se conserva.
+ */
+async function derivarNotificacion(notif: INotificacion, event: MouseEvent) {
+  event.stopPropagation();
+  if (!notif.datos || derivandoId.value !== null) return;
+
+  derivandoId.value = notif.id;
+
+  try {
+    const result = await crearLead({ ...notif.datos, es_reintento: true });
+
+    switch (result.accion) {
+      case 'CREADO':
+      case 'CREADO_NUEVO_PROYECTO':
+      case 'ALERTA': {
+        if (result.accion === 'ALERTA') {
+          toast.warning(
+            result.mensaje || 'El cliente ya tiene un lead activo en este proyecto.',
+          );
+        } else {
+          toast.success(result.mensaje || 'Lead derivado correctamente');
+        }
+
+        // Resuelto: quitar la notificación
+        if (!notif.leida) {
+          contadorNoLeidas.value = Math.max(0, contadorNoLeidas.value - 1);
+        }
+        notificaciones.value = notificaciones.value.filter((n) => n.id !== notif.id);
+        await eliminarNotificacion(notif.id);
+
+        if (result.id_lead !== null) {
+          eventBus.emit('refrescar-leads', result.id_lead);
+        }
+        break;
+      }
+
+      // Sigue sin asesor activo: se conserva la notificación para reintentar luego
+      case 'PENDIENTE_ASESOR_NO_ACTIVO':
+      case 'SIN_ASESOR_ACTIVO':
+        toast.warning('Aún no hay asesores activos. Intenta de nuevo más tarde.');
+        break;
+
+      default:
+        toast.warning(result.mensaje || 'No se pudo determinar el resultado.');
+    }
+  } catch (error: any) {
+    toast.error(error?.message || 'Error al derivar el lead');
+  } finally {
+    derivandoId.value = null;
   }
 }
 
@@ -462,8 +530,8 @@ onBeforeUnmount(() => {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 300px;
-  max-height: 360px;
+  width: 340px;
+  max-height: 400px;
   overflow-y: auto;
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -557,6 +625,35 @@ onBeforeUnmount(() => {
   margin: 2px 0 0;
   font-size: .78rem;
   color: #6b7280;
+  overflow-wrap: anywhere;
+}
+
+/* Botón "Derivar lead" */
+.notif-bell__derive {
+  margin-top: 8px;
+  padding: 5px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #2d8c4a;
+  color: #fff;
+  font-size: .74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.notif-bell__derive:hover:not(:disabled) {
+  background: #237a3d;
+}
+
+.notif-bell__derive:focus-visible {
+  outline: 2px solid #2d8c4a;
+  outline-offset: 2px;
+}
+
+.notif-bell__derive:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .notif-bell__delete {
