@@ -3,11 +3,14 @@ import { isAxiosError } from 'axios';
 
 import type {
 
+  IActualizarLeadDniProyectoRequest,
+  IActualizarLeadDniProyectoResponse,
   IClientePotencial,
   IEtapaActualLeadResponse,
 
   IListarAsesoresResponse,
   IListarClientesPotencialesRequest,
+  IListarEtapasResponse,
   IListarOpcionesResponse,
   IListarProyectoResponse,
 } from '../interfaces/clients.interface';
@@ -32,7 +35,27 @@ export const listarOpciones = async (
     throw error;
   }
 };
+export const actualizarLeadDniProyecto = async (
+  payload: IActualizarLeadDniProyectoRequest
+): Promise<IActualizarLeadDniProyectoResponse> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/actualizar-dni-proyecto',
+      payload
+    );
 
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al actualizar el DNI y el proyecto del lead.'
+      );
+    }
+
+    throw error;
+  }
+};
 export const listarAsesores = async (): Promise<IListarAsesoresResponse[]> => {
   try {
     const { data } = await automatizateApiNest.get(
@@ -89,6 +112,29 @@ export const listarClientesPotenciales = async (
       throw new Error(
         error.response?.data?.message ??
         'Error al listar clientes potenciales.'
+      );
+    }
+
+    throw error;
+  }
+};
+
+// NUEVO
+export const listarEtapas = async (
+  idFase?: number | null
+): Promise<IListarEtapasResponse[]> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/listar-etapas',
+      { id_fase: idFase ?? null }
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al listar etapas.'
       );
     }
 

@@ -116,6 +116,34 @@
         </div>
       </div>
 
+      <!-- Combobox: Etapa -->
+      <div class="relative w-full lg:w-52" @click.stop>
+        <label class="mb-1 block text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Etapa</label>
+        <div class="relative">
+          <input v-model="queryEtapa" @focus="abiertoEtapa = true" @input="onInputEtapa" type="text"
+            placeholder="Todas las etapas"
+            class="w-full rounded-xl border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10">
+          <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        <div v-if="abiertoEtapa"
+          class="absolute z-20 mt-1.5 max-h-56 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+          <button type="button" @click="seleccionarEtapa(null)"
+            class="w-full px-3 py-2 text-left text-sm text-slate-500 hover:bg-[#2d8c4a]/[0.06]">
+            Todas las etapas
+          </button>
+          <button v-for="op in etapasFiltradas" :key="op.id" type="button" @click="seleccionarEtapa(op)"
+            class="w-full px-3 py-2 text-left text-sm transition-colors hover:bg-[#2d8c4a]/[0.06]"
+            :class="filtroEtapa?.id === op.id ? 'font-semibold text-[#1e6236] bg-[#2d8c4a]/[0.05]' : 'text-slate-700'">
+            {{ op.label }}
+          </button>
+          <p v-if="etapasFiltradas.length === 0" class="px-3 py-2 text-sm text-slate-400">Sin resultados</p>
+        </div>
+      </div>
+
       <!-- Limpiar filtros -->
       <button v-if="hayFiltrosActivos" type="button" @click="limpiarFiltros"
         class="lg:ml-auto flex items-center gap-1.5 self-start lg:self-auto rounded-full border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500">
@@ -194,6 +222,9 @@
                 <div class="h-3 w-16 rounded bg-slate-200"></div>
               </td>
               <td class="px-4 py-3.5">
+                <div class="h-3 w-16 rounded bg-slate-200"></div>
+              </td>
+              <td class="px-4 py-3.5">
                 <div class="mx-auto h-6 w-6 rounded-full bg-slate-200"></div>
               </td>
             </tr>
@@ -217,7 +248,7 @@
 
               <td class="px-4 py-3 text-slate-800">{{ cliente.proyecto }}</td>
               <td class="px-4 py-3 text-slate-800">{{ cliente.cliente }}</td>
-              <td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.dni_cliente }}</td>
+              <td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.dni_cliente || '—' }}</td>
 
               <td class="px-4 py-3">
                 <span

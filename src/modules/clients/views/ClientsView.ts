@@ -1,20 +1,23 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, defineComponent, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import type {
   IClientePotencial,
   IListarAsesoresResponse,
+  IListarEtapasResponse, // NUEVO
   IListarOpcionesResponse,
   IListarProyectoResponse,
 } from '../interfaces/clients.interface';
 import {
   listarAsesores,
   listarClientesPotenciales,
+  listarEtapas, // NUEVO
   listarOpciones,
   listarProyectos,
 } from '../actions/clients.action';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { eventBus } from '@/modules/common/utils/eventBus';
+
 interface IComboOption {
   id: number;
   label: string;
@@ -31,9 +34,11 @@ export default defineComponent({
     const asesores = ref<IListarAsesoresResponse[]>([]);
     const proyectos = ref<IListarProyectoResponse[]>([]);
     const opcionesFuente = ref<IListarOpcionesResponse[]>([]);
+    const etapas = ref<IListarEtapasResponse[]>([]); // NUEVO
     const filtroAsesor = ref<IComboOption | null>(null);
     const filtroProyecto = ref<IComboOption | null>(null);
     const filtroFuente = ref<IComboOption | null>(null);
+    const filtroEtapa = ref<IComboOption | null>(null); // NUEVO
     const filtroFechaInicio = ref('');
     const filtroFechaFin = ref('');
 
@@ -42,7 +47,6 @@ export default defineComponent({
     const filtroFase = ref<number>(1);
 
     const onCambioFecha = () => {
-
       if (
         filtroFechaInicio.value &&
         filtroFechaFin.value &&
@@ -57,17 +61,33 @@ export default defineComponent({
     const queryAsesor = ref('');
     const queryProyecto = ref('');
     const queryFuente = ref('');
-
-    // Ya no admite null: solo se alterna entre Fase 1 y Fase 2.
-    const seleccionarFase = (fase: number) => {
-      if (filtroFase.value === fase) return;
-      filtroFase.value = fase;
-      cargarClientes();
-    };
+    const queryEtapa = ref(''); // NUEVO
 
     const abiertoAsesor = ref(false);
     const abiertoProyecto = ref(false);
     const abiertoFuente = ref(false);
+    const abiertoEtapa = ref(false); // NUEVO
+
+    // NUEVO: carga las etapas de la fase activa
+    const cargarEtapas = async () => {
+      try {
+        etapas.value = await listarEtapas(filtroFase.value);
+      } catch (error: any) {
+        toast.error(error.message);
+      }
+    };
+
+    // Al cambiar de fase, la etapa elegida ya no aplica: se limpia y se recargan las etapas.
+    const seleccionarFase = async (fase: number) => {
+      if (filtroFase.value === fase) return;
+      filtroFase.value = fase;
+
+      filtroEtapa.value = null; // NUEVO
+      queryEtapa.value = ''; // NUEVO
+      await cargarEtapas(); // NUEVO
+
+      cargarClientes();
+    };
 
     const opcionesAsesorCombo = computed<IComboOption[]>(() =>
       asesores.value.map((a) => ({ id: a.id_asesor, label: a.nombre }))
@@ -79,6 +99,11 @@ export default defineComponent({
 
     const opcionesFuenteCombo = computed<IComboOption[]>(() =>
       opcionesFuente.value.map((f) => ({ id: f.id, label: f.nombre }))
+    );
+
+    // NUEVO
+    const opcionesEtapaCombo = computed<IComboOption[]>(() =>
+      etapas.value.map((e) => ({ id: e.id, label: e.nombre }))
     );
 
     const asesoresFiltrados = computed(() => {
@@ -105,6 +130,15 @@ export default defineComponent({
       );
     });
 
+    // NUEVO
+    const etapasFiltradas = computed(() => {
+      const term = queryEtapa.value.trim().toLowerCase();
+      if (!term) return opcionesEtapaCombo.value;
+      return opcionesEtapaCombo.value.filter((o) =>
+        o.label.toLowerCase().includes(term)
+      );
+    });
+
     const seleccionarAsesor = (opcion: IComboOption | null) => {
       filtroAsesor.value = opcion;
       queryAsesor.value = opcion?.label ?? '';
@@ -126,6 +160,14 @@ export default defineComponent({
       cargarClientes();
     };
 
+    // NUEVO
+    const seleccionarEtapa = (opcion: IComboOption | null) => {
+      filtroEtapa.value = opcion;
+      queryEtapa.value = opcion?.label ?? '';
+      abiertoEtapa.value = false;
+      cargarClientes();
+    };
+
     const onInputAsesor = () => {
       abiertoAsesor.value = true;
       if (!queryAsesor.value) filtroAsesor.value = null;
@@ -141,10 +183,17 @@ export default defineComponent({
       if (!queryFuente.value) filtroFuente.value = null;
     };
 
+    // NUEVO
+    const onInputEtapa = () => {
+      abiertoEtapa.value = true;
+      if (!queryEtapa.value) filtroEtapa.value = null;
+    };
+
     const cerrarCombos = () => {
       abiertoAsesor.value = false;
       abiertoProyecto.value = false;
       abiertoFuente.value = false;
+      abiertoEtapa.value = false; // NUEVO
     };
 
     const itemsPorPagina = 8;
@@ -210,6 +259,7 @@ export default defineComponent({
           id_proyecto: filtroProyecto.value?.id ?? null,
           id_fuente: filtroFuente.value?.id ?? null,
           id_fase: filtroFase.value,
+          id_etapa: filtroEtapa.value?.id ?? null, // NUEVO
         });
 
         paginaActual.value = 1;
@@ -219,6 +269,7 @@ export default defineComponent({
         cargando.value = false;
       }
     };
+
     const onBuscarTexto = () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
@@ -236,6 +287,7 @@ export default defineComponent({
 
       filtroProyecto.value = null;
       filtroFuente.value = null;
+      filtroEtapa.value = null; // NUEVO
       // OJO: filtroFase se deja intacto a propósito, "Limpiar filtros"
       // no debe quitar la fase activa (Fase 1 / Fase 2).
 
@@ -244,28 +296,34 @@ export default defineComponent({
 
       queryProyecto.value = '';
       queryFuente.value = '';
+      queryEtapa.value = ''; // NUEVO
 
       cargarClientes();
     };
+
     const hayFiltrosActivos = computed(
       () =>
         !!search.value ||
         (!authStore.isAgent && !!filtroAsesor.value) ||
         !!filtroProyecto.value ||
         !!filtroFuente.value ||
+        !!filtroEtapa.value || // NUEVO
         !!filtroFechaInicio.value ||
         !!filtroFechaFin.value
       // filtroFase NO cuenta como "filtro activo": siempre hay uno seleccionado.
     );
+
     const verLead = (idLead: number) => {
       router.push({
-        name: "client-details",
+        name: 'client-details',
         params: { id: idLead },
       });
     };
+
     const refrescarPorNotificacion = () => {
-      cargarClientes(); // o la función que ya tengas para recargar el listado
+      cargarClientes();
     };
+
     onMounted(async () => {
       eventBus.on('refrescar-leads', refrescarPorNotificacion);
       try {
@@ -286,15 +344,19 @@ export default defineComponent({
           queryAsesor.value = propio?.label ?? '';
         }
 
+        await cargarEtapas(); // NUEVO
+
         // filtroFase ya arranca en 1 por defecto (ver ref arriba).
         await cargarClientes();
       } catch (error: any) {
         toast.error(error.message);
       }
     });
+
     onUnmounted(() => {
       eventBus.off('refrescar-leads', refrescarPorNotificacion);
     });
+
     return {
       authStore,
       cargando,
@@ -307,21 +369,27 @@ export default defineComponent({
       queryAsesor,
       queryProyecto,
       queryFuente,
+      queryEtapa, // NUEVO
       abiertoAsesor,
       abiertoProyecto,
       abiertoFuente,
+      abiertoEtapa, // NUEVO
       asesoresFiltrados,
       proyectosFiltrados,
       fuentesFiltradas,
+      etapasFiltradas, // NUEVO
       filtroAsesor,
       filtroProyecto,
       filtroFuente,
+      filtroEtapa, // NUEVO
       seleccionarAsesor,
       seleccionarProyecto,
       seleccionarFuente,
+      seleccionarEtapa, // NUEVO
       onInputAsesor,
       onInputProyecto,
       onInputFuente,
+      onInputEtapa, // NUEVO
       cerrarCombos,
       limpiarFiltros,
       hayFiltrosActivos,

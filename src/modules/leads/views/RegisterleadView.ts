@@ -171,7 +171,8 @@ export default defineComponent({
         return false;
       }
 
-      if (!dniRegex.test(nuevoLead.dni)) {
+      // DNI opcional: solo se valida el formato si se ingresó
+      if (nuevoLead.dni && !dniRegex.test(nuevoLead.dni)) {
         toast.warning('El DNI debe tener entre 8 y 10 dígitos, sin letras ni espacios');
         return false;
       }
@@ -183,7 +184,6 @@ export default defineComponent({
 
       return true;
     };
-
     const fechaHoy = computed(() => {
       return new Date().toLocaleDateString('es-PE');
     });
@@ -238,11 +238,10 @@ export default defineComponent({
         return;
       }
 
-      if (!nuevoLead.dni) {
-        toast.warning('Ingrese DNI');
+      if (!nuevoLead.fuente) {
+        toast.warning('Seleccione una fuente');
         return;
       }
-
       if (!nuevoLead.telefono) {
         toast.warning('Ingrese teléfono');
         return;
@@ -257,7 +256,7 @@ export default defineComponent({
           id_asesor: authStore.idEmploye,
           id_proyecto: Number(nuevoLead.proyecto),
           nombre_cliente: nuevoLead.nombre,
-          dni_cliente: nuevoLead.dni,
+          dni_cliente: nuevoLead.dni || null,
           telefono_cliente: nuevoLead.telefono,
           id_fuente: Number(nuevoLead.fuente),
           usuario_creacion: authStore.idEmploye,
@@ -272,7 +271,7 @@ export default defineComponent({
               result.mensaje ||
               'Este cliente ya tiene un lead activo para este proyecto.'
             );
-            // NO limpiar formulario ni recargar: no se creó nada
+            limpiarFormulario();
             break;
 
           // 2. OTRO PROYECTO - SE CREÓ EL NUEVO LEAD
@@ -285,7 +284,7 @@ export default defineComponent({
             await cargarLeads();
             break;
 
-              // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ, QUEDA NOTIFICACIÓN PARA DERIVAR
+          // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ, QUEDA NOTIFICACIÓN PARA DERIVAR
           case 'PENDIENTE_ASESOR_NO_ACTIVO':
             toast.warning(
               result.mensaje ||

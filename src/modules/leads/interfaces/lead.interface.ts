@@ -32,13 +32,12 @@ export interface ICrearLead {
   id_asesor: number;
   id_proyecto: number;
   nombre_cliente: string;
-  dni_cliente: string;
+  dni_cliente?: string | null; // opcional
   telefono_cliente: string;
   id_fuente: number;
   usuario_creacion: number;
   es_reintento?: boolean; // true cuando viene del botón "Derivar lead"
 }
-
 
 // RESPUESTA CREAR LEAD
 export interface ICrearLeadResponse {

@@ -30,8 +30,12 @@ export interface IListarClientesPotencialesRequest {
   id_fuente?: number | null;
   id_proyecto?: number | null;
   id_fase?: number | null;
+  id_etapa?: number | null;
 }
-
+export interface IListarEtapasResponse {
+  id: number;
+  nombre: string;
+}
 export interface IClientePotencial {
   id_lead: number;
   dni_cliente: string;
@@ -43,6 +47,16 @@ export interface IClientePotencial {
   id_asesor: number;
   nombre_asesor: string;
   fecha_asignacion: string;
-  etapa_actual:string;
+  etapa_actual: string;
 }
 
+export interface IActualizarLeadDniProyectoRequest {
+  id_lead: number;
+  dni_cliente: string | null;
+  id_proyecto: number;
+  usuario_modificacion: number;
+}
+
+export interface IActualizarLeadDniProyectoResponse {
+  mensaje: string;
+}
