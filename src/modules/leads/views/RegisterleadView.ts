@@ -285,20 +285,24 @@ export default defineComponent({
             await cargarLeads();
             break;
 
-          // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ
+              // 3. ASESOR ANTERIOR NO ACTIVO - NO SE CREÓ, QUEDA NOTIFICACIÓN PARA DERIVAR
           case 'PENDIENTE_ASESOR_NO_ACTIVO':
             toast.warning(
               result.mensaje ||
               'El asesor que atiende actualmente al cliente no se encuentra activo. El lead queda pendiente de registro.'
             );
-            // NO limpiar formulario ni recargar leads
+            // Los datos quedaron en la notificación "Derivar lead": se limpia el formulario
+            limpiarFormulario();
             break;
 
+          // 4. NO HAY ASESORES ACTIVOS - QUEDA NOTIFICACIÓN PARA DERIVAR
           case 'SIN_ASESOR_ACTIVO':
             toast.warning(
               result.mensaje ||
               'No hay asesores activos en este momento.'
             );
+            // Los datos quedaron en la notificación "Derivar lead": se limpia el formulario
+            limpiarFormulario();
             break;
 
           // 4. NUEVO LEAD NORMAL
