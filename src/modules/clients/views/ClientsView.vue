@@ -369,24 +369,7 @@
             </select>
           </div>
 
-          <div>
-            <label class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              Motivo
-            </label>
-            <select v-model="formReasignar.motivo" :disabled="reasignando"
-              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60">
-              <option v-for="m in motivos" :key="m.value" :value="m.value">{{ m.label }}</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              Observación <span class="normal-case tracking-normal">(opcional)</span>
-            </label>
-            <textarea v-model="formReasignar.observacion" :disabled="reasignando" rows="3" maxlength="300"
-              placeholder="Detalle de la reasignación..."
-              class="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60"></textarea>
-          </div>
+       
         </div>
 
         <div class="flex justify-end gap-3 rounded-b-2xl border-t border-slate-100 bg-slate-50/60 px-6 py-4">
