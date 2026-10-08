@@ -12,7 +12,7 @@
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z" />
         </svg>
-        <input v-model="search" @input="onBuscarTexto" type="text" placeholder="Buscar cliente o DNI"
+        <input v-model="search" @input="onBuscarTexto" type="text" placeholder="Buscar cliente, DNI o teléfono"
           class="w-full rounded-full border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-[15px] text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10">
       </div>
 
@@ -33,6 +33,8 @@
       </div>
 
       <div class="hidden lg:block h-8 w-px bg-slate-100"></div>
+
+      <!-- Combobox: Asesor -->
       <div v-if="!authStore.isAgent" class="relative w-full lg:w-52" @click.stop>
         <label class="mb-1 block text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Asesor</label>
         <div class="relative">
@@ -191,8 +193,7 @@
             <th class="rlv-mono px-4 py-3.5 text-left text-[11px] font-medium uppercase tracking-[0.14em]">DNI</th>
             <th class="px-4 py-3.5 text-left text-[11px] font-medium uppercase tracking-[0.14em]">Fuente</th>
             <th class="px-4 py-3.5 text-left text-[11px] font-medium uppercase tracking-[0.14em]">Etapa</th>
-
-            <th class="px-4 py-3.5 text-center text-[11px] font-medium uppercase tracking-[0.14em]">Ver</th>
+            <th class="px-4 py-3.5 text-center text-[11px] font-medium uppercase tracking-[0.14em]">Acciones</th>
           </tr>
         </thead>
 
@@ -258,15 +259,27 @@
                 </span>
               </td>
               <td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.etapa_actual }}</td>
+
               <td class="px-4 py-3 text-center">
-                <button type="button" @click="verLead(cliente.id_lead)" title="Ver detalle del lead"
-                  class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
+                <div class="inline-flex items-center gap-1">
+                  <button type="button" @click="verLead(cliente.id_lead)" title="Ver detalle del lead"
+                    class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+
+                  <button v-if="mostrarBotonReasignar(cliente)" type="button" @click.stop="abrirReasignar(cliente)"
+                    title="Reasignar lead"
+                    class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
 
@@ -310,6 +323,87 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </button>
+    </div>
+
+    <!-- ============ MODAL REASIGNAR ============ -->
+    <div v-if="mostrarModalReasignar"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[2px]"
+      @click.self="cerrarReasignar">
+
+      <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl">
+
+        <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <div class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-[#2d8c4a]"></span>
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-900">Reasignar lead</h3>
+          </div>
+          <button type="button" @click="cerrarReasignar" :disabled="reasignando"
+            class="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4 px-6 py-5">
+
+          <!-- Resumen del lead -->
+          <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+            <p class="font-semibold text-slate-800">{{ leadSeleccionado?.cliente }}</p>
+            <p class="mt-0.5 text-xs text-slate-500">
+              {{ leadSeleccionado?.proyecto }} · Asesor actual:
+              <span class="font-medium text-slate-700">{{ leadSeleccionado?.nombre_asesor }}</span>
+            </p>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              Nuevo asesor
+            </label>
+            <select v-model.number="formReasignar.id_asesor" :disabled="reasignando"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60">
+              <option value="" disabled>Seleccione</option>
+              <option v-for="a in asesoresDisponibles" :key="a.id_asesor" :value="a.id_asesor">
+                {{ a.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              Motivo
+            </label>
+            <select v-model="formReasignar.motivo" :disabled="reasignando"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60">
+              <option v-for="m in motivos" :key="m.value" :value="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              Observación <span class="normal-case tracking-normal">(opcional)</span>
+            </label>
+            <textarea v-model="formReasignar.observacion" :disabled="reasignando" rows="3" maxlength="300"
+              placeholder="Detalle de la reasignación..."
+              class="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60"></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 rounded-b-2xl border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+          <button type="button" @click="cerrarReasignar" :disabled="reasignando"
+            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60">
+            Cancelar
+          </button>
+          <button type="button" @click="confirmarReasignacion" :disabled="reasignando"
+            class="inline-flex items-center gap-2 rounded-lg bg-[#2d8c4a] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e6236] disabled:cursor-not-allowed disabled:opacity-60">
+            <svg v-if="reasignando" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            {{ reasignando ? 'Reasignando...' : 'Reasignar' }}
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>

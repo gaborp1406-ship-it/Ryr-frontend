@@ -1,19 +1,20 @@
-import { computed, defineComponent, onMounted, onUnmounted, ref } from 'vue';
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import type {
   IClientePotencial,
   IListarAsesoresResponse,
-  IListarEtapasResponse, // NUEVO
+  IListarEtapasResponse,
   IListarOpcionesResponse,
   IListarProyectoResponse,
 } from '../interfaces/clients.interface';
 import {
   listarAsesores,
   listarClientesPotenciales,
-  listarEtapas, // NUEVO
+  listarEtapas,
   listarOpciones,
   listarProyectos,
+  reasignarLead, // NUEVO
 } from '../actions/clients.action';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { eventBus } from '@/modules/common/utils/eventBus';
@@ -34,11 +35,11 @@ export default defineComponent({
     const asesores = ref<IListarAsesoresResponse[]>([]);
     const proyectos = ref<IListarProyectoResponse[]>([]);
     const opcionesFuente = ref<IListarOpcionesResponse[]>([]);
-    const etapas = ref<IListarEtapasResponse[]>([]); // NUEVO
+    const etapas = ref<IListarEtapasResponse[]>([]);
     const filtroAsesor = ref<IComboOption | null>(null);
     const filtroProyecto = ref<IComboOption | null>(null);
     const filtroFuente = ref<IComboOption | null>(null);
-    const filtroEtapa = ref<IComboOption | null>(null); // NUEVO
+    const filtroEtapa = ref<IComboOption | null>(null);
     const filtroFechaInicio = ref('');
     const filtroFechaFin = ref('');
 
@@ -61,14 +62,14 @@ export default defineComponent({
     const queryAsesor = ref('');
     const queryProyecto = ref('');
     const queryFuente = ref('');
-    const queryEtapa = ref(''); // NUEVO
+    const queryEtapa = ref('');
 
     const abiertoAsesor = ref(false);
     const abiertoProyecto = ref(false);
     const abiertoFuente = ref(false);
-    const abiertoEtapa = ref(false); // NUEVO
+    const abiertoEtapa = ref(false);
 
-    // NUEVO: carga las etapas de la fase activa
+    // Carga las etapas de la fase activa
     const cargarEtapas = async () => {
       try {
         etapas.value = await listarEtapas(filtroFase.value);
@@ -82,9 +83,9 @@ export default defineComponent({
       if (filtroFase.value === fase) return;
       filtroFase.value = fase;
 
-      filtroEtapa.value = null; // NUEVO
-      queryEtapa.value = ''; // NUEVO
-      await cargarEtapas(); // NUEVO
+      filtroEtapa.value = null;
+      queryEtapa.value = '';
+      await cargarEtapas();
 
       cargarClientes();
     };
@@ -101,7 +102,6 @@ export default defineComponent({
       opcionesFuente.value.map((f) => ({ id: f.id, label: f.nombre }))
     );
 
-    // NUEVO
     const opcionesEtapaCombo = computed<IComboOption[]>(() =>
       etapas.value.map((e) => ({ id: e.id, label: e.nombre }))
     );
@@ -130,7 +130,6 @@ export default defineComponent({
       );
     });
 
-    // NUEVO
     const etapasFiltradas = computed(() => {
       const term = queryEtapa.value.trim().toLowerCase();
       if (!term) return opcionesEtapaCombo.value;
@@ -160,7 +159,6 @@ export default defineComponent({
       cargarClientes();
     };
 
-    // NUEVO
     const seleccionarEtapa = (opcion: IComboOption | null) => {
       filtroEtapa.value = opcion;
       queryEtapa.value = opcion?.label ?? '';
@@ -183,7 +181,6 @@ export default defineComponent({
       if (!queryFuente.value) filtroFuente.value = null;
     };
 
-    // NUEVO
     const onInputEtapa = () => {
       abiertoEtapa.value = true;
       if (!queryEtapa.value) filtroEtapa.value = null;
@@ -193,7 +190,7 @@ export default defineComponent({
       abiertoAsesor.value = false;
       abiertoProyecto.value = false;
       abiertoFuente.value = false;
-      abiertoEtapa.value = false; // NUEVO
+      abiertoEtapa.value = false;
     };
 
     const itemsPorPagina = 8;
@@ -259,7 +256,7 @@ export default defineComponent({
           id_proyecto: filtroProyecto.value?.id ?? null,
           id_fuente: filtroFuente.value?.id ?? null,
           id_fase: filtroFase.value,
-          id_etapa: filtroEtapa.value?.id ?? null, // NUEVO
+          id_etapa: filtroEtapa.value?.id ?? null,
         });
 
         paginaActual.value = 1;
@@ -287,7 +284,7 @@ export default defineComponent({
 
       filtroProyecto.value = null;
       filtroFuente.value = null;
-      filtroEtapa.value = null; // NUEVO
+      filtroEtapa.value = null;
       // OJO: filtroFase se deja intacto a propósito, "Limpiar filtros"
       // no debe quitar la fase activa (Fase 1 / Fase 2).
 
@@ -296,7 +293,7 @@ export default defineComponent({
 
       queryProyecto.value = '';
       queryFuente.value = '';
-      queryEtapa.value = ''; // NUEVO
+      queryEtapa.value = '';
 
       cargarClientes();
     };
@@ -307,7 +304,7 @@ export default defineComponent({
         (!authStore.isAgent && !!filtroAsesor.value) ||
         !!filtroProyecto.value ||
         !!filtroFuente.value ||
-        !!filtroEtapa.value || // NUEVO
+        !!filtroEtapa.value ||
         !!filtroFechaInicio.value ||
         !!filtroFechaFin.value
       // filtroFase NO cuenta como "filtro activo": siempre hay uno seleccionado.
@@ -318,6 +315,91 @@ export default defineComponent({
         name: 'client-details',
         params: { id: idLead },
       });
+    };
+
+    // =========================================================
+    // REASIGNACIÓN (solo leads en etapa 1 = Asignación)
+    // =========================================================
+    const ETAPA_ASIGNACION = 1;
+
+    const mostrarModalReasignar = ref(false);
+    const reasignando = ref(false);
+    const leadSeleccionado = ref<IClientePotencial | null>(null);
+
+    const motivos = [
+      { value: 'SIN_RESPUESTA', label: 'El asesor no respondió' },
+      { value: 'CARGA_TRABAJO', label: 'Carga de trabajo' },
+      { value: 'MANUAL', label: 'Otro motivo' },
+    ];
+
+    const formReasignar = reactive({
+      id_asesor: '' as number | '',
+      motivo: 'SIN_RESPUESTA',
+      observacion: '',
+    });
+
+    // Solo admin / derivador pueden reasignar
+    const puedeReasignar = computed(
+      () => authStore.isAdmin || authStore.isDerivador
+    );
+
+    const mostrarBotonReasignar = (cliente: IClientePotencial) =>
+      puedeReasignar.value && cliente.id_etapa === ETAPA_ASIGNACION;
+
+    // No se ofrece el asesor actual del lead
+    const asesoresDisponibles = computed(() =>
+      asesores.value.filter(
+        (a) => a.id_asesor !== leadSeleccionado.value?.id_asesor
+      )
+    );
+
+    const abrirReasignar = (cliente: IClientePotencial) => {
+      leadSeleccionado.value = cliente;
+      formReasignar.id_asesor = '';
+      formReasignar.motivo = 'SIN_RESPUESTA';
+      formReasignar.observacion = '';
+      mostrarModalReasignar.value = true;
+    };
+
+    const cerrarReasignar = () => {
+      if (reasignando.value) return;
+      mostrarModalReasignar.value = false;
+      leadSeleccionado.value = null;
+    };
+
+    const confirmarReasignacion = async () => {
+      if (reasignando.value || !leadSeleccionado.value) return;
+
+      if (!formReasignar.id_asesor) {
+        toast.warning('Seleccione el nuevo asesor.');
+        return;
+      }
+
+      if (!authStore.idEmploye) {
+        toast.error('No se encontró el usuario de sesión');
+        return;
+      }
+
+      reasignando.value = true;
+
+      try {
+        const res = await reasignarLead({
+          id_lead: leadSeleccionado.value.id_lead,
+          id_asesor_nuevo: Number(formReasignar.id_asesor),
+          usuario_modificacion: authStore.idEmploye,
+          motivo: formReasignar.motivo,
+          observacion: formReasignar.observacion.trim() || undefined,
+        });
+
+        toast.success(res.mensaje || 'Lead reasignado correctamente.');
+        mostrarModalReasignar.value = false;
+        leadSeleccionado.value = null;
+        await cargarClientes();
+      } catch (error: any) {
+        toast.error(error.message);
+      } finally {
+        reasignando.value = false;
+      }
     };
 
     const refrescarPorNotificacion = () => {
@@ -344,7 +426,7 @@ export default defineComponent({
           queryAsesor.value = propio?.label ?? '';
         }
 
-        await cargarEtapas(); // NUEVO
+        await cargarEtapas();
 
         // filtroFase ya arranca en 1 por defecto (ver ref arriba).
         await cargarClientes();
@@ -369,27 +451,27 @@ export default defineComponent({
       queryAsesor,
       queryProyecto,
       queryFuente,
-      queryEtapa, // NUEVO
+      queryEtapa,
       abiertoAsesor,
       abiertoProyecto,
       abiertoFuente,
-      abiertoEtapa, // NUEVO
+      abiertoEtapa,
       asesoresFiltrados,
       proyectosFiltrados,
       fuentesFiltradas,
-      etapasFiltradas, // NUEVO
+      etapasFiltradas,
       filtroAsesor,
       filtroProyecto,
       filtroFuente,
-      filtroEtapa, // NUEVO
+      filtroEtapa,
       seleccionarAsesor,
       seleccionarProyecto,
       seleccionarFuente,
-      seleccionarEtapa, // NUEVO
+      seleccionarEtapa,
       onInputAsesor,
       onInputProyecto,
       onInputFuente,
-      onInputEtapa, // NUEVO
+      onInputEtapa,
       cerrarCombos,
       limpiarFiltros,
       hayFiltrosActivos,
@@ -403,6 +485,18 @@ export default defineComponent({
       irAPagina,
       irPaginaAnterior,
       irPaginaSiguiente,
+
+      // reasignación (NUEVO)
+      mostrarModalReasignar,
+      reasignando,
+      leadSeleccionado,
+      motivos,
+      formReasignar,
+      asesoresDisponibles,
+      mostrarBotonReasignar,
+      abrirReasignar,
+      cerrarReasignar,
+      confirmarReasignacion,
     };
   },
 });

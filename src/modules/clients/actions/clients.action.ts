@@ -13,6 +13,8 @@ import type {
   IListarEtapasResponse,
   IListarOpcionesResponse,
   IListarProyectoResponse,
+  IReasignarLeadRequest,
+  IReasignarLeadResponse,
 } from '../interfaces/clients.interface';
 
 export const listarOpciones = async (
@@ -75,6 +77,28 @@ export const listarAsesores = async (): Promise<IListarAsesoresResponse[]> => {
   }
 };
 
+
+export const reasignarLead = async (
+  payload: IReasignarLeadRequest
+): Promise<IReasignarLeadResponse> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/reasignar-lead',
+      payload
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al reasignar el lead.'
+      );
+    }
+
+    throw error;
+  }
+};
 export const listarProyectos = async (
   idEmpresa: number
 ): Promise<IListarProyectoResponse[]> => {

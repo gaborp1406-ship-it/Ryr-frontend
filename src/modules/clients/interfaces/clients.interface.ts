@@ -15,6 +15,19 @@ export interface IListarProyectoResponse {
   nombre: string;
 }
 
+
+export interface IReasignarLeadRequest {
+  id_lead: number;
+  id_asesor_nuevo: number;
+  usuario_modificacion: number;
+  motivo?: string;       // 'SIN_RESPUESTA' | 'CARGA_TRABAJO' | 'MANUAL'
+  observacion?: string;
+}
+
+export interface IReasignarLeadResponse {
+  mensaje: string;
+}
+
 export interface IEtapaActualLeadResponse {
   id_lead_etapa: number;
   id_etapa: number;
@@ -45,6 +58,7 @@ export interface IClientePotencial {
   id_proyecto: number;
   proyecto: string;
   id_asesor: number;
+  id_etapa: number;
   nombre_asesor: string;
   fecha_asignacion: string;
   etapa_actual: string;
