@@ -280,9 +280,6 @@ async function abrirNotificacion(notif: INotificacion) {
 
   isNotifOpen.value = false;
 
-  // Solo informativa: el lead ya no es del asesor, no hay a dónde ir
-  if (notif.tipo === 'LEAD_REASIGNADO') return;
-
   // Caso especial: cliente preguntando por otro proyecto -> ir al detalle del lead
   if (notif.titulo === 'Cliente preguntando por otro proyecto') {
     router.push(`/clients/details/${notif.id_lead}`);
@@ -459,10 +456,11 @@ function onNuevaNotificacion(notif: INotificacion) {
   if (notif.tipo === 'NUEVO_LEAD' && notif.id_lead !== null) {
     eventBus.emit('refrescar-leads', notif.id_lead);
   }
+}
 
-  if (notif.tipo === 'LEAD_REASIGNADO' && notif.id_lead !== null) {
-    eventBus.emit('lead-lost', { id_lead: notif.id_lead });
-  }
+// Evento silencioso: le quitaron un lead a este asesor (sin notificación ni sonido)
+function onLeadPerdido(payload: { id_lead: number }) {
+  eventBus.emit('lead-lost', { id_lead: payload.id_lead });
 }
 
 // ========== LIFECYCLE ==========
@@ -481,6 +479,7 @@ onMounted(() => {
 
     const socket = conectarSocket(authStore.idEmploye);
     socket.on('nueva-notificacion', onNuevaNotificacion);
+    socket.on('lead-perdido', onLeadPerdido);
   }
 });
 
@@ -488,6 +487,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('click', handleClickOutsideNotif);
   getSocket()?.off('nueva-notificacion', onNuevaNotificacion);
+  getSocket()?.off('lead-perdido', onLeadPerdido);
   desconectarSocket();
 });
 </script>

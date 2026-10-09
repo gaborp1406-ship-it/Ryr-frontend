@@ -439,8 +439,8 @@ export default defineComponent({
       const existe = clientes.value.some((c) => c.id_lead === payload.id_lead);
       if (!existe) return;
 
+      // Silencioso: sin toast ni sonido, la fila solo se desliza y desaparece
       quitarLeadConEfecto(payload.id_lead);
-      toast.info('Un lead fue reasignado a otro asesor.');
     };
 
     const refrescarPorNotificacion = () => {
