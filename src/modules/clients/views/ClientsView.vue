@@ -6,7 +6,7 @@
       @click.self="cerrarCombos">
 
       <!-- Buscar texto libre -->
-      <div class="relative w-full lg:w48">
+      <div class="relative w-full lg:w-48">
         <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24"
           stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round"
@@ -233,7 +233,8 @@
 
           <template v-else>
             <tr v-for="cliente in clientesPaginados" :key="cliente.id_lead"
-              class="group border-l-2 border-l-transparent odd:bg-white even:bg-slate-50/50 transition-colors hover:border-l-[#2d8c4a] hover:bg-[#2d8c4a]/[0.05]">
+              class="group border-l-2 border-l-transparent odd:bg-white even:bg-slate-50/50 transition-all duration-500 hover:border-l-[#2d8c4a] hover:bg-[#2d8c4a]/[0.05]"
+              :class="idsSaliendo.has(cliente.id_lead) ? 'opacity-0 -translate-x-6 !bg-red-50' : ''">
               <td class="rlv-mono px-4 py-3 whitespace-nowrap text-slate-500">{{ cliente.fecha_asignacion }}</td>
 
               <td class="px-4 py-3">
@@ -369,7 +370,6 @@
             </select>
           </div>
 
-       
         </div>
 
         <div class="flex justify-end gap-3 rounded-b-2xl border-t border-slate-100 bg-slate-50/60 px-6 py-4">

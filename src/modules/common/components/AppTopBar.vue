@@ -135,7 +135,11 @@ import type {
   IEstadoActualTrabajador,
 } from '@/modules/estados/interfaces/estados.interface';
 import { useRouter } from 'vue-router';
-import { conectarSocket, desconectarSocket } from '@/modules/leads/actions/socket.service';
+import {
+  conectarSocket,
+  desconectarSocket,
+  getSocket,
+} from '@/modules/leads/actions/socket.service';
 import { crearLead } from '@/modules/leads/actions/lead.action';
 import { eventBus } from '../utils/eventBus';
 import {
@@ -275,6 +279,9 @@ async function abrirNotificacion(notif: INotificacion) {
   if (TIPOS_DERIVABLES.includes(notif.tipo)) return;
 
   isNotifOpen.value = false;
+
+  // Solo informativa: el lead ya no es del asesor, no hay a dónde ir
+  if (notif.tipo === 'LEAD_REASIGNADO') return;
 
   // Caso especial: cliente preguntando por otro proyecto -> ir al detalle del lead
   if (notif.titulo === 'Cliente preguntando por otro proyecto') {
@@ -440,6 +447,24 @@ async function selectStatus(opt: IEstadoConexion) {
   }
 }
 
+// ========== SOCKET ==========
+
+// Handler con nombre para poder quitarlo al desmontar (evita listeners duplicados)
+function onNuevaNotificacion(notif: INotificacion) {
+  notificaciones.value.unshift(notif);
+  contadorNoLeidas.value++;
+  reproducirSonido();
+
+  // Tiempo real en las vistas de leads
+  if (notif.tipo === 'NUEVO_LEAD' && notif.id_lead !== null) {
+    eventBus.emit('refrescar-leads', notif.id_lead);
+  }
+
+  if (notif.tipo === 'LEAD_REASIGNADO' && notif.id_lead !== null) {
+    eventBus.emit('lead-lost', { id_lead: notif.id_lead });
+  }
+}
+
 // ========== LIFECYCLE ==========
 
 onMounted(() => {
@@ -455,21 +480,18 @@ onMounted(() => {
     cargarNotificaciones();
 
     const socket = conectarSocket(authStore.idEmploye);
-
-    socket.on('nueva-notificacion', (notif: INotificacion) => {
-      notificaciones.value.unshift(notif);
-      contadorNoLeidas.value++;
-      reproducirSonido();
-    });
+    socket.on('nueva-notificacion', onNuevaNotificacion);
   }
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('click', handleClickOutsideNotif);
+  getSocket()?.off('nueva-notificacion', onNuevaNotificacion);
   desconectarSocket();
 });
 </script>
+
 
 <style scoped>
 .app-header {

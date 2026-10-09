@@ -3,7 +3,8 @@ import { io, Socket } from 'socket.io-client';
 let socket: Socket | null = null;
 
 export function conectarSocket(idAsesor: number): Socket {
-  if (socket?.connected) return socket;
+  // Si ya existe (conectado o conectando) se reutiliza, así no se crean sockets duplicados
+  if (socket) return socket;
 
   socket = io(`${import.meta.env.VITE_API_URL_NEST}/notificaciones`, {
     query: { id_asesor: idAsesor },

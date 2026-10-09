@@ -14,7 +14,7 @@ import {
   listarEtapas,
   listarOpciones,
   listarProyectos,
-  reasignarLead, // NUEVO
+  reasignarLead,
 } from '../actions/clients.action';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { eventBus } from '@/modules/common/utils/eventBus';
@@ -46,6 +46,9 @@ export default defineComponent({
     // La fase ya NO es un filtro "opcional": siempre hay una activa (1 o 2).
     // Arranca en Fase 1 al entrar a la vista.
     const filtroFase = ref<number>(1);
+
+    // Ids de filas que se están "yendo" (para animar antes de quitarlas)
+    const idsSaliendo = ref<Set<number>>(new Set());
 
     const onCambioFecha = () => {
       if (
@@ -244,8 +247,9 @@ export default defineComponent({
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const cargarClientes = async () => {
-      cargando.value = true;
+    // silencioso = true: sin skeleton, sin errores en toast y sin volver a la página 1
+    const cargarClientes = async (silencioso = false) => {
+      if (!silencioso) cargando.value = true;
 
       try {
         clientes.value = await listarClientesPotenciales({
@@ -259,11 +263,18 @@ export default defineComponent({
           id_etapa: filtroEtapa.value?.id ?? null,
         });
 
-        paginaActual.value = 1;
+        if (silencioso) {
+          // solo retrocede si la página actual quedó fuera de rango
+          if (paginaActual.value > totalPaginas.value) {
+            paginaActual.value = totalPaginas.value;
+          }
+        } else {
+          paginaActual.value = 1;
+        }
       } catch (error: any) {
-        toast.error(error.message);
+        if (!silencioso) toast.error(error.message);
       } finally {
-        cargando.value = false;
+        if (!silencioso) cargando.value = false;
       }
     };
 
@@ -394,7 +405,7 @@ export default defineComponent({
         toast.success(res.mensaje || 'Lead reasignado correctamente.');
         mostrarModalReasignar.value = false;
         leadSeleccionado.value = null;
-        await cargarClientes();
+        await cargarClientes(true);
       } catch (error: any) {
         toast.error(error.message);
       } finally {
@@ -402,12 +413,43 @@ export default defineComponent({
       }
     };
 
+    // =========================================================
+    // TIEMPO REAL
+    // =========================================================
+
+    // Quita la fila con animación
+    const quitarLeadConEfecto = (idLead: number) => {
+      idsSaliendo.value = new Set(idsSaliendo.value).add(idLead);
+
+      setTimeout(() => {
+        clientes.value = clientes.value.filter((c) => c.id_lead !== idLead);
+
+        const nuevo = new Set(idsSaliendo.value);
+        nuevo.delete(idLead);
+        idsSaliendo.value = nuevo;
+
+        if (paginaActual.value > totalPaginas.value) {
+          paginaActual.value = totalPaginas.value;
+        }
+      }, 400);
+    };
+
+    // Le quitaron un lead a este asesor
+    const onLeadPerdido = (payload: { id_lead: number }) => {
+      const existe = clientes.value.some((c) => c.id_lead === payload.id_lead);
+      if (!existe) return;
+
+      quitarLeadConEfecto(payload.id_lead);
+      toast.info('Un lead fue reasignado a otro asesor.');
+    };
+
     const refrescarPorNotificacion = () => {
-      cargarClientes();
+      cargarClientes(true);
     };
 
     onMounted(async () => {
       eventBus.on('refrescar-leads', refrescarPorNotificacion);
+      eventBus.on('lead-lost', onLeadPerdido);
       try {
         const [opciones, proyectosData, asesoresData] = await Promise.all([
           listarOpciones(1),
@@ -437,6 +479,8 @@ export default defineComponent({
 
     onUnmounted(() => {
       eventBus.off('refrescar-leads', refrescarPorNotificacion);
+      eventBus.off('lead-lost', onLeadPerdido);
+      if (debounceTimer) clearTimeout(debounceTimer);
     });
 
     return {
@@ -486,7 +530,10 @@ export default defineComponent({
       irPaginaAnterior,
       irPaginaSiguiente,
 
-      // reasignación (NUEVO)
+      // tiempo real
+      idsSaliendo,
+
+      // reasignación
       mostrarModalReasignar,
       reasignando,
       leadSeleccionado,
