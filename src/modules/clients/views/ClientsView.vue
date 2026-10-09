@@ -361,13 +361,18 @@
             <label class="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">
               Nuevo asesor
             </label>
-            <select v-model.number="formReasignar.id_asesor" :disabled="reasignando"
+            <select v-model.number="formReasignar.id_asesor" :disabled="reasignando || cargandoActivos"
               class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60">
-              <option value="" disabled>Seleccione</option>
-              <option v-for="a in asesoresDisponibles" :key="a.id_asesor" :value="a.id_asesor">
+              <option value="" disabled>
+                {{ cargandoActivos ? 'Cargando asesores activos...' : 'Seleccione' }}
+              </option>
+              <option v-for="a in asesoresDisponibles" :key="a.id_trabajador" :value="a.id_trabajador">
                 {{ a.nombre }}
               </option>
             </select>
+            <p v-if="!cargandoActivos && asesoresDisponibles.length === 0" class="mt-1.5 text-xs text-amber-600">
+              No hay otros asesores activos en este momento.
+            </p>
           </div>
 
         </div>

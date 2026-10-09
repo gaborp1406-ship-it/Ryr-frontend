@@ -14,6 +14,16 @@ export interface IListarProyectoResponse {
   id_proyecto: number;
   nombre: string;
 }
+export interface IListarAsesoresActivosResponse {
+id_trabajador: number;
+nombre: string;
+id_estado: number;
+estado_conexion: string;
+color: string;
+fecha_inicio: string;
+tiempo_en_estado: string;
+}
+
 
 
 export interface IReasignarLeadRequest {

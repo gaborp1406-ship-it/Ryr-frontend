@@ -69,8 +69,8 @@
                             <span class="text-sm font-medium text-slate-700">
                                 {{ nombreArchivo || 'Arrastra tu Excel aquí o haz clic para elegirlo' }}
                             </span>
-                            <span class="text-xs text-slate-400">.xls, .xlsx o .csv · columnas: nombre, DNI y
-                                teléfono</span>
+                            <span class="text-xs text-slate-400">.xls, .xlsx o .csv · columnas: nombre, teléfono y DNI
+                                (opcional)</span>
                         </template>
                     </label>
 
@@ -132,9 +132,9 @@
 
                                     <td class="px-2 py-1.5">
                                         <input v-model="fila.dni" :disabled="!editable(fila)" maxlength="10"
-                                            inputmode="numeric" @input="revalidar"
-                                            class="w-28 rounded-lg border bg-white px-2 py-1.5 font-mono text-xs outline-none transition focus:border-[#2d8c4a] disabled:border-transparent disabled:bg-transparent"
-                                            :class="fila.errores.dni ? 'border-red-300' : 'border-slate-200'">
+                                            inputmode="numeric" placeholder="Opcional" @input="revalidar"
+                                            class="w-28 rounded-lg border bg-white px-2 py-1.5 font-mono text-xs outline-none transition placeholder:text-slate-300 focus:border-[#2d8c4a] disabled:border-transparent disabled:bg-transparent"
+                                            :class="fila.errores.dni || fila.errores.duplicado ? 'border-red-300' : 'border-slate-200'">
                                     </td>
 
                                     <td class="px-2 py-1.5">
@@ -181,7 +181,7 @@
                 <div
                     class="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-3.5">
                     <p class="text-xs text-slate-400">
-                        Los teléfonos se normalizan a 9 dígitos (se quita +51 y espacios).
+                        Los teléfonos se normalizan a 9 dígitos (se quita +51 y espacios). El DNI es opcional.
                     </p>
                     <div class="flex items-center gap-2">
                         <button type="button" :disabled="guardando" @click="cerrar"
@@ -227,7 +227,7 @@ interface FilaImport {
     uid: number;
     fila: number; // número de fila en el Excel
     nombre: string;
-    dni: string;
+    dni: string; // opcional: puede ser ''
     telefono: string;
     errores: { nombre?: string; dni?: string; telefono?: string; duplicado?: string };
     estado: Estado;
@@ -260,6 +260,7 @@ const normalizarTelefono = (raw: unknown): string => {
 };
 
 // Excel guarda el DNI como número y pierde el cero inicial: 7123456 -> 07123456
+// Si viene vacío se queda vacío (el DNI es opcional)
 const normalizarDni = (raw: unknown): string => {
     let d = String(raw ?? '').replace(/\D/g, '');
     if (d.length === 7) d = d.padStart(8, '0');
@@ -296,14 +297,18 @@ const revalidar = () => {
         f.errores = {};
 
         if (f.nombre.trim().length < 2) f.errores.nombre = 'Nombre vacío';
-        if (!/^\d{8,10}$/.test(f.dni)) f.errores.dni = 'DNI inválido (8 a 10 dígitos)';
         if (!/^\d{9}$/.test(f.telefono)) f.errores.telefono = 'Teléfono inválido (9 dígitos)';
 
-        // DNI repetido dentro del mismo archivo
-        if (!f.errores.dni) {
-            const previa = vistos.get(f.dni);
-            if (previa !== undefined) f.errores.duplicado = `DNI repetido (fila ${previa})`;
-            else vistos.set(f.dni, f.fila);
+        // DNI opcional: solo se valida si se ingresó
+        if (f.dni) {
+            if (!/^\d{8,10}$/.test(f.dni)) {
+                f.errores.dni = 'DNI inválido (8 a 10 dígitos)';
+            } else {
+                // DNI repetido dentro del mismo archivo
+                const previa = vistos.get(f.dni);
+                if (previa !== undefined) f.errores.duplicado = `DNI repetido (fila ${previa})`;
+                else vistos.set(f.dni, f.fila);
+            }
         }
     }
 };
@@ -366,12 +371,12 @@ const procesarArchivo = async (file: File) => {
         const headers = (data[0] as unknown[]).map(normalizarClave);
 
         const iNombre = buscarColumna(headers, ['full name', 'nombre completo', 'nombres', 'nombre', 'name'], ['full name', 'nombre']);
-        const iDni = buscarColumna(headers, ['dni'], ['dni', 'documento']);
+        const iDni = buscarColumna(headers, ['dni'], ['dni', 'documento']); // opcional
         const iTel = buscarColumna(headers, ['telefono', 'celular', 'phone', 'phone number'], ['telefono', 'celular', 'phone']);
 
+        // El DNI ya no es obligatorio: solo nombre y teléfono
         const faltan = [
             iNombre < 0 && 'nombre',
-            iDni < 0 && 'DNI',
             iTel < 0 && 'teléfono',
         ].filter(Boolean);
         if (faltan.length) throw new Error(`No se encontró la columna de: ${faltan.join(', ')}`);
@@ -381,7 +386,7 @@ const procesarArchivo = async (file: File) => {
         data.slice(1).forEach((row, idx) => {
             const r = row as unknown[];
             const nombre = normalizarNombre(r[iNombre]);
-            const dni = normalizarDni(r[iDni]);
+            const dni = iDni >= 0 ? normalizarDni(r[iDni]) : '';
             const telefono = normalizarTelefono(r[iTel]);
 
             if (!nombre && !dni && !telefono) return; // fila vacía
@@ -449,7 +454,7 @@ const guardar = async () => {
                 id_asesor: authStore.idEmploye,
                 id_proyecto: Number(proyectoId.value),
                 nombre_cliente: f.nombre,
-                dni_cliente: f.dni,
+                dni_cliente: f.dni || null,
                 telefono_cliente: f.telefono,
                 id_fuente: Number(fuenteId.value),
                 usuario_creacion: authStore.idEmploye,

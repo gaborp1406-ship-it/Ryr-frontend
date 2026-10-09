@@ -8,6 +8,8 @@ import type {
   IClientePotencial,
   IEtapaActualLeadResponse,
 
+  IListarAsesoresActivosResponse,
+
   IListarAsesoresResponse,
   IListarClientesPotencialesRequest,
   IListarEtapasResponse,
@@ -74,6 +76,32 @@ export const listarAsesores = async (): Promise<IListarAsesoresResponse[]> => {
     }
 
     throw error;
+  }
+};
+
+
+export const listarAsesoresActivos = async (): Promise<IListarAsesoresActivosResponse[]> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      '/asesor/listar-asesores-activos'
+    );
+
+
+    return data;
+
+
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al listar asesores activos.'
+      );
+    }
+
+
+    throw error;
+
+
   }
 };
 

@@ -4,12 +4,14 @@ import { useToast } from 'vue-toastification';
 import type {
   IClientePotencial,
   IListarAsesoresResponse,
+  IListarAsesoresActivosResponse,
   IListarEtapasResponse,
   IListarOpcionesResponse,
   IListarProyectoResponse,
 } from '../interfaces/clients.interface';
 import {
   listarAsesores,
+  listarAsesoresActivos,
   listarClientesPotenciales,
   listarEtapas,
   listarOpciones,
@@ -337,6 +339,10 @@ export default defineComponent({
     const reasignando = ref(false);
     const leadSeleccionado = ref<IClientePotencial | null>(null);
 
+    // Asesores activos (solo para el modal de reasignación)
+    const asesoresActivos = ref<IListarAsesoresActivosResponse[]>([]);
+    const cargandoActivos = ref(false);
+
     const motivos = [
       { value: 'SIN_RESPUESTA', label: 'El asesor no respondió' },
       { value: 'CARGA_TRABAJO', label: 'Carga de trabajo' },
@@ -357,12 +363,25 @@ export default defineComponent({
     const mostrarBotonReasignar = (cliente: IClientePotencial) =>
       puedeReasignar.value && cliente.id_etapa === ETAPA_ASIGNACION;
 
-    // No se ofrece el asesor actual del lead
+    // Solo asesores ACTIVOS, sin el asesor actual del lead
     const asesoresDisponibles = computed(() =>
-      asesores.value.filter(
-        (a) => a.id_asesor !== leadSeleccionado.value?.id_asesor
+      asesoresActivos.value.filter(
+        (a) => a.id_trabajador !== leadSeleccionado.value?.id_asesor
       )
     );
+
+    // Se consulta cada vez que se abre el modal, porque el estado de los asesores cambia
+    const cargarAsesoresActivos = async () => {
+      cargandoActivos.value = true;
+      try {
+        asesoresActivos.value = await listarAsesoresActivos();
+      } catch (error: any) {
+        asesoresActivos.value = [];
+        toast.error(error.message);
+      } finally {
+        cargandoActivos.value = false;
+      }
+    };
 
     const abrirReasignar = (cliente: IClientePotencial) => {
       leadSeleccionado.value = cliente;
@@ -370,6 +389,7 @@ export default defineComponent({
       formReasignar.motivo = 'SIN_RESPUESTA';
       formReasignar.observacion = '';
       mostrarModalReasignar.value = true;
+      cargarAsesoresActivos();
     };
 
     const cerrarReasignar = () => {
@@ -540,6 +560,7 @@ export default defineComponent({
       motivos,
       formReasignar,
       asesoresDisponibles,
+      cargandoActivos,
       mostrarBotonReasignar,
       abrirReasignar,
       cerrarReasignar,
