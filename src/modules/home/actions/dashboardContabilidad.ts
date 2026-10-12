@@ -289,4 +289,90 @@ export const contarTotalLeadsDashboard = async ({
 
     throw error;
   }
+
+};
+
+export const obtenerLeadsPorProyectoDashboard = async ({
+  fechaInicio,
+  fechaFin,
+  idAsesor,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string | number> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/leads-por-proyecto',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al obtener los leads por proyecto.',
+      );
+    }
+
+    throw error;
+  }
+};
+export const obtenerLeadsReasignadosDashboard = async ({
+  fechaInicio,
+  fechaFin,
+  idAsesor,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string | number> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/leads-reasignados',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al obtener los leads reasignados.',
+      );
+    }
+
+    throw error;
+  }
 };

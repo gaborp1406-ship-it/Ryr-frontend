@@ -357,7 +357,7 @@ export default defineComponent({
 
     // Solo admin / derivador pueden reasignar
     const puedeReasignar = computed(
-      () => authStore.isAdmin || authStore.isDerivador
+      () => authStore.isAdmin || authStore.isDerivador  || authStore.isJefeVentas
     );
 
     const mostrarBotonReasignar = (cliente: IClientePotencial) =>

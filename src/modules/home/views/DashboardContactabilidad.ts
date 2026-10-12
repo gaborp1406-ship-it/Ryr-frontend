@@ -102,8 +102,6 @@ const formatearDecimal = (valor: unknown): string => {
 };
 
 
-// Convierte textos tipo "10 min 28 seg" a minutos decimales (10.47).
-// Si el valor ya viene como número, lo respeta tal cual.
 const parseMinutosTexto = (valor: unknown): number => {
 
   if (typeof valor === 'number') {
@@ -112,24 +110,25 @@ const parseMinutosTexto = (valor: unknown): number => {
 
   const texto = String(valor ?? '').trim();
 
+  const matchDia = texto.match(/(\d+(?:[.,]\d+)?)\s*d/i);
+  const matchHora = texto.match(/(\d+(?:[.,]\d+)?)\s*h/i);
   const matchMin = texto.match(/(\d+(?:[.,]\d+)?)\s*min/i);
   const matchSeg = texto.match(/(\d+(?:[.,]\d+)?)\s*seg/i);
 
-  if (!matchMin && !matchSeg) {
-    // No tenía el formato "X min Y seg": puede que ya sea
-    // un número en texto plano (ej. "10.47" o "10,47").
+  if (!matchDia && !matchHora && !matchMin && !matchSeg) {
     return numero(texto.replace(',', '.'));
   }
 
-  const minutos = matchMin
-    ? Number(matchMin[1].replace(',', '.'))
-    : 0;
+  const aNumero = (m: RegExpMatchArray | null) =>
+    m ? Number(m[1].replace(',', '.')) : 0;
 
-  const segundos = matchSeg
-    ? Number(matchSeg[1].replace(',', '.'))
-    : 0;
+  const total =
+    aNumero(matchDia) * 1440 +
+    aNumero(matchHora) * 60 +
+    aNumero(matchMin) +
+    aNumero(matchSeg) / 60;
 
-  return Number((minutos + segundos / 60).toFixed(2));
+  return Number(total.toFixed(2));
 };
 
 
@@ -393,7 +392,7 @@ export default defineComponent({
 
       const ordenadas = filas
         .filter(item => item.name !== 'Sin nombre' || item.minutos > 0)
-        .sort((a, b) => a.minutos - b.minutos)
+        .sort((a, b) => b.minutos - a.minutos)
         .slice(0, 8);
 
       const maximo = Math.max(

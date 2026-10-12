@@ -233,7 +233,6 @@
           </div>
         </section>
 
-        <!-- DESISTIDOS: GRÁFICO DE PASTEL -->
         <!-- DESISTIDOS: GRÁFICO DE BARRAS -->
         <section
           class="min-w-0 rounded-[18px] border border-slate-200 bg-white p-[20px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
@@ -293,22 +292,17 @@
               </div>
 
               <!-- BARRA -->
-              <div class="relative h-[30px] flex-1 overflow-hidden rounded-[5px] bg-slate-100">
-
+              <div class="relative h-[30px] flex-1 rounded-[5px] bg-slate-100">
                 <div class="h-full rounded-[5px] bg-[#2d8c4a] transition-all duration-500" :style="{
                   width: `${getPorcentajeDesistimiento(Number(motivo.cantidad))}%`
-                }">
-                </div>
-
-                <!-- PORCENTAJE DENTRO DE LA BARRA -->
-                <span v-if="Number(motivo.cantidad) > 0"
-                  class="absolute inset-y-0 left-[8px] flex items-center text-[11px] font-bold" :class="getPorcentajeDesistimiento(Number(motivo.cantidad)) > 15
-                    ? 'text-white'
-                    : 'text-slate-500'
-                    ">
-                  {{ getPorcentajeDesistimiento(Number(motivo.cantidad)).toFixed(0) }}%
-                </span>
+                }"></div>
               </div>
+
+              <!-- PORCENTAJE FUERA DE LA BARRA -->
+              <strong v-if="Number(motivo.cantidad) > 0"
+                class="w-[45px] shrink-0 text-right text-[12px] font-bold text-slate-700">
+                {{ getPorcentajeDesistimiento(Number(motivo.cantidad)).toFixed(1) }}%
+              </strong>
 
               <!-- CANTIDAD -->
               <strong class="w-[38px] shrink-0 text-right text-[14px] font-bold text-slate-900">
@@ -326,9 +320,6 @@
           </div>
 
         </section>
-
-        <!-- ENCABEZADO ACTIVIDADES (ocupa el ancho completo) -->
-
 
         <!-- 4 GRÁFICOS DE ACTIVIDADES: mismas clases que Candidatos/Desistidos -->
         <section v-for="grafico in actividadesGraficos" :key="grafico.key"
@@ -390,20 +381,20 @@
                     grafico.tipo,
                     grafico.estado
                   )" :key="`line-${grafico.key}-${valor}`" x1="0" x2="300" :y1="22 +
-                  index *
-                  (73 /
-                    Math.max(
-                      obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1,
-                      1
-                    ))
-                  " :y2="22 +
-            index *
-            (73 /
-              Math.max(
-                obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1,
-                1
-              ))
-            " stroke="#e5e7eb" stroke-width="0.7" />
+                    index *
+                    (73 /
+                      Math.max(
+                        obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1,
+                        1
+                      ))
+                    " :y2="22 +
+                      index *
+                      (73 /
+                        Math.max(
+                          obtenerEscalaActividad(grafico.tipo, grafico.estado).length - 1,
+                          1
+                        ))
+                      " stroke="#e5e7eb" stroke-width="0.7" />
 
                   <!-- LÍNEA DEL GRÁFICO -->
                   <polyline :points="obtenerPuntosActividad(grafico.tipo, grafico.estado)" fill="none"
@@ -436,13 +427,145 @@
                 <span v-for="dato in obtenerDatosActividad(
                   grafico.tipo,
                   grafico.estado
-                )" :key="`${grafico.key}-${dato.fecha}`" class="truncate text-center text-[11px] font-medium text-slate-500">
+                )" :key="`${grafico.key}-${dato.fecha}`"
+                  class="truncate text-center text-[11px] font-medium text-slate-500">
                   {{ dato.dia_semana }}
                 </span>
               </div>
             </div>
           </div>
 
+        </section>
+
+        <!-- LEADS POR PROYECTO -->
+        <section
+          class="min-w-0 rounded-[18px] border border-slate-200 bg-white p-[20px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+          <div class="mb-[15px] flex items-start justify-between gap-[10px]">
+            <div>
+              <span class="mb-[4px] block text-[11px] font-bold tracking-[0.13em] text-[#2d8c4a]">
+                PROYECTOS
+              </span>
+
+              <h2 class="m-0 text-[18px] font-bold tracking-[-0.02em]">
+                Leads por proyecto
+              </h2>
+            </div>
+
+            <div class="text-right">
+              <span class="block text-[11px] text-slate-400">Total</span>
+              <strong class="text-[24px] font-bold text-[#0a0a0a]">
+                {{ totalLeadsProyectos }}
+              </strong>
+            </div>
+          </div>
+
+          <div v-if="leadsPorProyectoVista.length" class="max-h-[260px] space-y-[14px] overflow-y-auto pr-1">
+            <div v-for="proyecto in leadsPorProyectoVista" :key="proyecto.id" class="flex items-center gap-[10px]">
+              <div class="w-[125px] shrink-0">
+                <span class="block truncate text-[12px] font-medium text-slate-500" :title="proyecto.nombre">
+                  {{ proyecto.nombre }}
+                </span>
+              </div>
+
+              <div class="relative h-[30px] flex-1 overflow-hidden rounded-[5px] bg-slate-100">
+                <div class="h-full rounded-[5px] bg-[#2d8c4a] transition-all duration-500"
+                  :style="{ width: `${proyecto.cantidad > 0 ? Math.max(proyecto.percent, 3) : 0}%` }">
+                </div>
+              </div>
+
+              <strong class="w-[38px] shrink-0 text-right text-[14px] font-bold text-slate-900">
+                {{ proyecto.cantidad }}
+              </strong>
+            </div>
+          </div>
+
+          <div v-else class="flex h-[170px] items-center justify-center">
+            <span class="text-[13px] text-slate-400">
+              No hay leads por proyecto
+            </span>
+          </div>
+        </section>
+
+        <!-- LEADS REASIGNADOS (POR ASESOR) -->
+        <section
+          class="min-w-0 rounded-[18px] border border-slate-200 bg-white p-[20px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
+
+          <!-- HEADER + TOTAL GENERAL -->
+          <div class="mb-[15px] flex items-start justify-between gap-[10px]">
+            <div>
+              <span class="mb-[4px] block text-[11px] font-bold tracking-[0.13em] text-[#2d8c4a]">
+                REASIGNACIONES
+              </span>
+
+              <h2 class="m-0 text-[18px] font-bold tracking-[-0.02em]">
+                Leads reasignados
+              </h2>
+            </div>
+
+            <!-- CUADRITO TOTAL GENERAL (global, no es por asesor) -->
+            <div class="shrink-0 rounded-[12px] border border-slate-200 bg-slate-50 px-[14px] py-[8px] text-right">
+              <span class="block text-[11px] font-medium text-slate-400">Total general</span>
+              <strong class="block text-[26px] font-bold leading-none tracking-[-0.03em] text-[#0a0a0a]">
+                {{ totalGeneralReasignados }}
+              </strong>
+            </div>
+          </div>
+
+          <!-- LEYENDA -->
+          <div class="mb-[12px] flex items-center gap-[16px] text-[11px] font-medium text-slate-500">
+            <span class="flex items-center gap-[6px]">
+              <span class="h-[10px] w-[10px] rounded-[3px] bg-[#2d8c4a]"></span>
+              Recibidas
+            </span>
+            <span class="flex items-center gap-[6px]">
+              <span class="h-[10px] w-[10px] rounded-[3px] bg-[#f39c35]"></span>
+              Realizadas
+            </span>
+          </div>
+
+          <!-- LISTA POR ASESOR -->
+          <div v-if="reasignadosPorAsesor.length" class="max-h-[260px] space-y-[14px] overflow-y-auto pr-1">
+            <div v-for="asesor in reasignadosPorAsesor" :key="asesor.id" class="flex items-start gap-[10px]">
+
+              <!-- NOMBRE -->
+              <div class="w-[125px] shrink-0 pt-[2px]">
+                <span class="block truncate text-[12px] font-medium text-slate-500" :title="asesor.nombre">
+                  {{ asesor.nombre }}
+                </span>
+              </div>
+
+              <!-- DOS BARRAS: RECIBIDAS / REALIZADAS -->
+              <div class="flex flex-1 flex-col gap-[5px]">
+                <div class="flex items-center gap-[8px]">
+                  <div class="relative h-[14px] flex-1 overflow-hidden rounded-[4px] bg-slate-100">
+                    <div class="h-full rounded-[4px] bg-[#2d8c4a] transition-all duration-500"
+                      :style="{ width: `${getPorcentajeReasignado(asesor.recibidas)}%` }"></div>
+                  </div>
+                  <strong class="w-[24px] shrink-0 text-right text-[12px] font-bold text-slate-700">
+                    {{ asesor.recibidas }}
+                  </strong>
+                </div>
+
+                <div class="flex items-center gap-[8px]">
+                  <div class="relative h-[14px] flex-1 overflow-hidden rounded-[4px] bg-slate-100">
+                    <div class="h-full rounded-[4px] bg-[#f39c35] transition-all duration-500"
+                      :style="{ width: `${getPorcentajeReasignado(asesor.realizadas)}%` }"></div>
+                  </div>
+                  <strong class="w-[24px] shrink-0 text-right text-[12px] font-bold text-slate-700">
+                    {{ asesor.realizadas }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SIN DATOS -->
+          <div v-else class="flex h-[170px] items-center justify-center">
+            <span class="text-[13px] text-slate-400">
+              No hay reasignaciones registradas
+            </span>
+          </div>
         </section>
       </div>
     </template>

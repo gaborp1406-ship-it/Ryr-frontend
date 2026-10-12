@@ -15,9 +15,11 @@ import {
   contarLeadsAtendidosDashboard,
   contarLeadsPorEtapa,
   contarLeadsPorFase,
+
 } from '../actions/home.actions';
 import { obtenerLeadsContactadosAsesorDashboard } from '../actions/dashboardContabilidad.js';
 import { useAuthStore } from '@/modules/auth/stores/auth.store.js';
+import { obtenerLeadsPorProyectoDashboard, obtenerLeadsReasignadosDashboard } from '../actions/dashboardContabilidad';
 
 
 type DashboardTab =
@@ -68,6 +70,21 @@ interface LeadAtendido {
 interface AsesorOpcion {
   id_asesor: number;
   asesor: string;
+}
+
+interface LeadProyecto {
+  id_proyecto: number;
+  proyecto: string;
+  cantidad_leads: number | string;
+}
+
+// Fila que devuelve obtenerLeadsReasignadosDashboard (una por asesor)
+interface LeadsReasignadosAsesor {
+  id_asesor: number;
+  asesor: string;
+  total_reasignaciones_recibidas: number | string;
+  total_reasignaciones_realizadas: number | string;
+  total_general: number | string;
 }
 
 type ActividadGraficoKey =
@@ -219,6 +236,11 @@ export default defineComponent({
     const leadsAtendidos = ref<LeadAtendido[]>([]);
 
     const desistimientos = ref<Desistimiento[]>([]);
+
+    const leadsPorProyecto = ref<LeadProyecto[]>([]);
+
+    // Ahora es una lista: una fila por asesor
+    const leadsReasignados = ref<LeadsReasignadosAsesor[]>([]);
 
     // =========================================================
     // KPIs
@@ -617,6 +639,89 @@ export default defineComponent({
       '#42a5a5',
     ];
 
+    // =========================================================
+    // LEADS POR PROYECTO
+    // =========================================================
+
+    const leadsPorProyectoVista = computed(() => {
+      const filas = leadsPorProyecto.value
+        .map((x) => ({
+          id: x.id_proyecto,
+          nombre: x.proyecto,
+          cantidad: Number(x.cantidad_leads || 0),
+        }))
+        .sort((a, b) => b.cantidad - a.cantidad);
+
+      const maximo = Math.max(1, ...filas.map((x) => x.cantidad));
+
+      return filas.map((x) => ({
+        ...x,
+        percent: Number(((x.cantidad / maximo) * 100).toFixed(1)),
+      }));
+    });
+
+    const totalLeadsProyectos = computed(() =>
+      leadsPorProyecto.value.reduce(
+        (total, x) => total + Number(x.cantidad_leads || 0),
+        0,
+      ),
+    );
+
+    // =========================================================
+    // LEADS REASIGNADOS (POR ASESOR)
+    // =========================================================
+
+    // Total general: es global (no es por asesor), viene repetido en cada fila.
+    const totalGeneralReasignados = computed(() => {
+      if (!leadsReasignados.value.length) return 0;
+
+      return Math.max(
+        ...leadsReasignados.value.map((x) =>
+          Number(x.total_general || 0),
+        ),
+        0,
+      );
+    });
+
+    // Asesores con recibidas/realizadas normalizadas, ordenados por movimiento
+    const reasignadosPorAsesor = computed(() =>
+      leadsReasignados.value
+        .map((x) => {
+          const recibidas = Number(x.total_reasignaciones_recibidas || 0);
+          const realizadas = Number(x.total_reasignaciones_realizadas || 0);
+
+          return {
+            id: x.id_asesor,
+            nombre: x.asesor,
+            recibidas,
+            realizadas,
+            movimientos: recibidas + realizadas,
+          };
+        })
+        .sort(
+          (a, b) =>
+            b.movimientos - a.movimientos ||
+            a.nombre.localeCompare(b.nombre),
+        ),
+    );
+
+    const reasignadosMaximo = computed(() =>
+      Math.max(
+        1,
+        ...reasignadosPorAsesor.value.flatMap((x) => [
+          x.recibidas,
+          x.realizadas,
+        ]),
+      ),
+    );
+
+    const getPorcentajeReasignado = (valor: number): number => {
+      if (valor <= 0) return 0;
+
+      // mínimo 3% para que una barra con valor siempre se vea
+      return Math.max((valor / reasignadosMaximo.value) * 100, 3);
+    };
+
 
     // =========================================================
     // VALIDAR FECHAS
@@ -661,6 +766,8 @@ export default defineComponent({
           actividadesResponse,
           desistimientosResponse,
           atendidosResponse,
+          proyectosResponse,
+          reasignadosResponse,
         ] = await Promise.all([
           // FECHA + ASESOR
           contarLeadsPorEtapa({
@@ -685,6 +792,20 @@ export default defineComponent({
 
           // FECHA + ASESOR
           contarLeadsAtendidosDashboard({
+            fechaInicio: inicio,
+            fechaFin: fin,
+            idAsesor: asesor,
+          }),
+
+          // POR PROYECTO
+          obtenerLeadsPorProyectoDashboard({
+            fechaInicio: inicio,
+            fechaFin: fin,
+            idAsesor: asesor,
+          }),
+
+          // REASIGNADOS
+          obtenerLeadsReasignadosDashboard({
             fechaInicio: inicio,
             fechaFin: fin,
             idAsesor: asesor,
@@ -732,6 +853,24 @@ export default defineComponent({
             atendidosResponse,
           )
             ? atendidosResponse
+            : [];
+
+        // =====================================================
+        // POR PROYECTO
+        // =====================================================
+
+        leadsPorProyecto.value = Array.isArray(proyectosResponse)
+          ? proyectosResponse
+          : [];
+
+        // =====================================================
+        // REASIGNADOS (lista por asesor)
+        // =====================================================
+
+        leadsReasignados.value = Array.isArray(reasignadosResponse)
+          ? reasignadosResponse
+          : reasignadosResponse
+            ? [reasignadosResponse]
             : [];
       } catch (error) {
         console.error(
@@ -874,6 +1013,16 @@ export default defineComponent({
       totalDesistimientos,
       getPorcentajeDesistimiento,
       cambiarEtapaDesistimiento,
+
+      // Por proyecto
+      leadsPorProyectoVista,
+      totalLeadsProyectos,
+
+      // Reasignados
+      leadsReasignados,
+      totalGeneralReasignados,
+      reasignadosPorAsesor,
+      getPorcentajeReasignado,
     };
   },
 });

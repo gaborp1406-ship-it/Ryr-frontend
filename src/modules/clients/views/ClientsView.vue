@@ -261,7 +261,7 @@
               </td>
               <td class="rlv-mono px-4 py-3 tabular-nums text-slate-500">{{ cliente.etapa_actual }}</td>
 
-              <td class="px-4 py-3 text-center">
+               <td class="px-4 py-3 text-center">
                 <div class="inline-flex items-center gap-1">
                   <button type="button" @click="verLead(cliente.id_lead)" title="Ver detalle del lead"
                     class="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">
