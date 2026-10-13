@@ -223,8 +223,8 @@ export default defineComponent({
     // ---------- Llamada (SIP + SSE + estado de la llamada) ----------
     const eventSource = ref<EventSource | null>(null);
     const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
-    
-    
+
+
     const {
       currentCallId,
       isCalling,
@@ -240,16 +240,38 @@ export default defineComponent({
 
 
 
-    function formatFechaSimple(valor: string | null | undefined): string {
+
+    function formatFechaSimple(
+      valor: string | null | undefined
+    ): string {
       if (!valor) return "-";
-      const d = new Date(valor);
-      if (!isNaN(d.getTime())) {
-        return d.toLocaleDateString("es-PE", {
+
+      // Conservar la fecha calendario recibida de PostgreSQL.
+      // No interpretar la medianoche UTC como una fecha de otro día.
+      const match = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+      if (match) {
+        const [, anio, mes, dia] = match;
+
+        // Mediodía UTC evita que la conversión a Lima
+        // cambie el día calendario.
+        const fecha = new Date(
+          Date.UTC(
+            Number(anio),
+            Number(mes) - 1,
+            Number(dia),
+            12
+          )
+        );
+
+        return fecha.toLocaleDateString("es-PE", {
           day: "numeric",
           month: "long",
           year: "numeric",
+          timeZone: "America/Lima",
         });
       }
+
       return valor;
     }
 
