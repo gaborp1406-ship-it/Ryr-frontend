@@ -537,15 +537,7 @@
 
               <!-- DOS BARRAS: RECIBIDAS / REALIZADAS -->
               <div class="flex flex-1 flex-col gap-[5px]">
-                <div class="flex items-center gap-[8px]">
-                  <div class="relative h-[14px] flex-1 overflow-hidden rounded-[4px] bg-slate-100">
-                    <div class="h-full rounded-[4px] bg-[#2d8c4a] transition-all duration-500"
-                      :style="{ width: `${getPorcentajeReasignado(asesor.recibidas)}%` }"></div>
-                  </div>
-                  <strong class="w-[24px] shrink-0 text-right text-[12px] font-bold text-slate-700">
-                    {{ asesor.recibidas }}
-                  </strong>
-                </div>
+              
 
                 <div class="flex items-center gap-[8px]">
                   <div class="relative h-[14px] flex-1 overflow-hidden rounded-[4px] bg-slate-100">

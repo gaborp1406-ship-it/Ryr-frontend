@@ -3,6 +3,7 @@ import {
   defineComponent,
   onMounted,
   ref,
+  watch,
 } from 'vue';
 
 import DashboardComercial from './DashboardComercial.vue';
@@ -126,28 +127,33 @@ export default defineComponent({
     // =========================================================
     const authStore = useAuthStore();
     const esAgent = computed(() => authStore.isAgent);
+    const esDerivador = computed(() => authStore.isDerivador);
     const idEmpleadoDelAgent = computed(() => authStore.idEmploye);
 
     const activeTab = ref<DashboardTab>('general');
 
-    const tabs = [
-      {
-        id: 'general' as DashboardTab,
-        label: 'General',
-      },
-      {
-        id: 'comercial' as DashboardTab,
-        label: 'Comercial',
-      },
-      {
-        id: 'contactabilidad' as DashboardTab,
-        label: 'Contactabilidad',
-      },
-      {
-        id: 'cierres' as DashboardTab,
-        label: 'Cierres',
-      },
+    const todasLasTabs = [
+      { id: 'general' as DashboardTab, label: 'General' },
+      { id: 'comercial' as DashboardTab, label: 'Comercial' },
+      { id: 'contactabilidad' as DashboardTab, label: 'Contactabilidad' },
+      { id: 'cierres' as DashboardTab, label: 'Cierres' },
     ];
+
+    // Si es derivador, solo ve la pestaña General
+    const tabs = computed(() =>
+      esDerivador.value
+        ? todasLasTabs.filter((tab) => tab.id === 'general')
+        : todasLasTabs,
+    );
+
+    // Evita quedar en una pestaña oculta si el rol se resuelve después de montar
+    watch(
+      esDerivador,
+      (valor) => {
+        if (valor) activeTab.value = 'general';
+      },
+      { immediate: true },
+    );
 
     const titulosPorTab: Record<DashboardTab, string> = {
       general: 'Resumen general',
@@ -980,7 +986,7 @@ export default defineComponent({
       fechaFin,
       aplicarFiltroFechas,
       limpiarFiltroFechas,
-
+      esDerivador,
       // Filtro asesor
       idAsesor,
       idAsesorNumerico,

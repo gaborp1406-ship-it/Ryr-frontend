@@ -74,11 +74,14 @@ export interface IClientePotencial {
   etapa_actual: string;
 }
 
+
 export interface IActualizarLeadDniProyectoRequest {
   id_lead: number;
   dni_cliente: string | null;
   id_proyecto: number;
   usuario_modificacion: number;
+  nombres: string | null;
+  telefono: string | null;
 }
 
 export interface IActualizarLeadDniProyectoResponse {

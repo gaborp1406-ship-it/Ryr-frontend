@@ -43,3 +43,31 @@ export const finalizarEtapaLeadAsignacion = async (
     throw error;
   }
 };
+
+
+export interface IVerificarLeadReasignadoResponse {
+  es_reasignado: boolean;
+  id_asesor_anterior: number | null;
+  nombre_asesor_anterior: string | null;
+}
+
+export const verificarLeadReasignado = async (
+  idLead: number
+): Promise<IVerificarLeadReasignadoResponse> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      `/lead/verificar-lead-reasignado/${idLead}`
+    );
+
+    return Array.isArray(data) ? data[0] : data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al verificar si el lead fue reasignado.'
+      );
+    }
+
+    throw error;
+  }
+};

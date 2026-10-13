@@ -10,7 +10,8 @@
                     <div>
                         <h2 class="text-base font-semibold text-slate-800">Importar leads desde Excel</h2>
                         <p class="mt-0.5 text-xs text-slate-500">
-                            Elige proyecto y fuente, sube el archivo, revisa y guarda. Se registrarán a nombre de
+                            Elige proyecto, fuente y asesores, sube el archivo, revisa y guarda. Se registrarán a nombre
+                            de
                             <span class="font-semibold text-slate-700">{{ nombreUsuarioActual }}</span>.
                         </p>
                     </div>
@@ -35,7 +36,7 @@
                                 class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60">
                                 <option value="">Seleccione</option>
                                 <option v-for="p in proyectos" :key="p.id_proyecto" :value="p.id_proyecto">{{ p.nombre
-                                    }}</option>
+                                }}</option>
                             </select>
                         </label>
 
@@ -50,13 +51,62 @@
                         </label>
                     </div>
 
+                    <!-- Asesores -->
+                    <div>
+                        <div class="mb-1.5 flex items-center justify-between">
+                            <span class="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500">
+                                Asesores para la rotación
+                                <span class="ml-1 normal-case tracking-normal text-slate-400">
+                                    ({{ asesoresSeleccionados.length }} seleccionado{{ asesoresSeleccionados.length ===
+                                        1 ? '' : 's' }})
+                                </span>
+                            </span>
+                            <div class="flex items-center gap-3 text-xs">
+                                <button type="button" :disabled="guardando || !asesores.length"
+                                    class="font-medium text-[#2d8c4a] hover:underline disabled:opacity-40"
+                                    @click="seleccionarTodos">Todos</button>
+                                <button type="button" :disabled="guardando || !asesoresSeleccionados.length"
+                                    class="font-medium text-slate-500 hover:underline disabled:opacity-40"
+                                    @click="asesoresSeleccionados = []">Ninguno</button>
+                            </div>
+                        </div>
+
+                        <div v-if="cargandoAsesores"
+                            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500">
+                            Cargando asesores…
+                        </div>
+                        <div v-else-if="!asesores.length"
+                            class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs text-amber-700">
+                            No se pudieron cargar los asesores.
+                            <button type="button" class="font-semibold underline"
+                                @click="cargarAsesores">Reintentar</button>
+                        </div>
+                        <div v-else
+                            class="flex max-h-32 flex-wrap gap-2 overflow-auto rounded-xl border border-slate-200 bg-white p-2.5">
+                            <button v-for="a in asesores" :key="a.id_asesor" type="button" :disabled="guardando"
+                                :title="a.nombre" @click="toggleAsesor(a.id_asesor)"
+                                class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition disabled:opacity-60"
+                                :class="posicionAsesor(a.id_asesor)
+                                    ? 'border-[#2d8c4a] bg-[#2d8c4a]/10 font-medium text-[#1e6236]'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-[#2d8c4a]/50'">
+                                <span v-if="posicionAsesor(a.id_asesor)"
+                                    class="flex h-4 w-4 items-center justify-center rounded-full bg-[#2d8c4a] text-[9px] font-bold text-white">
+                                    {{ posicionAsesor(a.id_asesor) }}
+                                </span>
+                                {{ a.nombre_abrev || a.nombre }}
+                            </button>
+                        </div>
+
+                    </div>
+
                     <!-- Dropzone -->
                     <label
                         class="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition"
                         :class="[
                             arrastrando ? 'border-[#2d8c4a] bg-[#2d8c4a]/5' : 'border-slate-200 bg-slate-50 hover:border-[#2d8c4a]/50',
                             guardando ? 'pointer-events-none opacity-60' : '',
-                        ]" @dragover.prevent="arrastrando = true" @dragleave.prevent="arrastrando = false" @drop.prevent="onDrop">
+                        ]" @dragover.prevent="arrastrando = true" @dragleave.prevent="arrastrando = false"
+                        @drop.prevent="onDrop">
                         <input ref="inputArchivo" type="file" accept=".xls,.xlsx,.csv" class="hidden"
                             @change="onArchivo">
                         <svg class="h-7 w-7 text-[#2d8c4a]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -90,16 +140,19 @@
                             class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
                             Creados: <b>{{ totalCreados }}</b>
                         </span>
+                        <span v-if="totalReservados"
+                            class="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-sky-700">
+                            Reservados: <b>{{ totalReservados }}</b>
+                        </span>
                         <span v-if="totalOmitidos"
                             class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700">
                             Omitidos: <b>{{ totalOmitidos }}</b>
                         </span>
                     </div>
 
-                    <!-- Barra de progreso -->
+                    <!-- Barra de progreso (indeterminada: es una sola llamada) -->
                     <div v-if="guardando" class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div class="h-full rounded-full bg-[#2d8c4a] transition-all"
-                            :style="{ width: porcentaje + '%' }"></div>
+                        <div class="h-full w-1/3 animate-pulse rounded-full bg-[#2d8c4a]"></div>
                     </div>
 
                     <!-- Tabla previa -->
@@ -150,10 +203,13 @@
                                         <span v-else-if="fila.estado === 'creado'" class="font-medium text-emerald-600">
                                             ✓ {{ fila.mensaje || 'Creado' }}
                                         </span>
+                                        <span v-else-if="fila.estado === 'reservado'" class="text-sky-600">
+                                            {{ fila.mensaje }}
+                                        </span>
                                         <span v-else-if="fila.estado === 'omitido'" class="text-amber-600">{{
                                             fila.mensaje }}</span>
                                         <span v-else-if="fila.estado === 'error'" class="text-red-600">{{ fila.mensaje
-                                            }}</span>
+                                        }}</span>
                                         <span v-else-if="listaErrores(fila).length" class="text-red-600">
                                             {{ listaErrores(fila).join(' · ') }}
                                         </span>
@@ -186,13 +242,13 @@
                     <div class="flex items-center gap-2">
                         <button type="button" :disabled="guardando" @click="cerrar"
                             class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50">
-                            {{ totalCreados || totalOmitidos ? 'Cerrar' : 'Cancelar' }}
+                            {{ huboResultados ? 'Cerrar' : 'Cancelar' }}
                         </button>
                         <button type="button" :disabled="!puedeGuardar" @click="guardar"
                             class="rounded-xl bg-[#2d8c4a] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1e6236] disabled:cursor-not-allowed disabled:opacity-40">
-                            {{ guardando ? `Guardando ${progreso}/${totalAGuardar}…` : `Guardar ${totalListos}
-                            lead${totalListos === 1 ?
-                            '' : 's'}` }}
+                            {{ guardando ? `Guardando ${totalAGuardar}…` : `Guardar ${totalListos} lead${totalListos ===
+                            1 ? '' : 's'}`
+                            }}
                         </button>
                     </div>
                 </div>
@@ -205,9 +261,14 @@
 import { computed, ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
-import { crearLead } from '../actions/lead.action';
-import type { IListarOpcionesResponse, IListarProyectoResponse } from '../interfaces/lead.interface';
-
+import { importarLeads } from '../actions/lead.action';
+import { listarAsesores } from '@/modules/clients/actions/clients.action';
+import type {
+    IImportarLeads,
+    IListarOpcionesResponse,
+    IListarProyectoResponse,
+} from '../interfaces/lead.interface';
+import type { IListarAsesoresResponse } from '@/modules/clients/interfaces/clients.interface';
 // ───────────────────────── Props / Emits ─────────────────────────
 const props = defineProps<{
     modelValue: boolean;
@@ -221,7 +282,7 @@ const emit = defineEmits<{
 }>();
 
 // ───────────────────────── Tipos ─────────────────────────
-type Estado = 'pendiente' | 'guardando' | 'creado' | 'omitido' | 'error';
+type Estado = 'pendiente' | 'guardando' | 'creado' | 'reservado' | 'omitido' | 'error';
 
 interface FilaImport {
     uid: number;
@@ -246,10 +307,44 @@ const nombreArchivo = ref('');
 const leyendo = ref(false);
 const guardando = ref(false);
 const arrastrando = ref(false);
-const progreso = ref(0);
 const totalAGuardar = ref(0);
 const inputArchivo = ref<HTMLInputElement | null>(null);
 let uidSeq = 0;
+
+// Asesores
+const asesores = ref<IListarAsesoresResponse[]>([]);
+const asesoresSeleccionados = ref<number[]>([]); // el orden de selección = orden de rotación
+const cargandoAsesores = ref(false);
+
+const cargarAsesores = async () => {
+    cargandoAsesores.value = true;
+    try {
+        asesores.value = await listarAsesores();
+    } catch (error: any) {
+        console.error('Error al listar asesores:', error);
+        toast.error(error?.message || 'No se pudieron cargar los asesores');
+        asesores.value = [];
+    } finally {
+        cargandoAsesores.value = false;
+    }
+};
+
+const posicionAsesor = (id: number): number => asesoresSeleccionados.value.indexOf(id) + 1; // 0 = no seleccionado
+
+const toggleAsesor = (id: number) => {
+    const i = asesoresSeleccionados.value.indexOf(id);
+    if (i >= 0) asesoresSeleccionados.value.splice(i, 1);
+    else asesoresSeleccionados.value.push(id);
+};
+
+const seleccionarTodos = () => {
+    asesoresSeleccionados.value = asesores.value.map((a) => a.id_asesor);
+};
+
+const nombreAsesor = (id: number): string => {
+    const a = asesores.value.find((x) => x.id_asesor === id);
+    return a?.nombre_abrev || a?.nombre || `Asesor ${id}`;
+};
 
 // ───────────────────────── Normalizadores ─────────────────────────
 // Deja solo dígitos; quita ceros iniciales y el prefijo 51: "+51 987-654-321" -> "987654321"
@@ -336,11 +431,18 @@ const totalConErrores = computed(
     () => filas.value.filter((f) => (f.estado === 'pendiente' || f.estado === 'error') && tieneErrores(f)).length,
 );
 const totalCreados = computed(() => filas.value.filter((f) => f.estado === 'creado').length);
+const totalReservados = computed(() => filas.value.filter((f) => f.estado === 'reservado').length);
 const totalOmitidos = computed(() => filas.value.filter((f) => f.estado === 'omitido').length);
-const porcentaje = computed(() => (totalAGuardar.value ? Math.round((progreso.value / totalAGuardar.value) * 100) : 0));
+const huboResultados = computed(() => totalCreados.value + totalReservados.value + totalOmitidos.value > 0);
 
 const puedeGuardar = computed(
-    () => !guardando.value && !leyendo.value && !!proyectoId.value && !!fuenteId.value && totalListos.value > 0,
+    () =>
+        !guardando.value &&
+        !leyendo.value &&
+        !!proyectoId.value &&
+        !!fuenteId.value &&
+        asesoresSeleccionados.value.length > 0 &&
+        totalListos.value > 0,
 );
 
 // ───────────────────────── Lectura del Excel ─────────────────────────
@@ -374,7 +476,6 @@ const procesarArchivo = async (file: File) => {
         const iDni = buscarColumna(headers, ['dni'], ['dni', 'documento']); // opcional
         const iTel = buscarColumna(headers, ['telefono', 'celular', 'phone', 'phone number'], ['telefono', 'celular', 'phone']);
 
-        // El DNI ya no es obligatorio: solo nombre y teléfono
         const faltan = [
             iNombre < 0 && 'nombre',
             iTel < 0 && 'teléfono',
@@ -439,84 +540,95 @@ const guardar = async () => {
 
     const lista = [...porGuardar.value];
     guardando.value = true;
-    progreso.value = 0;
     totalAGuardar.value = lista.length;
-
-    let creados = 0;
-    let abortado = false;
-
-    // Secuencial a propósito: el backend asigna asesor/valida duplicados y el orden importa
-    for (const f of lista) {
+    lista.forEach((f) => {
         f.estado = 'guardando';
+        f.mensaje = '';
+    });
 
-        try {
-            const result = await crearLead({
-                id_asesor: authStore.idEmploye,
-                id_proyecto: Number(proyectoId.value),
-                nombre_cliente: f.nombre,
-                dni_cliente: f.dni || null,
-                telefono_cliente: f.telefono,
-                id_fuente: Number(fuenteId.value),
-                usuario_creacion: authStore.idEmploye,
-            });
+    const payload: IImportarLeads = {
+        id_asesores: [...asesoresSeleccionados.value],
+        usuario_creacion: authStore.idEmploye,
+        leads: lista.map((f) => ({
+            id_proyecto: Number(proyectoId.value),
+            id_fuente: Number(fuenteId.value),
+            nombre_cliente: f.nombre,
+            dni_cliente: f.dni || null,
+            telefono_cliente: f.telefono,
+        })),
+    };
 
-            switch (result.accion) {
+    try {
+        // La función SQL devuelve un resultado por lead, en el mismo orden en que se enviaron
+        const resultados = await importarLeads(payload);
+
+        let creados = 0;
+        let reservados = 0;
+        let omitidos = 0;
+        let sinRespuesta = 0;
+
+        lista.forEach((f, i) => {
+            const r = resultados[i];
+
+            if (!r) {
+                f.estado = 'error';
+                f.mensaje = 'Sin respuesta del servidor';
+                sinRespuesta++;
+                return;
+            }
+
+            const asesor = r.id_asesor ? nombreAsesor(r.id_asesor) : '';
+
+            switch (r.accion) {
                 case 'CREADO':
                     f.estado = 'creado';
-                    f.mensaje = 'Creado';
+                    f.mensaje = asesor ? `Creado → ${asesor}` : 'Creado';
                     creados++;
                     break;
 
                 case 'CREADO_NUEVO_PROYECTO':
                     f.estado = 'creado';
-                    f.mensaje = 'Creado (ya tenía otra oportunidad)';
+                    f.mensaje = `Creado${asesor ? ` → ${asesor}` : ''} `;
                     creados++;
+                    break;
+
+                case 'RESERVADO':
+                    f.estado = 'reservado';
+                    f.mensaje = `Reservado${asesor ? ` (${asesor} no está activo)` : ''}`;
+                    reservados++;
                     break;
 
                 case 'ALERTA':
                     f.estado = 'omitido';
-                    f.mensaje = result.mensaje || 'Ya tiene un lead activo en este proyecto';
-                    break;
-
-                case 'PENDIENTE_ASESOR_NO_ACTIVO':
-                    f.estado = 'omitido';
-                    f.mensaje = result.mensaje || 'Su asesor actual no está activo';
-                    break;
-
-                case 'SIN_ASESOR_ACTIVO':
-                    // Si no hay asesores activos, ninguna fila siguiente va a funcionar
-                    f.estado = 'pendiente';
-                    f.mensaje = '';
-                    toast.warning(result.mensaje || 'No hay asesores activos en este momento.');
-                    abortado = true;
+                    f.mensaje = r.mensaje;
+                    omitidos++;
                     break;
 
                 default:
                     f.estado = 'error';
-                    f.mensaje = result.mensaje || 'Respuesta no reconocida';
+                    f.mensaje = r.mensaje || 'Respuesta no reconocida';
+                    sinRespuesta++;
                     break;
             }
-        } catch (error: any) {
-            console.error(`Error al guardar fila ${f.fila}:`, error);
-            f.estado = 'error';
-            f.mensaje = error?.message || 'Error al guardar';
-        }
+        });
 
-        if (abortado) break;
-        progreso.value++;
+        if (creados > 0 || reservados > 0) emit('importado'); // el padre recarga la tabla
+
+        if (creados) toast.success(`${creados} lead${creados === 1 ? '' : 's'} creado${creados === 1 ? '' : 's'} correctamente`);
+        if (reservados) toast.info(`${reservados} reservado${reservados === 1 ? '' : 's'} (asesor no activo)`);
+        if (omitidos) toast.info(`${omitidos} omitido${omitidos === 1 ? '' : 's'} (ya tenían un lead activo en el proyecto)`);
+        if (sinRespuesta) toast.error(`${sinRespuesta} con error. Puedes corregirlos y volver a guardar.`);
+    } catch (error: any) {
+        // La función SQL es atómica: si falla, no se guardó nada
+        console.error('Error al importar leads:', error);
+        lista.forEach((f) => {
+            f.estado = 'pendiente';
+            f.mensaje = '';
+        });
+        toast.error(error?.message || 'Error al importar leads. No se guardó ninguna fila.');
+    } finally {
+        guardando.value = false;
     }
-
-    guardando.value = false;
-
-    if (creados > 0) {
-        emit('importado'); // el padre recarga la tabla
-        toast.success(`${creados} lead${creados === 1 ? '' : 's'} creado${creados === 1 ? '' : 's'} correctamente`);
-    }
-
-    const omitidos = lista.filter((f) => f.estado === 'omitido').length;
-    const fallidos = lista.filter((f) => f.estado === 'error').length;
-    if (omitidos) toast.info(`${omitidos} omitido${omitidos === 1 ? '' : 's'} (ya existían o sin asesor activo)`);
-    if (fallidos) toast.error(`${fallidos} fallaron. Puedes corregirlos y volver a guardar.`);
 };
 
 // ───────────────────────── Cerrar / resetear ─────────────────────────
@@ -525,8 +637,8 @@ const resetear = () => {
     fuenteId.value = '';
     filas.value = [];
     nombreArchivo.value = '';
-    progreso.value = 0;
     totalAGuardar.value = 0;
+    asesoresSeleccionados.value = [];
 };
 
 const cerrar = () => {
@@ -537,7 +649,11 @@ const cerrar = () => {
 watch(
     () => props.modelValue,
     (abierto) => {
-        if (!abierto) resetear();
+        if (abierto) {
+            if (!asesores.value.length) cargarAsesores();
+        } else {
+            resetear();
+        }
     },
 );
 </script>

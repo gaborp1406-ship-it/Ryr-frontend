@@ -1,5 +1,5 @@
 import { automatizateApiNest } from "@/api/automatizateApiNest";
-import type { IHistorialCorreoResponse, IHistorialLlamadaResponse, IHistorialWhatsappResponse, IInfoEstadoReunionLeadResponse, IRegistrarCorreoRequest, IRegistrarWhatsappRequest } from "../interfaces/clients.atencion.interface";
+import type { IHistorialCorreoResponse, IHistorialLlamadaResponse, IHistorialMensajeLeadEtapaReunionResponse, IHistorialWhatsappResponse, IInfoEstadoReunionLeadResponse, IRegistrarCorreoRequest, IRegistrarWhatsappRequest } from "../interfaces/clients.atencion.interface";
 import { isAxiosError } from "axios";
 
 
@@ -231,6 +231,56 @@ export const finalizarActividad = async (
       throw new Error(
         error.response?.data?.message ??
           "Error al finalizar la etapa de negociación."
+      );
+    }
+
+    throw error;
+  }
+};
+
+
+
+export const guardarMensajeLeadEtapaReunion = async (
+  idLeadEtapaReunion: number,
+  mensaje: string
+): Promise<IHistorialMensajeLeadEtapaReunionResponse> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/guardar-mensaje-lead-etapa-reunion',
+      {
+        id_lead_etapa_reunion: idLeadEtapaReunion,
+        mensaje,
+      }
+    );
+
+    // El backend devuelve un arreglo porque la función SQL usa RETURNS TABLE.
+    return Array.isArray(data) ? data[0] : data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al guardar el mensaje de atención.'
+      );
+    }
+
+    throw error;
+  }
+};
+
+export const obtenerHistorialMensajesLeadEtapaReunion = async (
+  idLeadEtapaReunion: number
+): Promise<IHistorialMensajeLeadEtapaReunionResponse[]> => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      `/lead/obtener-historial-mensajes-lead-etapa-reunion/${idLeadEtapaReunion}`
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al obtener el historial de mensajes de atención.'
       );
     }
 

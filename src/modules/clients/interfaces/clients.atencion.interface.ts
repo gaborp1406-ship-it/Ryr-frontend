@@ -22,6 +22,12 @@ export interface IHistorialLlamadaResponse {
 }
 
 
+export interface IHistorialMensajeLeadEtapaReunionResponse {
+  id: number;
+  id_lead_etapa_reunion: number;
+  mensaje: string;
+  fecha_creacion: string;
+}
 export interface IInfoEstadoReunionLeadResponse {
   nombre: string;
   id_etapa_reunion: number;

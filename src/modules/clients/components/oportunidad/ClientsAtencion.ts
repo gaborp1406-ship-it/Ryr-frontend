@@ -16,14 +16,15 @@ import ModalReprogramar from "@/modules/clients/components/oportunidad/atencion/
 import ModalDesistir from "@/modules/clients/components/oportunidad/atencion/Modaldesistir.vue";
 import ModalAgendarReu from "@/modules/clients/components/oportunidad/atencion/ModalAgendarReu.vue";
 import ModalLlamada from "@/modules/clients/components/oportunidad/atencion/llamada/views/ModalLlamada.vue";
-import { finalizarEtapaAtencion } from "../../actions/clients.atencion.action";
+import { finalizarEtapaAtencion, guardarMensajeLeadEtapaReunion, obtenerHistorialMensajesLeadEtapaReunion } from "../../actions/clients.atencion.action";
 import { useSipPhone } from "./atencion/llamada/composables/useSipPhone";
 import { useLlamadaSaliente } from "./atencion/llamada/composables/useLlamadaSaliente";
 import { conectarEventosLlamada } from "./atencion/llamada/actions/Gestioninteraction.action";
 import { obtenerEtapaActualLead } from "../../actions/clients.action";
+import type { IHistorialMensajeLeadEtapaReunionResponse } from "../../interfaces/clients.atencion.interface";
 
 const ITEMS_POR_PAGINA = 3;
-
+const MENSAJES_POR_PAGINA = 2;
 export default defineComponent({
   components: {
     IconWhatsapp,
@@ -105,10 +106,119 @@ export default defineComponent({
     const reprogramacion = useReprogramacion(props.idLead);
     const desistimiento = useDesistimiento(props.idLead);
     const finalizarActividadState = useFinalizarActividad(props.idLead);
+    // ---------- Historial de mensajes (Atención) ----------
+    const nuevoMensaje = ref("");
+    const enviandoMensaje = ref(false);
+    const historialMensajes = ref<IHistorialMensajeLeadEtapaReunionResponse[]>([]);
+    const cargandoHistorialMensajes = ref(false);
+    const paginaMensajes = ref(1);
 
+    const mensajesOrdenados = computed(() =>
+      [...historialMensajes.value].sort(
+        (a, b) =>
+          new Date(b.fecha_creacion).getTime() -
+          new Date(a.fecha_creacion).getTime()
+      )
+    );
+
+    const totalPaginasMensajes = computed(() =>
+      Math.max(1, Math.ceil(mensajesOrdenados.value.length / MENSAJES_POR_PAGINA))
+    );
+
+    const mensajesPaginados = computed(() => {
+      const inicio = (paginaMensajes.value - 1) * MENSAJES_POR_PAGINA;
+      return mensajesOrdenados.value.slice(inicio, inicio + MENSAJES_POR_PAGINA);
+    });
+
+    watch(totalPaginasMensajes, (nuevoTotal) => {
+      if (paginaMensajes.value > nuevoTotal) {
+        paginaMensajes.value = nuevoTotal;
+      }
+    });
+
+    function irPaginaMensajesAnterior() {
+      if (paginaMensajes.value > 1) paginaMensajes.value -= 1;
+    }
+
+    function irPaginaMensajesSiguiente() {
+      if (paginaMensajes.value < totalPaginasMensajes.value) paginaMensajes.value += 1;
+    }
+
+    async function cargarHistorialMensajes() {
+      const idEstado = reunion.idEstadoReunion.value;
+      if (!idEstado) return;
+
+      cargandoHistorialMensajes.value = true;
+      try {
+        const data = await obtenerHistorialMensajesLeadEtapaReunion(idEstado);
+        historialMensajes.value = data ?? [];
+      } catch (error: any) {
+        console.error("Error cargando historial de mensajes", error);
+        toast.error(error.message ?? "No se pudo cargar el historial de mensajes");
+      } finally {
+        cargandoHistorialMensajes.value = false;
+      }
+    }
+
+    async function enviarMensaje() {
+      const idEstado = reunion.idEstadoReunion.value;
+      if (!idEstado) return;
+
+      if (!nuevoMensaje.value.trim()) {
+        toast.error("El mensaje no puede estar vacío");
+        return;
+      }
+
+      enviandoMensaje.value = true;
+      try {
+        await guardarMensajeLeadEtapaReunion(idEstado, nuevoMensaje.value);
+        nuevoMensaje.value = "";
+        toast.success("Mensaje guardado correctamente");
+        paginaMensajes.value = 1;
+        await cargarHistorialMensajes();
+      } catch (error: any) {
+        console.error("Error guardando mensaje", error);
+        toast.error(error.message ?? "No se pudo guardar el mensaje");
+      } finally {
+        enviandoMensaje.value = false;
+      }
+    }
+
+    // Carga el historial apenas se conozca el id de la etapa de reunión
+    watch(reunion.idEstadoReunion, (nuevoId) => {
+      if (nuevoId) cargarHistorialMensajes();
+    });
+
+    function formatFechaHoraCompleta(valor: string | null | undefined): string {
+      if (!valor) return "-";
+
+      const match = valor.match(
+        /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?/
+      );
+
+      if (match) {
+        const [, anio, mes, dia, horas, minutos] = match;
+        const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
+
+        const fechaFormateada = fecha.toLocaleDateString("es-PE", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "America/Lima",
+        });
+
+        const horaNumero = Number(horas);
+        const hora12 = horaNumero % 12 || 12;
+        const periodo = horaNumero >= 12 ? "p. m." : "a. m.";
+
+        return `${fechaFormateada} · ${hora12}:${minutos} ${periodo}`;
+      }
+
+      return valor;
+    }
     // ---------- Llamada (SIP + SSE) ----------
     const eventSource = ref<EventSource | null>(null);
-   const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
+    const { sipCredentials, sipRegistrado, cargandoTelefono, conectarTelefono, micSilenciado, toggleMic } = useSipPhone();
     const {
       currentCallId,
       isCalling,
@@ -125,25 +235,25 @@ export default defineComponent({
 
 
 
-const altavozSilenciado = ref(false);
-const remoteAudioRef = ref<HTMLAudioElement | null>(null);
+    const altavozSilenciado = ref(false);
+    const remoteAudioRef = ref<HTMLAudioElement | null>(null);
 
-// 👇 ahora solo delega al mute real del composable (silencia lo que el agente envía)
-const toggleMicrophone = () => {
-  toggleMic();
-};
+    // 👇 ahora solo delega al mute real del composable (silencia lo que el agente envía)
+    const toggleMicrophone = () => {
+      toggleMic();
+    };
 
-const toggleSpeaker = () => {
-  try {
-    if (remoteAudioRef.value) {
-      remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
-      altavozSilenciado.value = !altavozSilenciado.value;
-      toast.info(altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado");
-    }
-  } catch (error) {
-    console.error("Error al silenciar altavoz:", error);
-  }
-};
+    const toggleSpeaker = () => {
+      try {
+        if (remoteAudioRef.value) {
+          remoteAudioRef.value.muted = !remoteAudioRef.value.muted;
+          altavozSilenciado.value = !altavozSilenciado.value;
+          toast.info(altavozSilenciado.value ? "🔇 Altavoz silenciado" : "🔊 Altavoz activado");
+        }
+      } catch (error) {
+        console.error("Error al silenciar altavoz:", error);
+      }
+    };
 
 
     watch(estadoLlamada, (nuevoEstado, estadoAnterior) => {
@@ -562,7 +672,18 @@ const toggleSpeaker = () => {
       abrirEvidencia,
       cerrarEvidencia,
 
-      // ✅ NUEVO: reproductor de audio
+      // Historial de mensajes
+      nuevoMensaje,
+      enviandoMensaje,
+      historialMensajes,
+      cargandoHistorialMensajes,
+      mensajesPaginados,
+      paginaMensajes,
+      totalPaginasMensajes,
+      enviarMensaje,
+      irPaginaMensajesAnterior,
+      irPaginaMensajesSiguiente,
+      formatFechaHoraCompleta,
       audioRef,
       audioPlaying,
       audioDuration,

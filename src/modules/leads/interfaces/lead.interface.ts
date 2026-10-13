@@ -47,11 +47,11 @@ export interface ICrearLeadResponse {
   fecha_creacion: string | null;
 
   accion:
-    | 'ALERTA'
-    | 'CREADO_NUEVO_PROYECTO'
-    | 'CREADO'
-    | 'PENDIENTE_ASESOR_NO_ACTIVO'
-    | 'SIN_ASESOR_ACTIVO';
+  | 'ALERTA'
+  | 'CREADO_NUEVO_PROYECTO'
+  | 'CREADO'
+  | 'PENDIENTE_ASESOR_NO_ACTIVO'
+  | 'SIN_ASESOR_ACTIVO';
 
   debe_notificar: boolean;
   id_lead_anterior: number | null;
@@ -99,4 +99,41 @@ export interface IListarEtapaResponse {
   id: number;
   nombre: string;
   orden: number;
+}
+
+
+export interface IImportarLeads {
+  id_asesores: number[];
+  leads: {
+    id_proyecto: number;
+    id_fuente: number;
+    nombre_cliente: string;
+    dni_cliente?: string | null;
+    telefono_cliente?: string | null;
+  }[];
+  usuario_creacion: number;
+}
+
+export interface IImportarLeadsResultado {
+  id_importacion: number | string;
+  id_lead: number | string | null;
+  id_cliente: number | string | null;
+  id_asesor: number;
+  accion: string;
+  mensaje: string;
+}
+
+export interface IAsignarLeadsReservados {
+  id_importacion: number;
+  id_asesor: number;
+  usuario_creacion: number;
+}
+
+export interface IAsignarLeadsReservadosResultado {
+  id_reservado: number | string;
+  id_lead: number | string | null;
+  id_cliente: number | string | null;
+  id_asesor: number;
+  accion: string;
+  mensaje: string;
 }

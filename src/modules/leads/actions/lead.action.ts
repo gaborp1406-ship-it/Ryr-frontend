@@ -3,8 +3,12 @@ import { isAxiosError } from 'axios';
 
 import type {
   IAsesor,
+  IAsignarLeadsReservados,
+  IAsignarLeadsReservadosResultado,
   ICrearLead,
   ICrearLeadResponse,
+  IImportarLeads,
+  IImportarLeadsResultado,
   ILeadDiario,
   ILeadPorEtapaActual,
   IListarEtapaResponse,
@@ -13,6 +17,76 @@ import type {
   IValidarLeadDuplicadoRequest,
   IValidarLeadDuplicadoResponse,
 } from '../interfaces/lead.interface';
+
+
+export const importarLeads = async (
+  payload: IImportarLeads
+): Promise<IImportarLeadsResultado[]> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/importar',
+      payload
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ?? 'Error al importar leads.'
+      );
+    }
+    throw error;
+  }
+};
+
+export const asignarLeadsReservados = async (
+  payload: IAsignarLeadsReservados
+): Promise<IAsignarLeadsReservadosResultado[]> => {
+  try {
+    const { data } = await automatizateApiNest.post(
+      '/lead/asignar-reservados',
+      payload
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al asignar leads reservados.'
+      );
+    }
+    throw error;
+  }
+};
+
+
+
+export const crearLead = async (
+  payload: ICrearLead
+): Promise<ICrearLeadResponse> => {
+
+  try {
+
+    const { data } = await automatizateApiNest.post(
+      '/lead/crear',
+      payload
+    );
+
+    return data;
+
+  } catch (error) {
+
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al crear lead.'
+      );
+    }
+
+    throw error;
+  }
+};
 
 export const listarOpciones = async (
   idListado: number
@@ -97,31 +171,6 @@ export const listarLeadsDiarios = async (
   }
 };
 
-export const crearLead = async (
-  payload: ICrearLead
-): Promise<ICrearLeadResponse> => {
-
-  try {
-
-    const { data } = await automatizateApiNest.post(
-      '/lead/crear',
-      payload
-    );
-
-    return data;
-
-  } catch (error) {
-
-    if (isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ??
-        'Error al crear lead.'
-      );
-    }
-
-    throw error;
-  }
-};
 
 export const validarLeadDuplicado = async (
   payload: IValidarLeadDuplicadoRequest
