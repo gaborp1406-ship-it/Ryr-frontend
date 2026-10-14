@@ -8,10 +8,11 @@
     </div>
 
     <!-- KPIs -->
-    <div class="mb-[14px] grid grid-cols-4 gap-[14px] max-[1000px]:grid-cols-2 max-[600px]:grid-cols-1">
+    <div
+      class="mb-[14px] grid grid-cols-5 gap-[14px] max-[1200px]:grid-cols-3 max-[1000px]:grid-cols-2 max-[600px]:grid-cols-1">
       <!-- SKELETON KPIs -->
       <template v-if="loading">
-        <div v-for="n in 4" :key="`kpi-skel-${n}`"
+        <div v-for="n in 5" :key="`kpi-skel-${n}`"
           class="min-h-[120px] rounded-[18px] border border-slate-200 bg-white p-[17px] shadow-[0_2px_10px_rgba(15,23,42,0.035)]">
           <div class="flex justify-between">
             <div class="skeleton h-[35px] w-[35px] rounded-[11px]"></div>
@@ -35,6 +36,7 @@
             'bg-slate-100 text-[#0a0a0a]': kpi.color === 'black',
             'bg-[#eef5ff] text-blue-600': kpi.color === 'blue',
             'bg-orange-50 text-orange-600': kpi.color === 'orange',
+            'bg-purple-50 text-purple-600': kpi.color === 'purple',
           }">
             <!-- TARGET -->
             <svg v-if="kpi.icon === 'target'" viewBox="0 0 24 24" fill="none" class="w-[18px]">
@@ -59,6 +61,19 @@
               <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8" />
 
               <path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+
+            <!-- CROSS (ventas cruzadas) -->
+            <svg v-else-if="kpi.icon === 'cross'" viewBox="0 0 24 24" fill="none" class="w-[18px]">
+              <path d="M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" />
+
+              <path d="M3 8h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+
+              <path d="M17 12l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" />
+
+              <path d="M21 16H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
 
             <!-- CHART -->

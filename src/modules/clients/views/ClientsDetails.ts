@@ -10,7 +10,7 @@ import ClientsNegociacion from "../components/oportunidad/ClientsNegociacion.vue
 import ClientsCierre from "../components/oportunidad/ClientsCierre.vue";
 import ClientsDesistioO from "../components/desistio/ClientsDesistio.vue";
 import { obtenerEtapaActualLead } from "../actions/clients.action.js";
-
+import WhatsappChat from "../components/whatsapp/WhatsappChat.vue";
 const IconCandidato = () =>
   h("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2" }, [
     h("circle", { cx: "12", cy: "8", r: "4" }),
@@ -50,6 +50,7 @@ export default defineComponent({
     ClientsNegociacion,
     ClientsCierre,
     ClientsDesistioO,
+    WhatsappChat
   },
 
   setup() {

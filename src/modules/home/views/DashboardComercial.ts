@@ -14,6 +14,7 @@ import {
   contarCierresPorAsesorDashboard,
   contarTotalLeadsPorFuenteDashboard,
   contarTasaCierreDashboard,
+  contarLeadsCruzadasDashboard,
 } from '../actions/dashboardComercial';
 
 // ============================================================
@@ -148,6 +149,7 @@ export default defineComponent({
           cierresAsesor,
           totalLeadsFuente,
           tasaCierre,
+          leadsCruzadas,
         ] = await Promise.all([
           contarLeadsCierreDashboard(filtro),
           contarTotalLeadsDashboard(filtro),
@@ -156,6 +158,7 @@ export default defineComponent({
           contarCierresPorAsesorDashboard(filtro),
           contarTotalLeadsPorFuenteDashboard(filtro),
           contarTasaCierreDashboard(filtro),
+          contarLeadsCruzadasDashboard(filtro),
         ]);
 
 
@@ -207,6 +210,11 @@ export default defineComponent({
           'tasa_cierre_porcentaje',
         ]);
 
+        // /dashboard/leads-cruzadas -> { "cantidad": "150" }
+        const ventasCruzadasValor = pickNumber(firstItem(leadsCruzadas), [
+          'cantidad',
+        ]);
+
         const asesoresConCierres = advisors.value.filter(
           (a) => a.cierres > 0,
         ).length;
@@ -232,6 +240,13 @@ export default defineComponent({
 
             icon: 'chart',
             color: 'orange',
+          },
+          {
+            label: 'Ventas cruzadas',
+            value: ventasCruzadasValor.toLocaleString('es-PE'),
+
+            icon: 'cross',
+            color: 'purple',
           },
           {
             label: 'Asesores con cierres',

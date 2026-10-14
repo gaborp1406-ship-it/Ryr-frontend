@@ -108,6 +108,7 @@
             </div>
 
         </div>
+          <!-- <WhatsappChat :id-lead="idLead" /> -->
     </div>
 </template>
 
