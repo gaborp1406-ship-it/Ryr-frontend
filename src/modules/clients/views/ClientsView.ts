@@ -198,7 +198,7 @@ export default defineComponent({
       abiertoEtapa.value = false;
     };
 
-    const itemsPorPagina = 8;
+    const itemsPorPagina = 10;
     const paginaActual = ref(1);
 
     const totalPaginas = computed(() =>
