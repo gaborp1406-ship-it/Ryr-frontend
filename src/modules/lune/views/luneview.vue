@@ -4,15 +4,7 @@
       <!-- Cabecera -->
       <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-wrap items-center gap-4">
-          <RouterLink
-            :to="{ name: 'homeDashboardAll' }"
-            class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-zinc-200 transition hover:bg-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
-          >
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
-            </svg>
-            Volver al inicio
-          </RouterLink>
+ 
           <div class="flex items-center gap-3">
             <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-base font-bold text-white shadow-sm" aria-hidden="true">L</span>
             <div>
