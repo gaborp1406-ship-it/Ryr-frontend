@@ -8,6 +8,7 @@ import { calendarRoutes } from '@/modules/calendar/routes';
 import { ConexionesRoutes } from '@/modules/estados/routes';
 import { closingRoutes } from '@/modules/leads/routes/closing.routes';
 import { desistedRoutes } from '@/modules/leads/routes/desisted.routes';
+import { LuneRoutes } from '@/modules/lune/routes';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +56,9 @@ const router = createRouter({
       },
     },
 
+    // Luné: independiente, fuera del HomeLayout
+    ...LuneRoutes,
+
     authRoutes,
   ],
 });
@@ -64,13 +68,8 @@ router.beforeEach(async (to, from, next) => {
 
   const isInitialPageLoad = from.name === undefined;
 
-
   if (to.meta.requiresAuth) {
-
-    if (
-      isInitialPageLoad &&
-      authStore.isChecking
-    ) {
+    if (isInitialPageLoad && authStore.isChecking) {
       try {
         await new Promise<void>((resolve) => {
           const unsubscribe = authStore.$subscribe(() => {
@@ -81,72 +80,55 @@ router.beforeEach(async (to, from, next) => {
           });
         });
       } catch (error) {
-        console.error(
-          'Error al verificar autenticación:',
-          error,
-        );
+        console.error('Error al verificar autenticación:', error);
       }
     }
 
     if (!authStore.isLoggedIn()) {
-
-      if (
-        isInitialPageLoad &&
-        to.name !== 'login'
-      ) {
-        localStorage.setItem(
-          'intendedPath',
-          to.fullPath,
-        );
+      if (isInitialPageLoad && to.name !== 'login') {
+        localStorage.setItem('intendedPath', to.fullPath);
       }
 
       return next({
         name: 'login',
       });
     }
-
-
-    const rutaSiempreLibre =
-      !!to.meta.alwaysAllowed;
+    if (authStore.islune && !to.path.startsWith('/lune')) {
+      return next('/lune');
+    }
+    const rutaSiempreLibre = !!to.meta.alwaysAllowed;
 
     const tienePermiso =
       authStore.isAdmin ||
       rutaSiempreLibre ||
       authStore.isValidPermission(to.path);
 
-
     if (!tienePermiso) {
-
-      console.warn(
-        `Acceso denegado a: ${to.path}`,
-      );
+      console.warn(`Acceso denegado a: ${to.path}`);
 
       return next({
         name: 'forbidden',
       });
     }
 
-    localStorage.setItem(
-      'lastPath',
-      to.fullPath,
-    );
+    localStorage.setItem('lastPath', to.fullPath);
 
     return next();
   }
 
-  if (
-    to.name === 'login' &&
-    authStore.isLoggedIn()
-  ) {
-
-    const intendedPath =
-      localStorage.getItem('intendedPath') || '/';
+  if (to.name === 'login' && authStore.isLoggedIn()) {
+    const intendedPath = localStorage.getItem('intendedPath');
 
     localStorage.removeItem('intendedPath');
 
-    return next(intendedPath);
-  }
+    // Si el usuario es de Luné, enviarlo directamente a /lune
+    if (authStore.islune) {
+      return next('/lune');
+    }
 
+    // Para los demás usuarios, mantener el comportamiento actual
+    return next(intendedPath || '/homeDashboardAll');
+  }
 
   return next();
 });

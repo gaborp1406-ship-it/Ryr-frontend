@@ -171,6 +171,10 @@ export const useAuthStore = defineStore('auth', () => {
       authCheckStatus.value?.roles?.[0]?.idrol === AuthRole.JefeVentas,
     ),
 
+
+    islune: computed(() =>
+      authCheckStatus.value?.roles?.[0]?.idrol === AuthRole.lune,
+    ),
     login,
     checkAuthStatus,
     logout,

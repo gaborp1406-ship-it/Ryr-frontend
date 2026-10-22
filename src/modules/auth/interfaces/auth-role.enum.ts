@@ -4,6 +4,7 @@ export enum AuthRole {
   Agente = 1,
   Supervisor = 3,
   Derivador=4,
-  JefeVentas=5
+  JefeVentas=5,
+  lune= 7
   
 }
