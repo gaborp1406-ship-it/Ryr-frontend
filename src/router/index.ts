@@ -63,6 +63,8 @@ const router = createRouter({
   ],
 });
 
+const esRutaLune = (path: string) => path === '/lune' || path.startsWith('/lune/');
+
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
@@ -93,9 +95,16 @@ router.beforeEach(async (to, from, next) => {
         name: 'login',
       });
     }
-    if (authStore.islune && !to.path.startsWith('/lune')) {
+
+    // Usuario de Luné: solo puede estar en /lune y no pasa por permisos
+    if (authStore.islune) {
+      if (esRutaLune(to.path)) {
+        localStorage.setItem('lastPath', to.fullPath);
+        return next();
+      }
       return next('/lune');
     }
+
     const rutaSiempreLibre = !!to.meta.alwaysAllowed;
 
     const tienePermiso =
