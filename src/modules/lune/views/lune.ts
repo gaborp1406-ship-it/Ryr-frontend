@@ -22,7 +22,16 @@ import type {
 import { hoy, inicioDeMes, soles } from '@/modules/lune/interfaces/formato';
 import LuneTabs from '@/modules/lune/components/lunetabs.vue';
 import CuentasPorCobrar from '@/modules/lune/components/cuentaporcobrar.vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/modules/auth/stores/auth.store';
 
+const authStore = useAuthStore();
+const router = useRouter();
+
+const cerrarSesion = async () => {
+  await authStore.logout();
+  await router.replace('/auth/login');
+};
 type Seccion = 'ventas' | 'cuentas' | 'clientes';
 
 export default defineComponent({
@@ -169,6 +178,7 @@ export default defineComponent({
     return {
       seccion,
       catalogos,
+      cerrarSesion,
       ventas,
       cuentas,
       clientes,

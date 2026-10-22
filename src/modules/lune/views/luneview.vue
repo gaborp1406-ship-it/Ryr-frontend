@@ -2,19 +2,37 @@
   <div class="min-h-screen bg-zinc-50 text-zinc-900 antialiased">
     <section class="mx-auto max-w-[96rem] px-4 py-6 sm:px-6 lg:px-10">
       <!-- Cabecera -->
-      <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex flex-wrap items-center gap-4">
- 
-          <div class="flex items-center gap-3">
-            <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-base font-bold text-white shadow-sm" aria-hidden="true">L</span>
-            <div>
-              <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Luné</h1>
-              <p class="text-sm text-zinc-500">Ventas, cobros y clientes</p>
-            </div>
-          </div>
-        </div>
-        <LuneTabs />
-      </header>
+
+<header
+  class="mb-6 flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+>
+  <!-- Marca -->
+  <div class="flex items-center gap-3">
+    <span
+      class="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 text-base font-bold text-white shadow-sm"
+      aria-hidden="true"
+    >
+      L
+    </span>
+
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-zinc-900">
+        Luné
+      </h1>
+      <p class="text-sm text-zinc-500">
+        Ventas, cobros y clientes
+      </p>
+    </div>
+  </div>
+
+  <!-- Navegación y cierre de sesión -->
+  <div class="flex flex-wrap items-center gap-3">
+    <LuneTabs />
+
+   
+  </div>
+</header>
+
 
       <!-- Aviso -->
       <transition
@@ -110,6 +128,25 @@
       <div v-else class="mt-5">
         <ClientesTable :clientes="clientes" />
       </div>
+
+      <!-- Cerrar sesión: parte inferior de la vista -->
+<footer
+  class="mt-10 flex justify-end border-t border-zinc-200 pt-5"
+>
+  <button
+    type="button"
+    class="menu-link menu-link--logout inline-flex items-center gap-3 rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+    @click="cerrarSesion"
+  >
+    <span class="menu-icon flex items-center justify-center">
+      <i class="uil uil-sign-in-alt text-lg"></i>
+    </span>
+
+    <span class="menu-text">
+      Cerrar sesión
+    </span>
+  </button>
+</footer>
     </section>
   </div>
 </template>
