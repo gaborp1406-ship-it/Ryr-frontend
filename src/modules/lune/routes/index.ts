@@ -31,4 +31,14 @@ export const LuneRoutes: RouteRecordRaw[] = [
       title: 'Lune · Reportes',
     },
   },
+   {
+    // Vista 3: reportes
+    path: '/lune/stock',
+    name: 'lune-stock',
+    component: () => import('@/modules/lune/views/stock.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Lune · Stock',
+    },
+  },
 ];

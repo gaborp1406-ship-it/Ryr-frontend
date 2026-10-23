@@ -20,11 +20,12 @@ import { defineComponent } from 'vue';
 export default defineComponent({
     name: 'LuneTabs',
     setup() {
-        const tabs = [
-            { name: 'lune', label: 'Ventas' },
-            { name: 'lune-egresos', label: 'Egresos' },
-            { name: 'lune-reportes', label: 'Reportes' },
-        ];
+     const tabs = [
+  { name: 'lune', label: 'Ventas' },
+  { name: 'lune-stock', label: 'Stock' },
+  { name: 'lune-egresos', label: 'Egresos' },
+  { name: 'lune-reportes', label: 'Reportes' },
+];
         return { tabs };
     },
 });

@@ -1,7 +1,6 @@
-// Las respuestas del backend vienen en snake_case (tal como salen de las
-// funciones de la BD). Los payloads que se envían van en camelCase (DTOs de Nest).
-
 // ------------------------------------------------------------- Catálogos
+export type EstadoVenta = 'agendado' | 'entregado';
+
 export interface IProducto {
   id: number;
   nombre: string;
@@ -20,6 +19,7 @@ export interface ICatalogos {
   metodosPago: string[];
   categoriasEgreso: string[];
   socios: string[];
+  estadosVenta: EstadoVenta[];
 }
 
 // -------------------------------------------------------------- Clientes
@@ -41,18 +41,30 @@ export interface IClientePayload {
 }
 
 // ---------------------------------------------------------------- Ventas
+/** Un producto dentro del pedido */
+export interface IVentaItem {
+  id: number;
+  productoId: number;
+  producto: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
+/** Un pedido (venta) con todos sus productos */
 export interface IVenta {
   id: number;
   fecha: string;
-  cliente_id: number;
-  cliente: string;
-  producto: string;
-  cantidad: number;
+  cliente: { id: number; nombre: string; telefono: string | null };
   monto: number;
   pagado: boolean;
-  metodo_pago: string | null;
-  fecha_pago: string | null;
+  metodoPago: string | null;
+  fechaPago: string | null;
   notas: string | null;
+  estado: EstadoVenta;
+  fechaEntrega: string | null;
+  entregadoEn: string | null;
+  items: IVentaItem[];
 }
 
 export interface IFiltroVentas {
@@ -60,26 +72,48 @@ export interface IFiltroVentas {
   hasta?: string;
   cliente?: string;
   pagado?: boolean;
+  estado?: EstadoVenta;
+}
+
+export interface IItemVentaPayload {
+  productoId: number;
+  cantidad: number;
+  /** Si no se envía = precio actual del producto */
+  precioUnitario?: number;
 }
 
 export interface ICrearVentaPayload {
   cliente: string;
-  productoId: number;
-  cantidad: number;
-  /** Si no se envía = precio del producto × cantidad */
+  items: IItemVentaPayload[];
+  /** Si no se envía = suma de (precio × cantidad) de los items */
   monto?: number;
   pagado?: boolean;
   metodoPago?: string;
   fecha?: string;
   notas?: string;
+  /** Por defecto 'entregado' */
+  estado?: EstadoVenta;
+  /** Fecha programada de entrega (pedidos agendados) */
+  fechaEntrega?: string;
+}
+
+export interface ICambiarEstadoPayload {
+  estado: EstadoVenta;
+  fechaEntrega?: string;
+}
+
+export interface ICuentaDetalleItem {
+  producto: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
 }
 
 export interface ICuentaDetalle {
   venta_id: number;
   fecha: string;
-  producto: string;
-  cantidad: number;
   monto: number;
+  items: ICuentaDetalleItem[];
 }
 
 export interface ICuentaCliente {
@@ -157,4 +191,48 @@ export interface IReporte {
 export interface IFiltroReporte {
   desde?: string;
   hasta?: string;
+}
+
+// ----------------------------------------------------------------- Stock
+export type TipoMovimiento = 'conteo' | 'entrada' | 'ajuste';
+
+export interface IStock {
+  productoId: number;
+  producto: string;
+  activo: boolean;
+  stockMinimo: number;
+  stock: number;
+  agendado: number;
+  disponible: number;
+  alerta: boolean;
+}
+
+export interface IMovimientoStock {
+  clave: string;
+  fecha: string;
+  productoId: number;
+  producto: string;
+  tipo: TipoMovimiento | 'venta';
+  cantidad: number;
+  nota: string | null;
+  ventaId: number | null;
+  cliente: string | null;
+}
+
+export interface IFiltroStock {
+  buscar?: string;
+  soloAlertas?: boolean;
+}
+
+export interface IFiltroMovimientos {
+  productoId?: number;
+  desde?: string;
+  hasta?: string;
+}
+
+export interface IMovimientoPayload {
+  productoId: number;
+  tipo: TipoMovimiento;
+  cantidad: number;
+  nota?: string;
 }

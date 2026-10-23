@@ -1,0 +1,208 @@
+/* =====================================================================
+   LUNÉ · estilos compartidos (todo con prefijo .lune para no chocar con
+   el resto de tu app). Paleta: ciruela (texto), lila (acción),
+   fresa (deuda), hoja (pagado).
+   ===================================================================== */
+.lune {
+  --ink: #2a2030;
+  --ink-soft: #6b6275;
+  --paper: #f7f5f9;
+  --card: #ffffff;
+  --line: #e3ddea;
+  --lilac: #6b4fa3;
+  --lilac-dark: #553d85;
+  --lilac-soft: #ece6f5;
+  --berry: #b83a54;
+  --berry-soft: #fbe9ed;
+  --leaf: #2e7d5b;
+  --leaf-soft: #e4f3ec;
+
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.lune *,
+.lune *::before,
+.lune *::after { box-sizing: border-box; }
+
+/* ----------------------------------------------------------- Encabezado */
+.lune-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+.lune-title { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; }
+
+.lune-nav, .lune-subtabs { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.lune-nav a, .lune-subtabs button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.6rem 0.9rem;
+  text-decoration: none;
+}
+.lune-nav a:hover, .lune-subtabs button:hover { color: var(--ink); }
+.lune-nav a.router-link-exact-active,
+.lune-subtabs button[aria-selected='true'] { color: var(--lilac); border-bottom-color: var(--lilac); }
+.lune-subtabs { margin: 1.5rem 0 1rem; border-bottom: 1px solid var(--line); }
+.lune-subtabs .lune-count {
+  background: var(--berry-soft); color: var(--berry);
+  border-radius: 999px; font-size: 0.75rem; padding: 0.1rem 0.5rem; margin-left: 0.35rem;
+}
+
+/* ------------------------------------------------------------ Tarjetas */
+.lune-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.lune-section-title { margin: 0 0 0.75rem; font-size: 1.05rem; font-weight: 700; }
+
+/* ---------------------------------------------------------- Formularios */
+.lune-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+.lune-field { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.lune-field--wide { grid-column: span 2; }
+.lune-field label { color: var(--ink-soft); font-size: 0.8rem; font-weight: 600; }
+.lune-field--check { flex-direction: row; align-items: center; gap: 0.5rem; padding-bottom: 0.55rem; }
+.lune-field--check label { color: var(--ink); font-size: 0.95rem; }
+
+.lune input[type='text'], .lune input[type='number'], .lune input[type='date'],
+.lune input[type='search'], .lune select {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.6rem;
+  width: 100%;
+}
+.lune input[type='checkbox'] { accent-color: var(--lilac); height: 1.1rem; width: 1.1rem; }
+.lune :is(input, select, button, summary):focus-visible { outline: 2px solid var(--lilac); outline-offset: 2px; }
+.lune-hint { color: var(--ink-soft); font-size: 0.78rem; }
+
+/* ------------------------------------------------------------- Botones */
+.lune-btn {
+  appearance: none;
+  background: var(--lilac);
+  border: 1px solid var(--lilac);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  min-height: 2.5rem;
+  padding: 0.45rem 1rem;
+}
+.lune-btn:hover { background: var(--lilac-dark); }
+.lune-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+.lune-btn--ghost { background: #fff; color: var(--lilac); }
+.lune-btn--ghost:hover { background: var(--lilac-soft); }
+.lune-btn--danger { background: #fff; border-color: var(--line); color: var(--berry); }
+.lune-btn--danger:hover { background: var(--berry-soft); }
+.lune-btn--sm { font-size: 0.82rem; min-height: 2rem; padding: 0.25rem 0.7rem; }
+
+/* ------------------------------------------------------------- Filtros */
+.lune-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-bottom: 0.75rem; }
+.lune-filters .lune-field { width: 160px; }
+.lune-filters .lune-field--grow { flex: 1 1 200px; width: auto; }
+
+/* -------------------------------------------------------------- Tablas */
+.lune-table-wrap { overflow-x: auto; }
+.lune-table { border-collapse: collapse; width: 100%; min-width: 560px; }
+.lune-table th {
+  border-bottom: 2px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  white-space: nowrap;
+}
+.lune-table td { border-bottom: 1px solid var(--line); padding: 0.55rem 0.6rem; vertical-align: middle; }
+.lune-table tbody tr:hover { background: var(--paper); }
+.lune-table .num { text-align: right; }
+.lune-table .acciones { text-align: right; white-space: nowrap; }
+.lune-table tfoot td { border-bottom: 0; font-weight: 700; padding-top: 0.75rem; }
+
+.lune-badge { border-radius: 999px; display: inline-block; font-size: 0.78rem; font-weight: 600; padding: 0.15rem 0.6rem; white-space: nowrap; }
+.lune-badge--ok { background: var(--leaf-soft); color: var(--leaf); }
+.lune-badge--debe { background: var(--berry-soft); color: var(--berry); }
+
+.lune-empty { color: var(--ink-soft); padding: 2rem 1rem; text-align: center; }
+.lune-toast { border-radius: 6px; font-weight: 600; margin: 0 0 1rem; padding: 0.6rem 0.9rem; }
+.lune-toast--ok { background: var(--leaf-soft); color: var(--leaf); }
+.lune-toast--error { background: var(--berry-soft); color: var(--berry); }
+.lune-loading { color: var(--ink-soft); font-size: 0.85rem; }
+
+/* ----------------------------------------------- Cuentas por cobrar */
+.lune-debt-total { align-items: baseline; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; justify-content: space-between; margin-bottom: 1rem; }
+.lune-debt-total strong { color: var(--berry); font-size: 2rem; letter-spacing: -0.02em; }
+.lune-debt-list { display: grid; gap: 0.6rem; }
+.lune-debt { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.lune-debt summary {
+  align-items: center; cursor: pointer; display: flex; flex-wrap: wrap;
+  gap: 0.5rem 1rem; justify-content: space-between; list-style: none; padding: 0.8rem 1rem;
+}
+.lune-debt summary::-webkit-details-marker { display: none; }
+.lune-debt-name { font-weight: 700; }
+.lune-debt-meta { color: var(--ink-soft); font-size: 0.82rem; }
+.lune-debt-amount { color: var(--berry); font-weight: 700; }
+.lune-debt-lines { border-top: 1px solid var(--line); padding: 0.4rem 1rem 0.8rem; }
+.lune-debt-line { align-items: center; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; justify-content: space-between; padding: 0.4rem 0; }
+.lune-pay { align-items: center; display: flex; gap: 0.5rem; }
+.lune-pay select { min-height: 2rem; padding: 0.2rem 0.5rem; width: auto; }
+
+/* ---------------------------------------------------------- Reportes */
+.lune-presets { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.lune-kpis { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 1rem 0; }
+.lune-kpi { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0.9rem 1rem; }
+.lune-kpi span { color: var(--ink-soft); display: block; font-size: 0.82rem; font-weight: 600; }
+.lune-kpi strong { display: block; font-size: 1.45rem; letter-spacing: -0.01em; margin-top: 0.15rem; }
+.lune-kpi small { color: var(--ink-soft); }
+.lune-kpi--profit { background: var(--lilac); border-color: var(--lilac); color: #fff; }
+.lune-kpi--profit span, .lune-kpi--profit small { color: #e9e0f7; }
+.lune-kpi--profit strong { font-size: 1.9rem; }
+.lune-kpi--neg strong { color: var(--berry); }
+.lune-kpi--profit.lune-kpi--neg { background: var(--berry); border-color: var(--berry); }
+.lune-kpi--profit.lune-kpi--neg strong { color: #fff; }
+
+.lune-grid-2 { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-top: 0.75rem; }
+.lune-bars { display: grid; gap: 0.6rem; list-style: none; margin: 0; padding: 0; }
+.lune-bar-head { display: flex; gap: 1rem; justify-content: space-between; }
+.lune-bar-track { background: var(--lilac-soft); border-radius: 4px; height: 8px; margin-top: 0.2rem; overflow: hidden; }
+.lune-bar-fill { background: var(--lilac); border-radius: 4px; height: 100%; }
+.lune-bar-fill--berry { background: var(--berry); }
+
+.lune-days { align-items: flex-end; display: flex; gap: 0.35rem; height: 160px; overflow-x: auto; padding-top: 0.5rem; }
+.lune-day { align-items: center; display: flex; flex: 1 0 34px; flex-direction: column; gap: 0.25rem; height: 100%; justify-content: flex-end; }
+.lune-day-bar { background: var(--lilac); border-radius: 4px 4px 0 0; min-height: 2px; width: 100%; }
+.lune-day-label { color: var(--ink-soft); font-size: 0.7rem; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .lune-field--wide { grid-column: span 1; }
+  .lune-filters .lune-field { flex: 1 1 140px; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lune * { scroll-behavior: auto; transition: none !important; }
+}

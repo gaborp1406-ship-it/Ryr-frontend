@@ -1,6 +1,7 @@
 import { automatizateApiNest } from '@/api/automatizateApiNest';
 import { isAxiosError } from 'axios';
 import type {
+  ICambiarEstadoPayload,
   ICatalogos,
   ICliente,
   IClientePayload,
@@ -10,11 +11,16 @@ import type {
   ICuentasPorCobrar,
   IEgreso,
   IFiltroEgresos,
+  IFiltroMovimientos,
   IFiltroReporte,
+  IFiltroStock,
   IFiltroVentas,
+  IMovimientoPayload,
+  IMovimientoStock,
   IProducto,
   IProductoPayload,
   IReporte,
+  IStock,
   IVenta,
 } from '../interfaces/lune.interfaces'
 
@@ -90,7 +96,7 @@ export const cobrarDeudaCliente = (id: number, metodoPago?: string): Promise<ICo
   );
 
 // =====================================================================
-// VENTAS (INGRESOS)
+// VENTAS (PEDIDOS)
 // =====================================================================
 export const listarVentas = (filtro: IFiltroVentas = {}): Promise<IVenta[]> =>
   ejecutar(
@@ -98,8 +104,26 @@ export const listarVentas = (filtro: IFiltroVentas = {}): Promise<IVenta[]> =>
     'Error al listar las ventas.'
   );
 
+/** Un pedido con todos sus productos */
+export const obtenerVenta = (id: number): Promise<IVenta> =>
+  ejecutar(() => automatizateApiNest.get(`/lune/ventas/${id}`), 'Error al cargar el pedido.');
+
 export const registrarVenta = (payload: ICrearVentaPayload): Promise<IVenta> =>
   ejecutar(() => automatizateApiNest.post('/lune/ventas', payload), 'Error al registrar la venta.');
+
+/** Cambia entre agendado / entregado (y opcionalmente reprograma la entrega) */
+export const cambiarEstadoVenta = (id: number, payload: ICambiarEstadoPayload): Promise<IVenta> =>
+  ejecutar(
+    () => automatizateApiNest.patch(`/lune/ventas/${id}/estado`, payload),
+    'Error al cambiar el estado del pedido.'
+  );
+
+/** Atajo: marca el pedido como entregado */
+export const marcarVentaEntregada = (id: number): Promise<IVenta> =>
+  ejecutar(
+    () => automatizateApiNest.patch(`/lune/ventas/${id}/entregar`),
+    'Error al marcar el pedido como entregado.'
+  );
 
 /** Marca UNA venta como pagada */
 export const marcarVentaPagada = (id: number, metodoPago?: string): Promise<IVenta> =>
@@ -137,4 +161,31 @@ export const obtenerReporte = (filtro: IFiltroReporte = {}): Promise<IReporte> =
   ejecutar(
     () => automatizateApiNest.get('/lune/reportes', { params: filtro }),
     'Error al cargar el reporte.'
+  );
+
+  // =====================================================================
+// STOCK
+// =====================================================================
+export const listarStock = (filtro: IFiltroStock = {}): Promise<IStock[]> =>
+  ejecutar(
+    () => automatizateApiNest.get('/lune/stock', { params: filtro }),
+    'Error al cargar el stock.'
+  );
+
+export const listarMovimientosStock = (filtro: IFiltroMovimientos = {}): Promise<IMovimientoStock[]> =>
+  ejecutar(
+    () => automatizateApiNest.get('/lune/stock/movimientos', { params: filtro }),
+    'Error al cargar el historial.'
+  );
+
+export const registrarMovimientoStock = (payload: IMovimientoPayload): Promise<IStock> =>
+  ejecutar(
+    () => automatizateApiNest.post('/lune/stock/movimientos', payload),
+    'Error al registrar el movimiento.'
+  );
+
+export const actualizarStockMinimo = (productoId: number, stockMinimo: number): Promise<IStock> =>
+  ejecutar(
+    () => automatizateApiNest.patch(`/lune/stock/${productoId}/minimo`, { stockMinimo }),
+    'Error al actualizar el stock mínimo.'
   );

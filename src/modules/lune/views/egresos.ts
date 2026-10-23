@@ -15,12 +15,13 @@ export default defineComponent({
   name: 'EgresosView',
   components: { LuneTabs },
   setup() {
-    const catalogos = ref<ICatalogos>({
-      productos: [],
-      metodosPago: [],
-      categoriasEgreso: [],
-      socios: [],
-    });
+  const catalogos = ref<ICatalogos>({
+  productos: [],
+  metodosPago: [],
+  categoriasEgreso: [],
+  socios: [],
+  estadosVenta: [],
+});
     const egresos = ref<IEgreso[]>([]);
 
     const form = reactive({
