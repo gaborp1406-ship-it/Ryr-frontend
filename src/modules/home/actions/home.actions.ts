@@ -61,12 +61,52 @@ export const contarLeadsPorEtapa = async ({
 };
 
 
-// ============================================================
-// CONTAR LEADS POR FASE
-//
-// fechaInicio / fechaFin:
-// Formato: YYYY-MM-DD
-// ============================================================
+/* ============================================================
+   CONTAR TOTAL DE LEADS
+   ============================================================ */
+export const contarTotalLeads = async ({
+  fechaInicio,
+  fechaFin,
+  idAsesor,
+}: IFiltroFechasDashboard = {}) => {
+  try {
+    const params: Record<string, string | number> = {};
+
+    if (fechaInicio) {
+      params.fecha_inicio = fechaInicio;
+    }
+
+    if (fechaFin) {
+      params.fecha_fin = fechaFin;
+    }
+
+    if (idAsesor !== undefined && idAsesor !== null) {
+      params.id_asesor = idAsesor;
+    }
+
+    const { data } = await automatizateApiNest.get(
+      '/dashboard/total-leads',
+      {
+        params:
+          Object.keys(params).length > 0
+            ? params
+            : undefined,
+      },
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+          'Error al contar el total de leads.',
+      );
+    }
+
+    throw error;
+  }
+};
+
 export const contarLeadsPorFase = async ({
   fechaInicio,
   fechaFin,

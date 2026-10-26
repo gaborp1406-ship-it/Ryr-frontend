@@ -16,6 +16,7 @@ import {
   contarLeadsAtendidosDashboard,
   contarLeadsPorEtapa,
   contarLeadsPorFase,
+  contarTotalLeads,
 
 } from '../actions/home.actions';
 import { obtenerLeadsContactadosAsesorDashboard } from '../actions/dashboardContabilidad.js';
@@ -136,7 +137,7 @@ export default defineComponent({
       { id: 'general' as DashboardTab, label: 'General' },
       { id: 'comercial' as DashboardTab, label: 'Comercial' },
       { id: 'contactabilidad' as DashboardTab, label: 'Contactabilidad' },
-      { id: 'cierres' as DashboardTab, label: 'Cierres' },
+      { id: 'cierres' as DashboardTab, label: 'Proyección de Cierre' },
     ];
 
     // Si es derivador, solo ve la pestaña General
@@ -234,7 +235,7 @@ export default defineComponent({
     // =========================================================
 
     const cargando = ref(true);
-
+    const totalLeads = ref(0);
     const leadsPorEtapa = ref<LeadEtapa[]>([]);
 
     const actividades = ref<ActividadDashboard[]>([]);
@@ -281,13 +282,13 @@ export default defineComponent({
         colorClass: 'kpi-black',
       },
       {
-        label: 'Cierres',
-        value: totalCierres.value.toString(),
-        trend: 0,
-        description: 'Operaciones en cierre',
-        icon: 'check',
-        colorClass: 'kpi-orange',
-      },
+  label: 'Total leads',
+  value: totalLeads.value.toString(),
+  trend: 0,
+  description: 'Total de leads registrados',
+  icon: 'users',
+  colorClass: 'kpi-orange',
+},
     ]);
 
     // =========================================================
@@ -297,44 +298,42 @@ export default defineComponent({
     const nombresEtapas: Record<number, string> = {
       1: 'Asignación',
       2: 'Contacto',
-      3: 'Desistió',
+
       4: 'Agendar reunión',
       5: 'Atención',
       6: 'Negociación',
       7: 'Cierre',
-      8: 'Desistió - oportunidad',
+
     };
 
     const coloresEtapas: Record<number, string> = {
       1: '#2d8c4a',
       2: '#3f91c9',
-      3: '#e76f8f',
+
       4: '#f4c542',
       5: '#f39c35',
       6: '#8e7cc3',
       7: '#42a5a5',
-      8: '#64748b',
+
     };
 
-    const etapasOrdenadas = computed(() => {
-      const resultado: LeadEtapa[] = [];
 
-      for (let id = 1; id <= 8; id++) {
+    const etapasOrdenadas = computed(() => {
+      const idsEtapas = [1, 2, 4, 5, 6, 7];
+
+      return idsEtapas.map((id) => {
         const encontrada = leadsPorEtapa.value.find(
           (x) => Number(x.id_etapa) === id,
         );
 
-        resultado.push({
+        return {
           id_etapa: id,
           etapa: nombresEtapas[id],
-          cantidad: Number(
-            encontrada?.cantidad || 0,
-          ),
-        });
-      }
-
-      return resultado;
+          cantidad: Number(encontrada?.cantidad || 0),
+        };
+      });
     });
+
 
     const leadsPorEtapaVista = computed(() => {
       return etapasOrdenadas.value.map((etapa) => ({
@@ -774,6 +773,7 @@ export default defineComponent({
           atendidosResponse,
           proyectosResponse,
           reasignadosResponse,
+          totalLeadsResponse
         ] = await Promise.all([
           // FECHA + ASESOR
           contarLeadsPorEtapa({
@@ -812,6 +812,12 @@ export default defineComponent({
 
           // REASIGNADOS
           obtenerLeadsReasignadosDashboard({
+            fechaInicio: inicio,
+            fechaFin: fin,
+            idAsesor: asesor,
+          }),
+
+          contarTotalLeads({
             fechaInicio: inicio,
             fechaFin: fin,
             idAsesor: asesor,
@@ -869,6 +875,7 @@ export default defineComponent({
           ? proyectosResponse
           : [];
 
+          totalLeads.value = Number(totalLeadsResponse?.cantidad ?? 0);
         // =====================================================
         // REASIGNADOS (lista por asesor)
         // =====================================================
@@ -1013,7 +1020,7 @@ export default defineComponent({
       obtenerEscalaActividad,
       obtenerMaximoActividad,
 
-      // Desistimientos
+
       desistimientoEtapa,
       desistimientosFiltrados,
       totalDesistimientos,
