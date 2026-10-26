@@ -282,13 +282,13 @@ export default defineComponent({
         colorClass: 'kpi-black',
       },
       {
-  label: 'Total leads',
-  value: totalLeads.value.toString(),
-  trend: 0,
-  description: 'Total de leads registrados',
-  icon: 'users',
-  colorClass: 'kpi-orange',
-},
+        label: 'Total leads',
+        value: totalLeads.value.toString(),
+        trend: 0,
+        description: 'Total de leads registrados',
+        icon: 'users',
+        colorClass: 'kpi-orange',
+      },
     ]);
 
     // =========================================================
@@ -298,23 +298,23 @@ const nombresEtapas: Record<number, string> = {
   1: 'Asignación',
   2: 'Contacto',
   4: 'Agendar reunión',
-  3: 'Negociación',
   5: 'Atención',
-  6: 'Cierre',
+  6: 'Negociación',
+  7: 'Cierre',
 };
 
 const coloresEtapas: Record<number, string> = {
   1: '#2d8c4a',
-  2: '#8e7cc3',
-  3: '#3f91c9',
+  2: '#3f91c9',
   4: '#f4c542',
   5: '#f39c35',
-  6: '#42a5a5',
+  6: '#8e7cc3',
+  7: '#42a5a5',
 };
 
 const etapasOrdenadas = computed(() => {
-  // Orden visual: 1, 3, 2, 5, 4, 6
-  const idsEtapas = [1, 3, 2, 5, 4, 6];
+  // Orden visual por filas: izquierda, derecha
+  const idsEtapas = [1, 5, 2, 6, 4, 7];
 
   return idsEtapas.map((id) => {
     const encontrada = leadsPorEtapa.value.find(
@@ -869,7 +869,7 @@ const etapasOrdenadas = computed(() => {
           ? proyectosResponse
           : [];
 
-          totalLeads.value = Number(totalLeadsResponse?.cantidad ?? 0);
+        totalLeads.value = Number(totalLeadsResponse?.cantidad ?? 0);
         // =====================================================
         // REASIGNADOS (lista por asesor)
         // =====================================================
