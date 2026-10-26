@@ -294,46 +294,40 @@ export default defineComponent({
     // =========================================================
     // LEADS POR ETAPA
     // =========================================================
+const nombresEtapas: Record<number, string> = {
+  1: 'Asignación',
+  2: 'Contacto',
+  4: 'Agendar reunión',
+  3: 'Negociación',
+  5: 'Atención',
+  6: 'Cierre',
+};
 
-    const nombresEtapas: Record<number, string> = {
-      1: 'Asignación',
-      2: 'Contacto',
+const coloresEtapas: Record<number, string> = {
+  1: '#2d8c4a',
+  2: '#8e7cc3',
+  3: '#3f91c9',
+  4: '#f4c542',
+  5: '#f39c35',
+  6: '#42a5a5',
+};
 
-      4: 'Agendar reunión',
-      5: 'Atención',
-      6: 'Negociación',
-      7: 'Cierre',
+const etapasOrdenadas = computed(() => {
+  // Orden visual: 1, 3, 2, 5, 4, 6
+  const idsEtapas = [1, 3, 2, 5, 4, 6];
 
+  return idsEtapas.map((id) => {
+    const encontrada = leadsPorEtapa.value.find(
+      (x) => Number(x.id_etapa) === id,
+    );
+
+    return {
+      id_etapa: id,
+      etapa: nombresEtapas[id],
+      cantidad: Number(encontrada?.cantidad || 0),
     };
-
-    const coloresEtapas: Record<number, string> = {
-      1: '#2d8c4a',
-      2: '#3f91c9',
-
-      4: '#f4c542',
-      5: '#f39c35',
-      6: '#8e7cc3',
-      7: '#42a5a5',
-
-    };
-
-
-    const etapasOrdenadas = computed(() => {
-      const idsEtapas = [1, 2, 4, 5, 6, 7];
-
-      return idsEtapas.map((id) => {
-        const encontrada = leadsPorEtapa.value.find(
-          (x) => Number(x.id_etapa) === id,
-        );
-
-        return {
-          id_etapa: id,
-          etapa: nombresEtapas[id],
-          cantidad: Number(encontrada?.cantidad || 0),
-        };
-      });
-    });
-
+  });
+});
 
     const leadsPorEtapaVista = computed(() => {
       return etapasOrdenadas.value.map((etapa) => ({
