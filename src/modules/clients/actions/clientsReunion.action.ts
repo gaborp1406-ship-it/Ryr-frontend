@@ -32,6 +32,38 @@ export const agendarReunion = async (
   }
 
 };
+
+
+export const agendarReunionAtencion = async (
+  payload: IAgendarReunionRequest
+): Promise<IAgendarReunionResponse> => {
+
+  try {
+
+    const { data } = await automatizateApiNest.post(
+      "/lead/agendar-reunion-atencion",
+      payload
+    );
+
+    return data;
+
+  } catch (error) {
+
+    if (isAxiosError(error)) {
+
+      throw new Error(
+        error.response?.data?.message ??
+        "Error al agendar reunión."
+      );
+
+    }
+
+    throw error;
+  }
+
+};
+
+
 export const obtenerInfoAgendarReuLead = async (
   idLead: number
 ): Promise<IObtenerInfoAgendarReuLeadResponse[]> => {

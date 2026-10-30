@@ -4,7 +4,7 @@ import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 import { listarOpciones } from '@/modules/leads/actions/lead.action';
 import type { IListarOpcionesResponse } from '@/modules/leads/interfaces/lead.interface';
-import { agendarReunion } from '@/modules/clients/actions/clientsReunion.action';
+import { agendarReunionAtencion } from '@/modules/clients/actions/clientsReunion.action';
 
 const ID_LISTADO_TIPO_ACTIVIDAD = 4;
 const ID_LISTADO_PLATAFORMAS = 9;
@@ -115,7 +115,7 @@ export default defineComponent({
 
       guardando.value = true;
       try {
-        const respuesta = await agendarReunion({
+        const respuesta = await agendarReunionAtencion({
           idAsesor: idEmpleado,
           idLead: props.idLead,
           idTipoActividad: form.idTipoActividad,
