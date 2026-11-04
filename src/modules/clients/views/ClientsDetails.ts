@@ -1,5 +1,5 @@
 // ClientsDetails.ts
-import { defineComponent, ref, h, onMounted } from "vue";
+import { defineComponent, ref, h, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import ClientsAsignar from "@/modules/clients/components/candidato/ClientsAsignar.vue";
 import ClientsContacto from "@/modules/clients/components/candidato/ClientsContacto.vue";
@@ -10,6 +10,8 @@ import ClientsNegociacion from "../components/oportunidad/ClientsNegociacion.vue
 import ClientsCierre from "../components/oportunidad/ClientsCierre.vue";
 import ClientsDesistioO from "../components/desistio/ClientsDesistio.vue";
 import { obtenerEtapaActualLead } from "../actions/clients.action.js";
+
+import { useAuthStore } from "@/modules/auth/stores/auth.store";
 import WhatsappChat from "../components/whatsapp/WhatsappChat.vue";
 const IconCandidato = () =>
   h("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2" }, [
@@ -39,7 +41,8 @@ interface EtapaInfo {
   menu: string;
   realizada: boolean;
 }
-
+const auth = useAuthStore();
+const idTrabajador = computed(() => auth.idEmploye);
 export default defineComponent({
   components: {
     ClientsAsignar,
@@ -258,6 +261,7 @@ export default defineComponent({
       cargarEtapaActual,
       obtenerIdEtapa,
       obtenerNombreEtapa,
+      idTrabajador,
       obtenerEtapasVisibles,
     };
   },

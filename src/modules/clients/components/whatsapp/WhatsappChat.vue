@@ -22,7 +22,6 @@
             <div class="flex items-center justify-between bg-emerald-600 px-4 py-3 text-white">
                 <div>
                     <p class="font-semibold">Chat Whatsapp</p>
-                   
                 </div>
 
                 <div class="flex gap-2">
@@ -42,6 +41,9 @@
             <p v-if="error" class="border-b border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
                 {{ error }}
             </p>
+
+            <!-- Conexión de WhatsApp del asesor (QR / estado) -->
+            <WhatsappConexion v-if="idTrabajador" :id-trabajador="idTrabajador" />
 
             <!-- Historial -->
             <div ref="listaRef" class="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3">
@@ -85,8 +87,6 @@
                 </p>
             </div>
 
-   
-
             <!-- Formulario para enviar -->
             <form class="flex items-end gap-2 border-t border-slate-200 bg-white p-3" @submit.prevent="enviarMensaje">
                 <textarea v-model="nuevoMensaje" rows="1" maxlength="4096" placeholder="Escribe un mensaje..."
@@ -106,6 +106,8 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { io, type Socket } from 'socket.io-client';
 
+import WhatsappConexion from './WhatsappConexion.vue';
+
 import {
     enviarMensajeWhatsappLead,
     escribiendoWhatsappLead,
@@ -119,6 +121,8 @@ import type {
 
 const props = defineProps<{
     idLead: number;
+    // ID del trabajador logueado; si no se pasa, no se muestra el cuadro de conexión
+    idTrabajador?: number;
 }>();
 
 const INTERVALO_ESCRIBIENDO_MS = 20_000;
@@ -172,11 +176,9 @@ async function avisarEscribiendo() {
 
     ultimoAvisoEscribiendo = ahora;
     estadoEscribiendo.value = 'Enviando "escribiendo..." al cliente...';
-    console.log('[escribiendo] llamando al backend, lead', props.idLead);
 
     try {
         const res = await escribiendoWhatsappLead(props.idLead);
-        console.log('[escribiendo] respuesta del backend:', res);
 
         estadoEscribiendo.value = res?.ok
             ? '✓ "Escribiendo..." enviado al cliente'

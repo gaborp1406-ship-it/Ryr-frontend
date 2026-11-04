@@ -108,7 +108,7 @@
             </div>
 
         </div>
-          <!-- <WhatsappChat :id-lead="idLead" /> -->
+          <WhatsappChat :id-lead="idLead" :id-trabajador="idTrabajador" />
     </div>
 </template>
 

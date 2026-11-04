@@ -1,60 +1,111 @@
 <template>
   <div class="flex flex-col gap-5">
+    <!-- ============ FILTROS ============ -->
     <div class="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
+      <div class="flex flex-col gap-4">
 
-        <!-- ASESOR -->
-        <div v-if="puedeFiltrarPorAsesor" class="flex min-w-[220px] flex-1 flex-col gap-1.5">
-          <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Asesor
-          </label>
+        <!-- FILA 1: buscador + proyecto + fuente + asesor -->
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
 
-          <select v-model="idAsesorSeleccionado" :disabled="cargandoAsesores" @change="cambiarAsesor"
-            class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10 disabled:cursor-not-allowed disabled:bg-slate-50">
-            <option :value="undefined">
-              Todos los asesores
-            </option>
+          <!-- BUSCAR CLIENTE -->
+          <div class="flex min-w-[220px] flex-1 flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Buscar cliente
+            </label>
+            <div class="relative">
+              <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input v-model="busqueda" type="text" placeholder="Nombre del cliente..."
+                class="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
+            </div>
+          </div>
 
-            <option v-for="asesor in asesores" :key="asesor.id_asesor" :value="asesor.id_asesor">
-              {{ asesor.nombre_abrev || asesor.nombre }}
-            </option>
-          </select>
+          <!-- PROYECTO -->
+          <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Proyecto
+            </label>
+            <select v-model="proyectoSeleccionado"
+              class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10">
+              <option value="">Todos los proyectos</option>
+              <option v-for="proyecto in proyectos" :key="proyecto" :value="proyecto">
+                {{ proyecto }}
+              </option>
+            </select>
+          </div>
+
+          <!-- FUENTE -->
+          <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Fuente
+            </label>
+            <select v-model="fuenteSeleccionada"
+              class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10">
+              <option value="">Todas las fuentes</option>
+              <option v-for="fuente in fuentes" :key="fuente" :value="fuente">
+                {{ fuente }}
+              </option>
+            </select>
+          </div>
+
+          <!-- ASESOR (oculto si es agente) -->
+          <div v-if="puedeFiltrarPorAsesor" class="flex min-w-[200px] flex-1 flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Asesor
+            </label>
+
+            <select v-model="idAsesorSeleccionado" :disabled="cargandoAsesores" @change="cambiarAsesor"
+              class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10 disabled:cursor-not-allowed disabled:bg-slate-50">
+              <option :value="undefined">Todos los asesores</option>
+
+              <option v-for="asesor in asesores" :key="asesor.id_asesor" :value="asesor.id_asesor">
+                {{ asesor.nombre_abrev || asesor.nombre }}
+              </option>
+            </select>
+          </div>
         </div>
 
-        <!-- FECHA INICIO -->
-        <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
-          <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Fecha inicio
-          </label>
+        <!-- FILA 2: fechas + botones -->
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
 
-          <input v-model="fechaInicio" type="date"
-            class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
+          <!-- FECHA INICIO -->
+          <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Fecha inicio
+            </label>
+            <input v-model="fechaInicio" type="date"
+              class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
+          </div>
+
+          <!-- FECHA FIN -->
+          <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Fecha fin
+            </label>
+            <input v-model="fechaFin" type="date"
+              class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
+          </div>
+
+          <!-- APLICAR -->
+          <button type="button" @click="aplicarFiltros" :disabled="cargandoLeads"
+            class="h-10 rounded-xl bg-[#2d8c4a] px-5 text-xs font-semibold text-white transition hover:bg-[#24753d] disabled:cursor-not-allowed disabled:opacity-60">
+            {{ cargandoLeads ? 'Cargando...' : 'Aplicar filtros' }}
+          </button>
+
+          <!-- LIMPIAR -->
+          <button type="button" @click="limpiarFiltros" :disabled="cargandoLeads"
+            class="h-10 rounded-xl border border-slate-200 bg-white px-5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+            Limpiar
+          </button>
         </div>
-
-        <!-- FECHA FIN -->
-        <div class="flex min-w-[180px] flex-1 flex-col gap-1.5">
-          <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Fecha fin
-          </label>
-
-          <input v-model="fechaFin" type="date"
-            class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10" />
-        </div>
-
-        <!-- APLICAR -->
-        <button type="button" @click="aplicarFiltros" :disabled="cargandoLeads"
-          class="h-10 rounded-xl bg-[#2d8c4a] px-5 text-xs font-semibold text-white transition hover:bg-[#24753d] disabled:cursor-not-allowed disabled:opacity-60">
-          {{ cargandoLeads ? 'Cargando...' : 'Aplicar filtros' }}
-        </button>
-
-        <!-- LIMPIAR -->
-        <button type="button" @click="limpiarFiltros" :disabled="cargandoLeads"
-          class="h-10 rounded-xl border border-slate-200 bg-white px-5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
-          Limpiar
-        </button>
 
       </div>
     </div>
+
     <!-- ============ TABLA ============ -->
     <div
       class="flex-1 overflow-auto rounded-[22px] border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -72,6 +123,7 @@
 
         <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
 
+          <!-- SKELETON -->
           <template v-if="cargandoLeads">
             <tr v-for="n in 6" :key="'skeleton-' + n" class="animate-pulse odd:bg-white even:bg-slate-50/50">
               <td class="px-4 py-3.5">
@@ -93,16 +145,14 @@
                 <div class="h-3 w-20 rounded bg-slate-200"></div>
               </td>
               <td class="px-4 py-3.5">
-                <div class="h-3 w-16 rounded bg-slate-200"></div>
-              </td>
-              <td class="px-4 py-3.5">
-                <div class="mx-auto h-6 w-6 rounded-full bg-slate-200"></div>
+                <div class="mx-auto h-6 w-16 rounded-full bg-slate-200"></div>
               </td>
             </tr>
           </template>
 
+          <!-- DATOS -->
           <template v-else>
-            <tr v-for="lead in leads" :key="lead.id_lead"
+            <tr v-for="lead in leadsPaginados" :key="lead.id_lead"
               class="group border-l-2 border-l-transparent odd:bg-white even:bg-slate-50/50 transition-colors hover:border-l-[#2d8c4a] hover:bg-[#2d8c4a]/[0.05]">
 
               <td class="px-4 py-3">
@@ -135,37 +185,83 @@
                 </span>
               </td>
 
+              <!-- ACCIONES -->
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-center gap-2">
 
+                  <!-- OJITO -->
+                  <button type="button" title="Ver lead" @click="verLead(lead)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-[#2d8c4a]/40 hover:bg-[#2d8c4a]/10 hover:text-[#1e6236]">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
 
-              <td class="px-4 py-3 text-center">
-                <button v-if="mostrarBotonReabrir(lead)" type="button" :disabled="reabriendoId === lead.id_lead"
-                  @click="reabrirLead(lead)"
-                  class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-[#2d8c4a]/40 hover:bg-[#2d8c4a]/10 hover:text-[#1e6236] disabled:opacity-50 disabled:cursor-not-allowed">
-                  <svg v-if="reabriendoId === lead.id_lead" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24"
-                    fill="none">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <svg v-else class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12a9 9 0 1 1 3 6.7" />
-                    <path d="M3 16v-4h4" />
-                  </svg>
-                  {{ reabriendoId === lead.id_lead ? 'Reabriendo...' : 'Reabrir' }}
-                </button>
-                <span v-else class="text-slate-300">—</span>
+                  <!-- REABRIR -->
+                  <button v-if="mostrarBotonReabrir(lead)" type="button" :disabled="reabriendoId === lead.id_lead"
+                    @click="reabrirLead(lead)"
+                    class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition-colors hover:border-[#2d8c4a]/40 hover:bg-[#2d8c4a]/10 hover:text-[#1e6236] disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg v-if="reabriendoId === lead.id_lead" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24"
+                      fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <svg v-else class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 12a9 9 0 1 1 3 6.7" />
+                      <path d="M3 16v-4h4" />
+                    </svg>
+                    {{ reabriendoId === lead.id_lead ? 'Reabriendo...' : 'Reabrir' }}
+                  </button>
+                </div>
               </td>
             </tr>
 
-            <tr v-if="leads.length === 0">
-              <td colspan="7" class="px-4 py-8 text-center text-slate-400 text-xs">
-                No se encontraron leads para esta etapa.
+            <tr v-if="leadsFiltrados.length === 0">
+              <td colspan="6" class="px-4 py-8 text-center text-slate-400 text-xs">
+                No se encontraron leads con los filtros seleccionados.
               </td>
             </tr>
           </template>
 
         </tbody>
       </table>
+    </div>
+
+    <!-- ============ PAGINACIÓN ============ -->
+    <div v-if="!cargandoLeads && leadsFiltrados.length > 0"
+      class="flex flex-col items-center justify-between gap-3 rounded-[22px] border border-slate-200/80 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:flex-row">
+
+      <p class="text-xs text-slate-500">
+        Mostrando
+        <span class="font-semibold text-slate-700">{{ desde }}–{{ hasta }}</span>
+        de
+        <span class="font-semibold text-slate-700">{{ leadsFiltrados.length }}</span>
+        leads
+      </p>
+
+      <div class="flex items-center gap-1">
+        <button type="button" :disabled="paginaActual === 1" @click="irAPagina(paginaActual - 1)"
+          class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+          Anterior
+        </button>
+
+        <button v-for="pagina in paginasVisibles" :key="pagina" type="button" @click="irAPagina(pagina)" :class="[
+          'h-8 min-w-[2rem] rounded-lg border px-2 text-xs font-semibold transition',
+          pagina === paginaActual
+            ? 'border-[#2d8c4a] bg-[#2d8c4a] text-white'
+            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+        ]">
+          {{ pagina }}
+        </button>
+
+        <button type="button" :disabled="paginaActual === totalPaginas" @click="irAPagina(paginaActual + 1)"
+          class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+          Siguiente
+        </button>
+      </div>
     </div>
 
   </div>
