@@ -1,348 +1,817 @@
+<!-- src/modules/clients/components/whatsapp/WhatsappChat.vue -->
 <template>
-    <div class="fixed bottom-5 right-5 z-50">
-        <!-- Botón flotante -->
-        <button type="button" @click="alternarChat"
-            class="flex items-center gap-3 rounded-full bg-emerald-600 px-5 py-3 text-white shadow-xl transition hover:bg-emerald-700">
-            <svg viewBox="0 0 24 24" class="h-6 w-6" fill="currentColor">
-                <path
-                    d="M20.52 3.48A11.85 11.85 0 0 0 12.08 0C5.5 0 .15 5.35.15 11.93c0 2.1.55 4.16 1.6 5.97L0 24l6.26-1.64a11.9 11.9 0 0 0 5.81 1.5h.01C18.66 23.86 24 18.5 24 11.93c0-3.19-1.24-6.19-3.48-8.45ZM12.08 21.8a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.72.98.99-3.63-.23-.37a9.85 9.85 0 0 1-1.51-5.26c0-5.46 4.44-9.9 9.9-9.9 2.65 0 5.14 1.03 7.01 2.9a9.84 9.84 0 0 1 2.9 7.01c0 5.46-4.44 9.9-9.94 9.9Zm5.43-7.41c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.8-1.49-1.78-1.67-2.08-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.48.71.3 1.26.48 1.69.61.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35Z" />
+  <Teleport to="body">
+    <!-- Botón flotante para abrir el chat -->
+    <button v-if="!abierto" class="wsp-fab" title="Abrir chat de WhatsApp" @click="abrir">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+        <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.2 1.4 2.5 1.5.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l2 .9c.3.1.5.2.5.3.1.2.1.7-.1 1.2Z" />
+      </svg>
+      <span>WhatsApp</span>
+    </button>
+
+    <template v-if="abierto">
+      <!-- Fondo oscuro solo cuando está extendido -->
+      <div v-if="expandido" class="wsp-backdrop" @click="expandido = false" />
+
+      <section class="wsp-panel" :class="{ 'wsp-panel--expandido': expandido }" role="dialog" aria-label="Chat de WhatsApp">
+        <!-- Cabecera -->
+        <header class="wsp-head">
+          <div class="wsp-head__info">
+            <div class="wsp-head__titulo">{{ titulo }}</div>
+            <div class="wsp-head__sub">
+              <span class="wsp-dot" :class="ventanaAbierta ? 'wsp-dot--on' : 'wsp-dot--off'" />
+              {{ ventanaAbierta ? 'Ventana de 24 h abierta' : 'Ventana de 24 h cerrada' }}
+            </div>
+          </div>
+
+          <button class="wsp-iconbtn" :title="expandido ? 'Reducir' : 'Extender'" @click="alternarExpandido">
+            <svg v-if="!expandido" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
             </svg>
+            <svg v-else viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+            </svg>
+          </button>
+          <button class="wsp-iconbtn" title="Cerrar" @click="cerrar">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </header>
 
-            <span class="text-sm font-semibold">WhatsApp</span>
+        <!-- Mensajes -->
+        <div ref="contenedor" class="wsp__mensajes">
+          <div v-if="cargando" class="wsp__estado">Cargando conversación…</div>
 
-            <span v-if="noLeidos > 0" class="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-emerald-700">
-                {{ noLeidos }}
-            </span>
-        </button>
+          <div v-else-if="!items.length" class="wsp__estado">
+            Aún no hay mensajes con este cliente.
+          </div>
 
-        <!-- Panel del chat -->
-        <div v-if="abierto"
-            class="absolute bottom-16 right-0 flex h-[min(520px,75vh)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <!-- Encabezado -->
-            <div class="flex items-center justify-between bg-emerald-600 px-4 py-3 text-white">
-                <div>
-                    <p class="font-semibold">Chat Whatsapp</p>
-                </div>
-
-                <div class="flex gap-2">
-                    <button type="button" @click="cargarMensajes" :disabled="cargando || enviando"
-                        title="Actualizar mensajes" class="rounded-lg p-2 hover:bg-emerald-700 disabled:opacity-50">
-                        ↻
-                    </button>
-
-                    <button type="button" @click="abierto = false" title="Cerrar chat"
-                        class="rounded-lg px-2 hover:bg-emerald-700">
-                        ✕
-                    </button>
-                </div>
+          <template v-for="item in items" :key="item.key">
+            <div v-if="item.tipo === 'fecha'" class="wsp__fecha">
+              <span>{{ item.label }}</span>
             </div>
 
-            <!-- Aviso de error -->
-            <p v-if="error" class="border-b border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
-                {{ error }}
-            </p>
-
-            <!-- Conexión de WhatsApp del asesor (QR / estado) -->
-            <WhatsappConexion v-if="idTrabajador" :id-trabajador="idTrabajador" />
-
-            <!-- Historial -->
-            <div ref="listaRef" class="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3">
-                <p v-if="cargando && !mensajes.length" class="py-8 text-center text-sm text-slate-500">
-                    Cargando mensajes...
-                </p>
-
-                <p v-else-if="!mensajes.length && !cargando" class="py-8 text-center text-sm text-slate-500">
-                    Todavía no hay mensajes para este lead.
-                </p>
-
-                <div v-for="mensaje in mensajes" :key="mensaje.wa_message_id || mensaje.id" class="flex" :class="mensaje.tipo_mensaje === 'entrante'
-                    ? 'justify-start'
-                    : 'justify-end'
-                    ">
-                    <div class="max-w-[85%] rounded-2xl px-3 py-2 shadow-sm" :class="mensaje.tipo_mensaje === 'entrante'
-                        ? 'rounded-bl-sm bg-white text-slate-800'
-                        : 'rounded-br-sm bg-emerald-100 text-slate-800'
-                        ">
-                        <p class="whitespace-pre-wrap break-words text-sm">
-                            {{ mensaje.mensaje || 'Mensaje multimedia' }}
-                        </p>
-
-                        <p class="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-500">
-                            {{ formatearFecha(mensaje.fecha_mensaje) }}
-
-                            <template v-if="mensaje.tipo_mensaje === 'saliente'">
-                                <span v-if="mensaje.estado === 'enviado'" title="Enviado">✓</span>
-                                <span v-else-if="mensaje.estado === 'entregado'" title="Entregado">✓✓</span>
-                                <span v-else-if="mensaje.estado === 'leido'" class="text-sky-500"
-                                    title="Leído">✓✓</span>
-                                <span v-else-if="mensaje.estado === 'fallido'" class="font-bold text-red-500"
-                                    :title="mensaje.error_detalle || 'No se pudo entregar'">!</span>
-                            </template>
-                        </p>
-                    </div>
+            <div
+              v-else
+              class="wsp__fila"
+              :class="item.msg.direccion === 'SALIENTE' ? 'wsp__fila--out' : 'wsp__fila--in'"
+            >
+              <div
+                class="wsp__burbuja"
+                :class="[
+                  item.msg.direccion === 'SALIENTE' ? 'wsp__burbuja--out' : 'wsp__burbuja--in',
+                  { 'wsp__burbuja--error': item.msg.estado === 'FALLIDO' },
+                ]"
+              >
+                <WhatsappMedia
+                  v-if="item.msg.tiene_archivo || item.msg.media_url"
+                  :id-mensaje="item.msg.id"
+                  :mime="item.msg.media_mime"
+                  :nombre="item.msg.media_nombre"
+                  :url="item.msg.media_url"
+                  :tiene-archivo="item.msg.tiene_archivo"
+                />
+                <div v-if="item.msg.contenido" class="wsp__texto">{{ item.msg.contenido }}</div>
+                <div class="wsp__meta">
+                  <span>{{ hora(item.msg.fecha_creacion) }}</span>
+                  <span
+                    v-if="item.msg.direccion === 'SALIENTE'"
+                    class="wsp__tick"
+                    :class="{
+                      'wsp__tick--leido': item.msg.estado === 'LEIDO',
+                      'wsp__tick--fallido': item.msg.estado === 'FALLIDO',
+                    }"
+                    :title="item.msg.error || item.msg.estado"
+                  >{{ tick(item.msg.estado) }}</span>
                 </div>
-
-                <p v-if="cargando && mensajes.length" class="py-2 text-center text-xs text-slate-400">
-                    Actualizando...
-                </p>
+                <div v-if="item.msg.estado === 'FALLIDO' && item.msg.error" class="wsp__error-msg">
+                  {{ item.msg.error }}
+                </div>
+              </div>
             </div>
-
-            <!-- Formulario para enviar -->
-            <form class="flex items-end gap-2 border-t border-slate-200 bg-white p-3" @submit.prevent="enviarMensaje">
-                <textarea v-model="nuevoMensaje" rows="1" maxlength="4096" placeholder="Escribe un mensaje..."
-                    class="max-h-28 min-h-10 flex-1 resize-y rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500"
-                    :disabled="enviando" @keydown.enter.exact.prevent="enviarMensaje" />
-
-                <button type="submit" :disabled="enviando || !nuevoMensaje.trim()"
-                    class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
-                    {{ enviando ? 'Enviando...' : 'Enviar' }}
-                </button>
-            </form>
+          </template>
         </div>
-    </div>
+
+        <!-- Error general -->
+        <div v-if="error" class="wsp__alerta wsp__alerta--error">
+          <span>{{ error }}</span>
+          <button class="wsp__link" @click="error = ''">Cerrar</button>
+        </div>
+
+        <!-- Ventana de 24h cerrada -->
+        <div v-if="!cargando && !ventanaAbierta" class="wsp__alerta wsp__alerta--aviso">
+          <div>
+            Pasaron más de 24 horas desde el último mensaje del cliente (o aún no te ha escrito).
+            Solo puedes enviar una <strong>plantilla aprobada</strong>.
+          </div>
+          <div class="wsp__alerta-acciones">
+            <button class="wsp__btn wsp__btn--chico" :disabled="enviando" @click="enviarSaludoClick">
+              {{ enviando ? 'Enviando…' : 'Enviar saludo' }}
+            </button>
+            <button class="wsp__link" @click="mostrarPlantilla = !mostrarPlantilla">
+              {{ mostrarPlantilla ? 'Ocultar' : 'Otra plantilla' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Formulario de plantilla -->
+        <div v-if="mostrarPlantilla" class="wsp__plantilla">
+          <div class="wsp__plantilla-fila">
+            <label>
+              Nombre de la plantilla
+              <input v-model.trim="plantilla.nombre" type="text" placeholder="saludo_asesor" />
+            </label>
+            <label class="wsp__plantilla-idioma">
+              Idioma
+              <input v-model.trim="plantilla.idioma" type="text" placeholder="es" />
+            </label>
+          </div>
+          <label>
+            Parámetros (separados por coma, en el orden de las variables de la plantilla)
+            <input v-model="plantilla.parametros" type="text" placeholder="Gabriel, Inmobiliaria Demo" />
+          </label>
+          <div class="wsp__plantilla-acciones">
+            <button class="wsp__btn" :disabled="enviando || !plantilla.nombre" @click="enviarPlantillaClick">
+              {{ enviando ? 'Enviando…' : 'Enviar plantilla' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Archivo seleccionado (vista previa) -->
+        <div v-if="archivo" class="wsp__adjunto">
+          <img v-if="vistaPrevia" :src="vistaPrevia" class="wsp__adjunto-img" alt="" />
+          <span v-else class="wsp__adjunto-icono">{{ archivo.type.startsWith('video/') ? '🎬' : '📄' }}</span>
+          <div class="wsp__adjunto-info">
+            <div class="wsp__adjunto-nombre">{{ archivo.name }}</div>
+            <div class="wsp__adjunto-peso">{{ pesoLegible(archivo.size) }} · el texto de abajo irá como comentario</div>
+          </div>
+          <button class="wsp-iconbtn wsp-iconbtn--oscuro" title="Quitar archivo" @click="quitarArchivo">✕</button>
+        </div>
+
+        <!-- Input de texto -->
+        <div class="wsp__input">
+          <input
+            ref="inputArchivo"
+            type="file"
+            class="wsp__file"
+            :accept="ACEPTA"
+            @change="elegirArchivo"
+          />
+          <button
+            class="wsp__clip"
+            title="Adjuntar imagen, video o documento"
+            :disabled="!ventanaAbierta || enviando"
+            @click="inputArchivo?.click()"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.4 11-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" />
+            </svg>
+          </button>
+          <textarea
+            ref="textarea"
+            v-model="texto"
+            rows="1"
+            :disabled="!ventanaAbierta || enviando"
+            :placeholder="
+              !ventanaAbierta ? 'Usa una plantilla'
+                : archivo ? 'Agrega un comentario (opcional)' : 'Escribe un mensaje…'
+            "
+            @keydown.enter.exact.prevent="enviar"
+            @input="autoCrecer"
+          />
+          <button
+            class="wsp__btn"
+            :disabled="!ventanaAbierta || enviando || (!texto.trim() && !archivo)"
+            @click="enviar"
+          >
+            {{ enviando ? '…' : 'Enviar' }}
+          </button>
+        </div>
+      </section>
+    </template>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { io, type Socket } from 'socket.io-client';
-
-import WhatsappConexion from './WhatsappConexion.vue';
-
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import {
-    enviarMensajeWhatsappLead,
-    escribiendoWhatsappLead,
-    listarMensajesWhatsappLead,
-    marcarLeidoWhatsappLead,
-} from '../../actions/whastsapp.action';
+  enviarArchivo,
+  enviarPlantilla,
+  enviarSaludo,
+  enviarTexto,
+  obtenerConversacion,
+  type EstadoMensajeWsp,
+  type MensajeWsp,
+} from './whatsapp.action';
+import WhatsappMedia from './WhatsappMedia.vue';
 
-import type {
-    IWhatsappMensajeResponse,
-} from '../../interfaces/whastsapp.interface';
-
-const props = defineProps<{
+const props = withDefaults(
+  defineProps<{
     idLead: number;
-    // ID del trabajador logueado; si no se pasa, no se muestra el cuadro de conexión
-    idTrabajador?: number;
-}>();
+    titulo?: string;
+    abrirInicial?: boolean;
+  }>(),
+  { titulo: 'WhatsApp', abrirInicial: false },
+);
 
-const INTERVALO_ESCRIBIENDO_MS = 20_000;
+const POLLING_MS = 4000;
 
 const abierto = ref(false);
-const cargando = ref(false);
+const expandido = ref(false);
+
+const mensajes = ref<MensajeWsp[]>([]);
+const ventanaAbierta = ref(false);
+const cargando = ref(true);
 const enviando = ref(false);
-const conectado = ref(false);
 const error = ref('');
-const nuevoMensaje = ref('');
-const noLeidos = ref(0);
-const estadoEscribiendo = ref('');
+const texto = ref('');
 
-const mensajes = ref<IWhatsappMensajeResponse[]>([]);
-const listaRef = ref<HTMLElement | null>(null);
+// Archivo adjunto (imagen, video o documento)
+const ACEPTA =
+  'image/jpeg,image/png,video/mp4,video/3gpp,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+const MAX_MB = { image: 5, video: 16, otro: 25 };
+const archivo = ref<File | null>(null);
+const vistaPrevia = ref('');
+const inputArchivo = ref<HTMLInputElement | null>(null);
 
-let socket: Socket | null = null;
-let ultimoAvisoEscribiendo = 0;
+const mostrarPlantilla = ref(false);
+const plantilla = reactive({ nombre: '', idioma: 'es', parametros: '' });
 
-const sonido = new Audio('/sounds/notificacionwsp.mp3');
-sonido.preload = 'auto';
+const contenedor = ref<HTMLElement | null>(null);
+const textarea = ref<HTMLTextAreaElement | null>(null);
+let timer: ReturnType<typeof setInterval> | null = null;
 
-async function bajarAlFinal() {
+// ───────────── helpers de formato ─────────────
+
+function mensajeDeError(e: any): string {
+  const m = e?.response?.data?.message;
+  return (Array.isArray(m) ? m.join(', ') : m) || e?.message || 'Ocurrió un error';
+}
+
+function hora(iso: string): string {
+  return new Date(iso).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+}
+
+function etiquetaFecha(iso: string): string {
+  const d = new Date(iso);
+  const hoy = new Date();
+  const ayer = new Date();
+  ayer.setDate(hoy.getDate() - 1);
+  const mismo = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (mismo(d, hoy)) return 'Hoy';
+  if (mismo(d, ayer)) return 'Ayer';
+  return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function tick(estado: EstadoMensajeWsp): string {
+  switch (estado) {
+    case 'ENVIADO': return '✓';
+    case 'ENTREGADO':
+    case 'LEIDO': return '✓✓';
+    case 'FALLIDO': return '⚠';
+    default: return '';
+  }
+}
+
+/** Mensajes agrupados con separadores por día */
+const items = computed(() => {
+  const out: Array<
+    | { key: string; tipo: 'fecha'; label: string }
+    | { key: string; tipo: 'msg'; msg: MensajeWsp }
+  > = [];
+  let ultimaFecha = '';
+  for (const msg of mensajes.value) {
+    const dia = new Date(msg.fecha_creacion).toDateString();
+    if (dia !== ultimaFecha) {
+      ultimaFecha = dia;
+      out.push({ key: `f-${dia}`, tipo: 'fecha', label: etiquetaFecha(msg.fecha_creacion) });
+    }
+    out.push({ key: `m-${msg.id}`, tipo: 'msg', msg });
+  }
+  return out;
+});
+
+// ───────────── scroll ─────────────
+
+function estaAbajo(): boolean {
+  const el = contenedor.value;
+  if (!el) return true;
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+}
+
+async function irAbajo() {
+  await nextTick();
+  const el = contenedor.value;
+  if (el) el.scrollTop = el.scrollHeight;
+}
+
+function autoCrecer() {
+  const el = textarea.value;
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+}
+
+// ───────────── carga y polling ─────────────
+
+async function cargar(primeraVez = false) {
+  try {
+    const abajoAntes = primeraVez || estaAbajo();
+    const ultimoIdAntes = mensajes.value[mensajes.value.length - 1]?.id;
+
+    const data = await obtenerConversacion(props.idLead);
+    mensajes.value = data.mensajes;
+    ventanaAbierta.value = data.ventana_abierta;
+
+    const hayNuevos = data.mensajes[data.mensajes.length - 1]?.id !== ultimoIdAntes;
+    if (abajoAntes && (primeraVez || hayNuevos)) await irAbajo();
+  } catch (e) {
+    if (primeraVez) error.value = mensajeDeError(e);
+  } finally {
+    if (primeraVez) cargando.value = false;
+  }
+}
+
+function iniciarPolling() {
+  detenerPolling();
+  timer = setInterval(() => {
+    if (!document.hidden && !enviando.value) cargar();
+  }, POLLING_MS);
+}
+
+function detenerPolling() {
+  if (timer) clearInterval(timer);
+  timer = null;
+}
+
+function alCambiarVisibilidad() {
+  if (!document.hidden) cargar();
+}
+
+// ───────────── abrir / cerrar / extender ─────────────
+
+function alPresionarTecla(e: KeyboardEvent) {
+  if (e.key !== 'Escape') return;
+  if (expandido.value) expandido.value = false;
+  else cerrar();
+}
+
+async function abrir() {
+  abierto.value = true;
+  cargando.value = true;
+  document.addEventListener('keydown', alPresionarTecla);
+  document.addEventListener('visibilitychange', alCambiarVisibilidad);
+  await cargar(true);
+  iniciarPolling();
+  await nextTick();
+  if (ventanaAbierta.value) textarea.value?.focus();
+}
+
+function cerrar() {
+  abierto.value = false;
+  expandido.value = false;
+  detenerPolling();
+  document.removeEventListener('keydown', alPresionarTecla);
+  document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+}
+
+async function alternarExpandido() {
+  expandido.value = !expandido.value;
+  await irAbajo();
+}
+
+// ───────────── acciones ─────────────
+
+async function enviar() {
+  const msg = texto.value.trim();
+  if ((!msg && !archivo.value) || enviando.value || !ventanaAbierta.value) return;
+
+  enviando.value = true;
+  error.value = '';
+  try {
+    if (archivo.value) {
+      await enviarArchivo(props.idLead, archivo.value, msg);
+      quitarArchivo();
+    } else {
+      await enviarTexto(props.idLead, msg);
+    }
+    texto.value = '';
     await nextTick();
-
-    if (listaRef.value) {
-        listaRef.value.scrollTop = listaRef.value.scrollHeight;
-    }
+    autoCrecer();
+    await cargar();
+    await irAbajo();
+  } catch (e) {
+    error.value = mensajeDeError(e);
+    await cargar(); // por si quedó registrado como FALLIDO
+  } finally {
+    enviando.value = false;
+  }
 }
 
-function reproducirSonido() {
-    sonido.currentTime = 0;
-    // El navegador bloquea el audio hasta que el usuario interactúa con la página.
-    sonido.play().catch(() => { });
+function pesoLegible(bytes: number): string {
+  return bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-async function marcarLeido() {
-    try {
-        await marcarLeidoWhatsappLead(props.idLead);
-    } catch {
-        // No es crítico, no mostramos error.
-    }
+function elegirArchivo(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const f = input.files?.[0];
+  input.value = ''; // permite volver a elegir el mismo archivo
+  if (!f) return;
+
+  const limite = f.type.startsWith('image/') ? MAX_MB.image : f.type.startsWith('video/') ? MAX_MB.video : MAX_MB.otro;
+  if (f.size > limite * 1024 * 1024) {
+    error.value = `El archivo pesa ${pesoLegible(f.size)} y el máximo para este tipo es ${limite} MB`;
+    return;
+  }
+
+  error.value = '';
+  quitarArchivo();
+  archivo.value = f;
+  if (f.type.startsWith('image/')) vistaPrevia.value = URL.createObjectURL(f);
+  textarea.value?.focus();
 }
 
-// Avisa "escribiendo..." al cliente. Máximo 1 vez cada 20 s
-// (el indicador de Meta dura hasta 25 s).
-async function avisarEscribiendo() {
-    const ahora = Date.now();
-
-    if (ahora - ultimoAvisoEscribiendo < INTERVALO_ESCRIBIENDO_MS) return;
-
-    ultimoAvisoEscribiendo = ahora;
-    estadoEscribiendo.value = 'Enviando "escribiendo..." al cliente...';
-
-    try {
-        const res = await escribiendoWhatsappLead(props.idLead);
-
-        estadoEscribiendo.value = res?.ok
-            ? '✓ "Escribiendo..." enviado al cliente'
-            : `⚠ No se pudo mostrar "escribiendo": ${res?.detalle ?? 'sin detalle'}`;
-    } catch (e) {
-        console.error('[escribiendo] error', e);
-        estadoEscribiendo.value = `⚠ Error: ${e instanceof Error ? e.message : 'desconocido'}`;
-    }
+function quitarArchivo() {
+  if (vistaPrevia.value) URL.revokeObjectURL(vistaPrevia.value);
+  vistaPrevia.value = '';
+  archivo.value = null;
 }
 
-// Un solo disparador: cada vez que cambia el texto y no está vacío.
-watch(nuevoMensaje, (valor) => {
-    if (!valor.trim()) {
-        estadoEscribiendo.value = '';
-        return;
-    }
+async function enviarPlantillaClick() {
+  if (!plantilla.nombre || enviando.value) return;
 
-    avisarEscribiendo();
-});
-
-async function cargarMensajes() {
-    if (cargando.value) return;
-
-    cargando.value = true;
-    error.value = '';
-
-    try {
-        mensajes.value = await listarMensajesWhatsappLead(props.idLead);
-        await bajarAlFinal();
-    } catch (e) {
-        error.value =
-            e instanceof Error
-                ? e.message
-                : 'No se pudieron cargar los mensajes.';
-    } finally {
-        cargando.value = false;
-    }
+  enviando.value = true;
+  error.value = '';
+  try {
+    const params = plantilla.parametros
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    await enviarPlantilla(props.idLead, plantilla.nombre, plantilla.idioma || 'es', params);
+    mostrarPlantilla.value = false;
+    await cargar();
+    await irAbajo();
+  } catch (e) {
+    error.value = mensajeDeError(e);
+  } finally {
+    enviando.value = false;
+  }
 }
 
-async function alternarChat() {
-    abierto.value = !abierto.value;
+async function enviarSaludoClick() {
+  if (enviando.value) return;
 
-    if (abierto.value) {
-        noLeidos.value = 0;
-        await cargarMensajes();
-        marcarLeido();
-    }
+  enviando.value = true;
+  error.value = '';
+  try {
+    await enviarSaludo(props.idLead);
+    await cargar();
+    await irAbajo();
+  } catch (e) {
+    error.value = mensajeDeError(e);
+  } finally {
+    enviando.value = false;
+  }
 }
 
-function formatearFecha(fecha: string) {
-    const date = new Date(fecha);
-
-    if (Number.isNaN(date.getTime())) {
-        return '';
-    }
-
-    return date.toLocaleString('es-PE', {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
-
-async function enviarMensaje() {
-    const texto = nuevoMensaje.value.trim();
-
-    if (!texto || enviando.value) return;
-
-    enviando.value = true;
-    error.value = '';
-
-    try {
-        const guardado = await enviarMensajeWhatsappLead(props.idLead, texto);
-
-        nuevoMensaje.value = '';
-        ultimoAvisoEscribiendo = 0;
-        estadoEscribiendo.value = '';
-
-        // El socket también emite este mensaje; evitamos duplicarlo.
-        if (
-            guardado?.wa_message_id &&
-            !mensajes.value.some((m) => m.wa_message_id === guardado.wa_message_id)
-        ) {
-            mensajes.value.push(guardado);
-            await bajarAlFinal();
-        }
-    } catch (e) {
-        error.value =
-            e instanceof Error
-                ? e.message
-                : 'No se pudo enviar el mensaje.';
-    } finally {
-        enviando.value = false;
-    }
-}
-
-// ───────────── Tiempo real (Socket.IO) ─────────────
-
-function conectarSocket() {
-    // Usamos solo el origin por si la URL trae un prefijo como /api
-    const origen = new URL(import.meta.env.VITE_API_URL_NEST, window.location.origin).origin;
-
-    socket = io(`${origen}/whatsapp`, { transports: ['websocket'] });
-
-    // Se ejecuta también al reconectar, así vuelve a unirse a la sala.
-    socket.on('connect', () => {
-        conectado.value = true;
-        socket!.emit('unirse-lead', props.idLead);
-
-        // Recupera lo que pudo llegar mientras estuvo desconectado.
-        if (abierto.value) cargarMensajes();
-    });
-
-    socket.on('disconnect', () => {
-        conectado.value = false;
-    });
-
-    socket.on('mensaje-nuevo', (m: IWhatsappMensajeResponse) => {
-        if (m.id_lead !== props.idLead) return;
-        if (mensajes.value.some((x) => x.wa_message_id === m.wa_message_id)) return;
-
-        mensajes.value.push(m);
-        bajarAlFinal();
-
-        if (m.tipo_mensaje === 'entrante') {
-            reproducirSonido();
-
-            if (abierto.value) marcarLeido();
-            else noLeidos.value++;
-        }
-    });
-
-    socket.on(
-        'estado-mensaje',
-        ({ wa_message_id, estado }: { wa_message_id: string; estado: IWhatsappMensajeResponse['estado'] }) => {
-            const m = mensajes.value.find((x) => x.wa_message_id === wa_message_id);
-            if (m) m.estado = estado;
-        },
-    );
-}
-
-onMounted(conectarSocket);
-
-onBeforeUnmount(() => {
-    socket?.disconnect();
-    socket = null;
-});
+// ───────────── ciclo de vida ─────────────
 
 watch(
-    () => props.idLead,
-    (nuevo, viejo) => {
-        socket?.emit('salir-lead', viejo);
-        socket?.emit('unirse-lead', nuevo);
-
-        mensajes.value = [];
-        error.value = '';
-        noLeidos.value = 0;
-        estadoEscribiendo.value = '';
-        ultimoAvisoEscribiendo = 0;
-
-        if (abierto.value) {
-            cargarMensajes().then(marcarLeido);
-        }
-    },
+  () => props.idLead,
+  async () => {
+    mensajes.value = [];
+    mostrarPlantilla.value = false;
+    if (abierto.value) {
+      cargando.value = true;
+      await cargar(true);
+    }
+  },
 );
+
+if (props.abrirInicial) abrir();
+
+onBeforeUnmount(() => {
+  detenerPolling();
+  document.removeEventListener('keydown', alPresionarTecla);
+  document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+});
 </script>
+
+<style scoped>
+/* ───── Botón flotante ───── */
+.wsp-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+.wsp-fab:hover { transform: translateY(-2px); }
+
+/* ───── Fondo y panel ───── */
+.wsp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2999;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.wsp-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  height: 560px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 40px);
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+}
+
+.wsp-panel--expandido {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: min(1100px, 94vw);
+  height: 92vh;
+  max-height: none;
+}
+
+/* ───── Cabecera ───── */
+.wsp-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px 10px 16px;
+  background: #075e54;
+  color: #fff;
+}
+.wsp-head__info { flex: 1; min-width: 0; }
+.wsp-head__titulo {
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsp-head__sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+.wsp-dot { width: 8px; height: 8px; border-radius: 50%; }
+.wsp-dot--on { background: #4ade80; }
+.wsp-dot--off { background: #fbbf24; }
+
+.wsp-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+.wsp-iconbtn:hover { background: rgba(255, 255, 255, 0.18); }
+
+/* ───── Mensajes ───── */
+.wsp__mensajes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: #efeae2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wsp__estado {
+  margin: auto;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.wsp__fecha {
+  align-self: center;
+  margin: 10px 0 6px;
+}
+.wsp__fecha span {
+  background: #e1f2fb;
+  color: #54656f;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+.wsp__fila { display: flex; }
+.wsp__fila--out { justify-content: flex-end; }
+.wsp__fila--in { justify-content: flex-start; }
+
+.wsp__burbuja {
+  max-width: 75%;
+  padding: 6px 9px 4px;
+  border-radius: 8px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+  word-break: break-word;
+}
+.wsp-panel--expandido .wsp__burbuja { max-width: 60%; }
+.wsp__burbuja--out { background: #d9fdd3; border-top-right-radius: 2px; }
+.wsp__burbuja--in { background: #fff; border-top-left-radius: 2px; }
+.wsp__burbuja--error { background: #fde8e8; }
+
+.wsp__texto {
+  white-space: pre-wrap;
+  color: #111b21;
+  line-height: 1.35;
+}
+
+.wsp__meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #667781;
+}
+
+.wsp__tick { letter-spacing: -2px; }
+.wsp__tick--leido { color: #53bdeb; }
+.wsp__tick--fallido { color: #dc2626; letter-spacing: 0; }
+
+.wsp__error-msg {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #b91c1c;
+}
+
+/* ───── Alertas ───── */
+.wsp__alerta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.wsp__alerta--error { background: #fee2e2; color: #991b1b; }
+.wsp__alerta--aviso { background: #fef3c7; color: #92400e; }
+
+.wsp__alerta-acciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.wsp__btn--chico {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.wsp__link {
+  background: none;
+  border: none;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ───── Plantilla ───── */
+.wsp__plantilla {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.wsp__plantilla label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: #4b5563;
+}
+.wsp__plantilla input {
+  padding: 7px 9px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.wsp__plantilla-fila { display: flex; gap: 8px; }
+.wsp__plantilla-fila label { flex: 1; }
+.wsp__plantilla-idioma { max-width: 90px; }
+.wsp__plantilla-acciones { display: flex; justify-content: flex-end; }
+
+/* ───── Input ───── */
+.wsp__input {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #e5e7eb;
+  background: #f0f2f5;
+}
+.wsp__input textarea {
+  flex: 1;
+  resize: none;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 18px;
+  font: inherit;
+  line-height: 1.3;
+  max-height: 120px;
+  outline: none;
+}
+.wsp__input textarea:focus { border-color: #25d366; }
+.wsp__input textarea:disabled { background: #e5e7eb; cursor: not-allowed; }
+
+.wsp__file { display: none; }
+
+.wsp__clip {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #54656f;
+  cursor: pointer;
+}
+.wsp__clip:hover:not(:disabled) { background: rgba(0, 0, 0, 0.07); }
+.wsp__clip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.wsp__adjunto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.wsp__adjunto-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.wsp__adjunto-icono { font-size: 30px; }
+.wsp__adjunto-info { flex: 1; min-width: 0; }
+.wsp__adjunto-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111b21;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wsp__adjunto-peso { font-size: 11px; color: #667781; }
+.wsp-iconbtn--oscuro { color: #54656f; }
+.wsp-iconbtn--oscuro:hover { background: rgba(0, 0, 0, 0.08); }
+
+.wsp__btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 18px;
+  background: #25d366;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wsp__btn:disabled {
+  background: #a7e8c3;
+  cursor: not-allowed;
+}
+</style>

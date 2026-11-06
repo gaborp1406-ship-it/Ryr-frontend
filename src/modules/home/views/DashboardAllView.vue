@@ -1,10 +1,20 @@
 <template>
-  <div class="min-h-full bg-[#f8faf9] p-6 font-sans text-[#0a0a0a] max-[650px]:p-[15px]">
+  <!-- ✨ NUEVO: transición + margen cuando el panel IA está abierto -->
+  <div
+    class="min-h-full bg-[#f8faf9] p-6 font-sans text-[#0a0a0a] transition-[margin] duration-300 max-[650px]:p-[15px]"
+    :class="iaAbierta ? 'min-[901px]:mr-[400px]' : ''">
     <!-- HEADER -->
     <div class="mb-5 flex items-end justify-between gap-5 max-[650px]:flex-col max-[650px]:items-start">
       <h1 class="m-0 text-[27px] font-bold leading-none tracking-[-0.04em] text-[#0a0a0a]">
         {{ tituloActivo }}
       </h1>
+
+      <!-- ✨ NUEVO: botón para abrir el chat -->
+      <button type="button"
+        class="flex h-[40px] items-center gap-[7px] rounded-[9px] bg-[#0a0a0a] px-[15px] text-[12px] font-bold text-white transition hover:bg-slate-800"
+        :aria-expanded="iaAbierta" @click="iaAbierta = !iaAbierta">
+        ✦ Analizar con IA
+      </button>
     </div>
     <!-- ================================================= -->
     <!-- FILTRO DE FECHAS + ASESOR -->
@@ -537,7 +547,7 @@
 
               <!-- DOS BARRAS: RECIBIDAS / REALIZADAS -->
               <div class="flex flex-1 flex-col gap-[5px]">
-              
+
 
                 <div class="flex items-center gap-[8px]">
                   <div class="relative h-[14px] flex-1 overflow-hidden rounded-[4px] bg-slate-100">
@@ -577,6 +587,10 @@
     <!-- CIERRES -->
     <!-- ================================================= -->
     <DashboardCierre v-else-if="activeTab === 'cierres'" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin"
+      :id-asesor="idAsesorNumerico" />
+
+    <!-- ✨ NUEVO: PANEL DEL ANALISTA IA -->
+    <DashboardAnalistaIA v-model:abierto="iaAbierta" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin"
       :id-asesor="idAsesorNumerico" />
   </div>
 </template>

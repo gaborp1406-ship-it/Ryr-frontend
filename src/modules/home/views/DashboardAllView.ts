@@ -9,6 +9,8 @@ import {
 import DashboardComercial from './DashboardComercial.vue';
 import DashboardContactabilidad from './DashboardContactabilidad.vue';
 import DashboardCierre from './DashboardCierre.vue';
+// ✨ NUEVO
+import DashboardAnalistaIA from './DashboardAnalistaIA.vue';
 
 import {
   contarActividadesDashboard,
@@ -120,6 +122,8 @@ export default defineComponent({
     DashboardComercial,
     DashboardContactabilidad,
     DashboardCierre,
+    // ✨ NUEVO
+    DashboardAnalistaIA,
   },
 
   setup() {
@@ -132,6 +136,9 @@ export default defineComponent({
     const idEmpleadoDelAgent = computed(() => authStore.idEmploye);
 
     const activeTab = ref<DashboardTab>('general');
+
+    // ✨ NUEVO: panel del analista IA (abierto/cerrado)
+    const iaAbierta = ref(false);
 
     const todasLasTabs = [
       { id: 'general' as DashboardTab, label: 'General' },
@@ -294,40 +301,40 @@ export default defineComponent({
     // =========================================================
     // LEADS POR ETAPA
     // =========================================================
-const nombresEtapas: Record<number, string> = {
-  1: 'Asignación',
-  2: 'Contacto',
-  4: 'Agendar reunión',
-  5: 'Atención',
-  6: 'Negociación',
-  7: 'Cierre',
-};
-
-const coloresEtapas: Record<number, string> = {
-  1: '#2d8c4a',
-  2: '#3f91c9',
-  4: '#f4c542',
-  5: '#f39c35',
-  6: '#8e7cc3',
-  7: '#42a5a5',
-};
-
-const etapasOrdenadas = computed(() => {
-  // Orden visual por filas: izquierda, derecha
-  const idsEtapas = [1, 5, 2, 6, 4, 7];
-
-  return idsEtapas.map((id) => {
-    const encontrada = leadsPorEtapa.value.find(
-      (x) => Number(x.id_etapa) === id,
-    );
-
-    return {
-      id_etapa: id,
-      etapa: nombresEtapas[id],
-      cantidad: Number(encontrada?.cantidad || 0),
+    const nombresEtapas: Record<number, string> = {
+      1: 'Asignación',
+      2: 'Contacto',
+      4: 'Agendar reunión',
+      5: 'Atención',
+      6: 'Negociación',
+      7: 'Cierre',
     };
-  });
-});
+
+    const coloresEtapas: Record<number, string> = {
+      1: '#2d8c4a',
+      2: '#3f91c9',
+      4: '#f4c542',
+      5: '#f39c35',
+      6: '#8e7cc3',
+      7: '#42a5a5',
+    };
+
+    const etapasOrdenadas = computed(() => {
+      // Orden visual por filas: izquierda, derecha
+      const idsEtapas = [1, 5, 2, 6, 4, 7];
+
+      return idsEtapas.map((id) => {
+        const encontrada = leadsPorEtapa.value.find(
+          (x) => Number(x.id_etapa) === id,
+        );
+
+        return {
+          id_etapa: id,
+          etapa: nombresEtapas[id],
+          cantidad: Number(encontrada?.cantidad || 0),
+        };
+      });
+    });
 
     const leadsPorEtapaVista = computed(() => {
       return etapasOrdenadas.value.map((etapa) => ({
@@ -978,6 +985,9 @@ const etapasOrdenadas = computed(() => {
       tituloActivo,
       kpis,
       cargando,
+
+      // ✨ NUEVO: panel IA
+      iaAbierta,
 
       // ✅ RETORNA PARA SABER SI ES AGENT EN EL TEMPLATE
       esAgent,
