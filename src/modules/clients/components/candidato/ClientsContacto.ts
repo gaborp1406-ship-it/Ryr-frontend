@@ -593,8 +593,9 @@ export default defineComponent({
         );
       }
     }
-    const puedeContactar = computed(() => authStore.isAgent);
-
+const puedeContactar = computed(() =>
+  authStore.isAgent || authStore.isJefeVentas
+);
     async function onReunionAgendada() {
       cerrarModalAgendarReunion();
       emit("etapa-finalizada");

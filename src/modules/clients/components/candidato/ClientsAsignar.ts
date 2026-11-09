@@ -31,29 +31,31 @@ export default defineComponent({
 
     const authStore = useAuthStore();
 
-    const puedeContactar = computed(() => authStore.isAgent);
-const estadoReasignacion = ref<{
-  es_reasignado: boolean;
-  id_asesor_anterior: number | null;
-  nombre_asesor_anterior: string | null;
-} | null>(null);
+const puedeContactar = computed(() =>
+  authStore.isAgent || authStore.isJefeVentas
+);
+    const estadoReasignacion = ref<{
+      es_reasignado: boolean;
+      id_asesor_anterior: number | null;
+      nombre_asesor_anterior: string | null;
+    } | null>(null);
 
-const loadingReasignacion = ref(false);
+    const loadingReasignacion = ref(false);
 
-const cargarEstadoReasignacion = async () => {
-  try {
-    loadingReasignacion.value = true;
+    const cargarEstadoReasignacion = async () => {
+      try {
+        loadingReasignacion.value = true;
 
-    estadoReasignacion.value = await verificarLeadReasignado(
-      props.idLead
-    );
-  } catch (error) {
-    console.error("Error al verificar reasignación:", error);
-    estadoReasignacion.value = null;
-  } finally {
-    loadingReasignacion.value = false;
-  }
-};
+        estadoReasignacion.value = await verificarLeadReasignado(
+          props.idLead
+        );
+      } catch (error) {
+        console.error("Error al verificar reasignación:", error);
+        estadoReasignacion.value = null;
+      } finally {
+        loadingReasignacion.value = false;
+      }
+    };
 
     // EDICIÓN DE DNI Y PROYECTO
     // =========================================================
@@ -61,12 +63,12 @@ const cargarEstadoReasignacion = async () => {
     const guardando = ref(false);
     const proyectos = ref<IListarProyectoResponse[]>([]);
 
- const form = reactive({
-  dni: "",
-  nombres: "",
-  telefono: "",
-  id_proyecto: "" as number | "",
-});
+    const form = reactive({
+      dni: "",
+      nombres: "",
+      telefono: "",
+      id_proyecto: "" as number | "",
+    });
     // Ajusta aquí quién puede editar (ej: authStore.isAdmin || authStore.isDerivador)
     const puedeEditar = computed(() => !!authStore.idEmploye);
 
@@ -77,21 +79,21 @@ const cargarEstadoReasignacion = async () => {
         console.error(error);
       }
     };
-const iniciarEdicion = () => {
-  if (!lead.value) return;
+    const iniciarEdicion = () => {
+      if (!lead.value) return;
 
-  form.dni = lead.value.numero_documento ?? "";
-  form.nombres = lead.value.nombres ?? "";
-  form.telefono = lead.value.telefono ?? "";
+      form.dni = lead.value.numero_documento ?? "";
+      form.nombres = lead.value.nombres ?? "";
+      form.telefono = lead.value.telefono ?? "";
 
-  form.id_proyecto =
-    lead.value.id_proyecto ??
-    proyectos.value.find((p) => p.nombre === lead.value.proyecto)
-      ?.id_proyecto ??
-    "";
+      form.id_proyecto =
+        lead.value.id_proyecto ??
+        proyectos.value.find((p) => p.nombre === lead.value.proyecto)
+          ?.id_proyecto ??
+        "";
 
-  editando.value = true;
-};
+      editando.value = true;
+    };
 
     const cancelarEdicion = () => {
       editando.value = false;
@@ -233,80 +235,80 @@ const iniciarEdicion = () => {
       return valor;
     }
 
-  const cargarInformacion = async () => {
-  try {
-    loading.value = true;
-    lead.value = await obtenerDetalleLeadCliente(props.idLead);
+    const cargarInformacion = async () => {
+      try {
+        loading.value = true;
+        lead.value = await obtenerDetalleLeadCliente(props.idLead);
 
-    await cargarEstadoReasignacion();
-  } catch (error) {
-    console.error(error);
-  } finally {
-    loading.value = false;
-  }
-};
+        await cargarEstadoReasignacion();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        loading.value = false;
+      }
+    };
 
-const guardarCambios = async () => {
-  if (!lead.value || guardando.value) return;
+    const guardarCambios = async () => {
+      if (!lead.value || guardando.value) return;
 
-  const dni = form.dni.trim();
+      const dni = form.dni.trim();
 
-  if (dni && !/^\d{8,10}$/.test(dni)) {
-    Swal.fire({
-      icon: "warning",
-      title: "DNI inválido",
-      text: "El DNI debe tener entre 8 y 10 dígitos.",
-      confirmButtonColor: "#2d8c4a",
-    });
-    return;
-  }
+      if (dni && !/^\d{8,10}$/.test(dni)) {
+        Swal.fire({
+          icon: "warning",
+          title: "DNI inválido",
+          text: "El DNI debe tener entre 8 y 10 dígitos.",
+          confirmButtonColor: "#2d8c4a",
+        });
+        return;
+      }
 
-  if (!form.id_proyecto) {
-    Swal.fire({
-      icon: "warning",
-      title: "Proyecto requerido",
-      text: "Seleccione un proyecto.",
-      confirmButtonColor: "#2d8c4a",
-    });
-    return;
-  }
+      if (!form.id_proyecto) {
+        Swal.fire({
+          icon: "warning",
+          title: "Proyecto requerido",
+          text: "Seleccione un proyecto.",
+          confirmButtonColor: "#2d8c4a",
+        });
+        return;
+      }
 
-  try {
-    guardando.value = true;
+      try {
+        guardando.value = true;
 
-    await actualizarLeadDniProyecto({
-      id_lead: props.idLead,
-      dni_cliente: dni || null,
-      nombres: form.nombres.trim() || null,
-      telefono: form.telefono.trim() || null,
-      id_proyecto: Number(form.id_proyecto),
-      usuario_modificacion: authStore.idEmploye!,
-    });
+        await actualizarLeadDniProyecto({
+          id_lead: props.idLead,
+          dni_cliente: dni || null,
+          nombres: form.nombres.trim() || null,
+          telefono: form.telefono.trim() || null,
+          id_proyecto: Number(form.id_proyecto),
+          usuario_modificacion: authStore.idEmploye!,
+        });
 
-    await cargarInformacion();
-    editando.value = false;
+        await cargarInformacion();
+        editando.value = false;
 
-    await Swal.fire({
-      icon: "success",
-      title: "Datos actualizados",
-      text: "Los cambios se guardaron correctamente.",
-      confirmButtonColor: "#16a34a",
-      timer: 1800,
-      timerProgressBar: true,
-    });
+        await Swal.fire({
+          icon: "success",
+          title: "Datos actualizados",
+          text: "Los cambios se guardaron correctamente.",
+          confirmButtonColor: "#16a34a",
+          timer: 1800,
+          timerProgressBar: true,
+        });
 
-    emit("lead-actualizado");
-  } catch (error: any) {
-    Swal.fire({
-      icon: "error",
-      title: "Ocurrió un error",
-      text: error?.message ?? "No fue posible actualizar los datos.",
-      confirmButtonColor: "#dc2626",
-    });
-  } finally {
-    guardando.value = false;
-  }
-};
+        emit("lead-actualizado");
+      } catch (error: any) {
+        Swal.fire({
+          icon: "error",
+          title: "Ocurrió un error",
+          text: error?.message ?? "No fue posible actualizar los datos.",
+          confirmButtonColor: "#dc2626",
+        });
+      } finally {
+        guardando.value = false;
+      }
+    };
 
     const contactarLead = async () => {
       if (!lead.value) return;
@@ -376,9 +378,9 @@ const guardarCambios = async () => {
       formatFechaHoraCompleta,
 
       estadoReasignacion,
-loadingReasignacion,
-cargarEstadoReasignacion,
-authStore,
+      loadingReasignacion,
+      cargarEstadoReasignacion,
+      authStore,
       // edición
       editando,
       guardando,

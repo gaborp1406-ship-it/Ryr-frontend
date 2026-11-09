@@ -29,70 +29,51 @@
             <!-- Datos -->
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-5 px-6 py-6">
 
-            
-<div>
-  <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
-    Nombre
-  </p>
 
-  <input
-    v-if="editando"
-    v-model="form.nombres"
-    :disabled="guardando"
-    maxlength="100"
-    placeholder="Ingrese el nombre"
-    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60"
-  />
+                <div>
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
+                        Nombre
+                    </p>
 
-  <p v-else class="text-sm font-semibold text-slate-800">
-    {{ lead?.nombres }}
-  </p>
-</div>
+                    <input v-if="editando" v-model="form.nombres" :disabled="guardando" maxlength="100"
+                        placeholder="Ingrese el nombre"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60" />
 
-         
-           
-<div>
-  <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
-    DNI
-  </p>
+                    <p v-else class="text-sm font-semibold text-slate-800">
+                        {{ lead?.nombres }}
+                    </p>
+                </div>
 
-  <input
-    v-if="editando"
-    v-model="form.dni"
-    @input="onDniInput"
-    @keyup.enter="guardarCambios"
-    :disabled="guardando"
-    maxlength="10"
-    inputmode="numeric"
-    placeholder="Ingrese el DNI"
-    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60"
-  />
 
-  <p v-else class="text-sm font-semibold text-slate-800">
-    {{ lead?.numero_documento || '—' }}
-  </p>
-</div>
 
-             
-<div>
-  <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
-    N.º Teléfono
-  </p>
+                <div>
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
+                        DNI
+                    </p>
 
-  <input
-    v-if="editando"
-    v-model="form.telefono"
-    :disabled="guardando"
-    maxlength="30"
-    type="tel"
-    placeholder="Ingrese el teléfono"
-    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60"
-  />
+                    <input v-if="editando" v-model="form.dni" @input="onDniInput" @keyup.enter="guardarCambios"
+                        :disabled="guardando" maxlength="10" inputmode="numeric" placeholder="Ingrese el DNI"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60" />
 
-  <p v-else class="text-sm font-semibold text-slate-800">
-    {{ lead?.telefono || '—' }}
-  </p>
-</div>
+                    <p v-else class="text-sm font-semibold text-slate-800">
+                        {{ lead?.numero_documento || '—' }}
+                    </p>
+                </div>
+
+
+                <div>
+                    <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1">
+                        N.º Teléfono
+                    </p>
+
+                    <input v-if="editando" v-model="form.telefono" :disabled="guardando" maxlength="30" type="tel"
+                        placeholder="Ingrese el teléfono"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-[#2d8c4a] focus:ring-4 focus:ring-[#2d8c4a]/10 disabled:opacity-60" />
+
+                    <p v-else class="text-sm font-semibold text-slate-800">
+                        {{ lead?.telefono || '—' }}
+                    </p>
+                </div>
 
                 <!-- Proyecto (editable) -->
                 <div>
