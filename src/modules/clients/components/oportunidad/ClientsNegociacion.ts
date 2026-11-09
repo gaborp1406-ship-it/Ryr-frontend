@@ -235,9 +235,8 @@ export default defineComponent({
 
 
     const authStore = useAuthStore();
-    const puedeContactar = computed(() =>
-      authStore.isAgent || authStore.isJefeVentas
-    );
+    const puedeContactar = computed(() => authStore.isAgent);
+
     async function abrirModalDesistio() {
       mostrarModalDesistio.value = true;
       motivoSeleccionado.value = null;

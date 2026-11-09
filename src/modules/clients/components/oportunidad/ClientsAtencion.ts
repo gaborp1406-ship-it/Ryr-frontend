@@ -506,9 +506,7 @@ export default defineComponent({
     });
 
 
-   const puedeContactar = computed(() =>
-  authStore.isAgent || authStore.isJefeVentas
-);
+    const puedeContactar = computed(() => authStore.isAgent);
 
     // ---------- Modal de evidencia (audio / imagen / pdf) ----------
     type TipoEvidencia = 'imagen' | 'pdf' | 'audio' | 'video' | null;

@@ -65,9 +65,7 @@ export default defineComponent({
       reunion.value = actividadReunion;
     }
     const authStore = useAuthStore();
-const puedeContactar = computed(() =>
-  authStore.isAgent || authStore.isJefeVentas
-);
+    const puedeContactar = computed(() => authStore.isAgent);
 
     // Consulta si ya existe un registro de "agendar reunión" con estado true
     // (es decir, si el lead ya fue convertido a oportunidad)

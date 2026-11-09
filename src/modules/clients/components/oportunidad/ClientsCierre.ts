@@ -394,9 +394,8 @@ export default defineComponent({
     const ID_LISTADO_MOTIVOS_DESISTIO = 3;
 
 
-const puedeContactar = computed(() =>
-  authStore.isAgent || authStore.isJefeVentas
-);
+    const puedeContactar = computed(() => authStore.isAgent);
+
     async function abrirModalDesistio() {
       mostrarModalDesistio.value = true;
       motivoSeleccionado.value = null;

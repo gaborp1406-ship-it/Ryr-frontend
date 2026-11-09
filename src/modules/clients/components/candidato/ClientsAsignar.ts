@@ -31,9 +31,7 @@ export default defineComponent({
 
     const authStore = useAuthStore();
 
-const puedeContactar = computed(() =>
-  authStore.isAgent || authStore.isJefeVentas
-);
+    const puedeContactar = computed(() => authStore.isAgent);
     const estadoReasignacion = ref<{
       es_reasignado: boolean;
       id_asesor_anterior: number | null;
