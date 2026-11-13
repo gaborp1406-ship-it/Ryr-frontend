@@ -279,3 +279,33 @@ export const reabrirLeadEtapa = async (
     throw error;
   }
 };
+
+export const obtenerLeadsDesistidos = async (
+  idAgente?: number,
+  fechaInicio?: string,
+  fechaFin?: string
+) => {
+  try {
+    const { data } = await automatizateApiNest.get(
+      '/lead/obtener-leads-desistidos',
+      {
+        params: {
+          id_agente: idAgente,
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin,
+        },
+      }
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ??
+        'Error al obtener los leads desistidos.'
+      );
+    }
+
+    throw error;
+  }
+};

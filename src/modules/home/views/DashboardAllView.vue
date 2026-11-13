@@ -10,7 +10,8 @@
       </h1>
 
       <!-- ✨ NUEVO: botón para abrir el chat -->
-      <button type="button"
+      <!-- ✨ botón para abrir el chat (oculto si es agente) -->
+      <button v-if="!esAgent" type="button"
         class="flex h-[40px] items-center gap-[7px] rounded-[9px] bg-[#0a0a0a] px-[15px] text-[12px] font-bold text-white transition hover:bg-slate-800"
         :aria-expanded="iaAbierta" @click="iaAbierta = !iaAbierta">
         ✦ Analizar con IA
@@ -224,7 +225,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.atendidos)}%` }"></div>
               </div>
               <strong class="w-[28px] shrink-0 text-right text-[13px] font-bold text-slate-700">{{ candidatos.atendidos
-                }}</strong>
+              }}</strong>
             </div>
 
             <div class="mb-[8px] flex items-center gap-[8px]">
@@ -234,7 +235,7 @@
                   :style="{ width: `${getPorcentajeCandidatos(candidatos.sinAtender)}%` }"></div>
               </div>
               <strong class="w-[28px] shrink-0 text-right text-[13px] font-bold text-slate-700">{{ candidatos.sinAtender
-                }}</strong>
+              }}</strong>
             </div>
 
             <div class="ml-[93px] mr-[10px] flex justify-between text-[11px] text-slate-400">
@@ -590,7 +591,8 @@
       :id-asesor="idAsesorNumerico" />
 
     <!-- ✨ NUEVO: PANEL DEL ANALISTA IA -->
-    <DashboardAnalistaIA v-model:abierto="iaAbierta" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin"
+    <!-- ✨ PANEL DEL ANALISTA IA (oculto si es agente) -->
+    <DashboardAnalistaIA v-if="!esAgent" v-model:abierto="iaAbierta" :fecha-inicio="fechaInicio" :fecha-fin="fechaFin"
       :id-asesor="idAsesorNumerico" />
   </div>
 </template>

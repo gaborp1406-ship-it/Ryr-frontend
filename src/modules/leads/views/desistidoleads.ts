@@ -1,7 +1,15 @@
-import { defineComponent, ref, computed, watch, onMounted } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+} from 'vue';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 
 import { useAuthStore } from '@/modules/auth/stores/auth.store';
 
@@ -9,6 +17,7 @@ import type { ILeadPorEtapaActual } from '../interfaces/lead.interface';
 
 import {
   obtenerLeadsPorEtapaActual,
+  obtenerLeadsDesistidos,
   reabrirLeadEtapa,
 } from '../actions/lead.action';
 import type { IListarAsesoresResponse } from '@/modules/clients/interfaces/clients.interface';
@@ -18,12 +27,64 @@ const ETAPAS_REABRIBLES = [3, 8];
 const ETAPAS_FIJAS = [3, 8];
 const POR_PAGINA = 12;
 
+/**
+ * Forma de cada fila que devuelve fn_obtener_leads_desistidos.
+ * (Si ya tienes una interface igual en lead.interface.ts, impórtala y borra esta.)
+ */
+interface IComentarioDesistido {
+  id: number;
+  mensaje: string | null;
+  fecha_creacion: string;
+}
+
+interface ILeadDesistidoExport {
+  id_lead: number;
+  id_etapa: number;
+  nombres_apellidos: string | null;
+  dni: string | null;
+  numero: string | null;
+  motivo_desistimiento: string | null;
+  fecha_desistimiento: string | null;
+  comentarios: IComentarioDesistido[] | string | null;
+}
+
 function normalizar(texto: string | null | undefined): string {
   return (texto ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+}
+
+/**
+ * Convierte el campo "comentarios" (json) en una lista de textos.
+ * Acepta array, string JSON o null.
+ */
+function extraerComentarios(valor: ILeadDesistidoExport['comentarios']): string[] {
+  if (!valor) return [];
+
+  let lista: unknown = valor;
+
+  if (typeof valor === 'string') {
+    try {
+      lista = JSON.parse(valor);
+    } catch {
+      return [valor.trim()].filter(Boolean);
+    }
+  }
+
+  if (!Array.isArray(lista)) return [];
+
+  return lista
+    .map((c) => String((c as IComentarioDesistido)?.mensaje ?? '').trim())
+    .filter(Boolean);
+}
+
+function fechaParaArchivo(): string {
+  const hoy = new Date();
+  const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dd = String(hoy.getDate()).padStart(2, '0');
+  return `${hoy.getFullYear()}-${mm}-${dd}`;
 }
 
 export default defineComponent({
@@ -304,6 +365,147 @@ export default defineComponent({
     }
 
     // =========================================================
+    // EXPORTAR EXCEL
+    // =========================================================
+
+    const modalExportarAbierto = ref(false);
+    const exportando = ref(false);
+
+    // Filtros propios del modal (independientes de los de la tabla)
+    const exportIdAsesor = ref<number | undefined>(undefined);
+    const exportFechaInicio = ref<string>('');
+    const exportFechaFin = ref<string>('');
+
+    const rangoFechasInvalido = computed(
+      () =>
+        !!exportFechaInicio.value &&
+        !!exportFechaFin.value &&
+        exportFechaInicio.value > exportFechaFin.value
+    );
+
+    function abrirModalExportar() {
+      // Se precargan con lo que ya está filtrado en pantalla
+      exportIdAsesor.value = idAsesorSeleccionado.value;
+      exportFechaInicio.value = fechaInicio.value;
+      exportFechaFin.value = fechaFin.value;
+
+      modalExportarAbierto.value = true;
+    }
+
+    function cerrarModalExportar() {
+      if (exportando.value) return;
+      modalExportarAbierto.value = false;
+    }
+
+    function limpiarFiltrosExportar() {
+      exportIdAsesor.value = undefined;
+      exportFechaInicio.value = '';
+      exportFechaFin.value = '';
+    }
+
+    function onKeydown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && modalExportarAbierto.value) {
+        cerrarModalExportar();
+      }
+    }
+
+    function generarExcel(filas: ILeadDesistidoExport[]) {
+      const comentariosPorFila = filas.map((f) => extraerComentarios(f.comentarios));
+
+      const maxComentarios = Math.max(
+        1,
+        ...comentariosPorFila.map((c) => c.length)
+      );
+
+      // 1 comentario como máximo => "Comentarios". Si hay más => "Comentario 1", "Comentario 2", ...
+      const encabezadosComentarios =
+        maxComentarios === 1
+          ? ['Comentarios']
+          : Array.from({ length: maxComentarios }, (_, i) => `Comentario ${i + 1}`);
+
+      const encabezados = [
+        'Nombres y Apellidos',
+        'DNI',
+        'Número',
+        'Motivo de desistimiento',
+        'Fecha de desistimiento',
+        ...encabezadosComentarios,
+      ];
+
+      const datos = filas.map((fila, index) => {
+        const comentarios = comentariosPorFila[index];
+
+        return [
+          fila.nombres_apellidos ?? '',
+          fila.dni ?? '',
+          fila.numero ?? '',
+          fila.motivo_desistimiento ?? '',
+          fila.fecha_desistimiento ?? '',
+          ...Array.from({ length: maxComentarios }, (_, i) => comentarios[i] ?? ''),
+        ];
+      });
+
+      const hoja = XLSX.utils.aoa_to_sheet([encabezados, ...datos]);
+
+      // Anchos de columna
+      hoja['!cols'] = [
+        { wch: 34 }, // Nombres y Apellidos
+        { wch: 14 }, // DNI
+        { wch: 14 }, // Número
+        { wch: 34 }, // Motivo
+        { wch: 20 }, // Fecha de desistimiento
+        ...encabezadosComentarios.map(() => ({ wch: 50 })),
+      ];
+
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hoja, 'Leads desistidos');
+
+      XLSX.writeFile(libro, `leads_desistidos_${fechaParaArchivo()}.xlsx`);
+    }
+
+    async function exportarExcel() {
+      if (rangoFechasInvalido.value) {
+        toast.warning('La fecha inicio no puede ser mayor a la fecha fin');
+        return;
+      }
+
+      exportando.value = true;
+
+      try {
+        /**
+         * AGENTE: se fuerza su propio id de trabajador.
+         * ADMIN / OTROS ROLES: usa el asesor elegido en el modal.
+         * undefined = todos los asesores.
+         */
+        const idAgente = authStore.isAgent
+          ? authStore.idEmploye
+          : exportIdAsesor.value;
+
+        const filas = (await obtenerLeadsDesistidos(
+          idAgente,
+          exportFechaInicio.value || undefined,
+          exportFechaFin.value || undefined
+        )) as ILeadDesistidoExport[];
+
+        if (!filas || filas.length === 0) {
+          toast.info('No hay leads desistidos con los filtros seleccionados');
+          return;
+        }
+
+        generarExcel(filas);
+
+        toast.success(`Se exportaron ${filas.length} leads`);
+        modalExportarAbierto.value = false;
+      } catch (error: any) {
+        console.error('Error exportando leads desistidos', error);
+
+        toast.error(error.message ?? 'No se pudo exportar el Excel');
+      } finally {
+        exportando.value = false;
+      }
+    }
+
+    // =========================================================
     // REABRIR LEAD
     // =========================================================
 
@@ -364,11 +566,17 @@ export default defineComponent({
     // =========================================================
 
     onMounted(async () => {
+      window.addEventListener('keydown', onKeydown);
+
       if (puedeFiltrarPorAsesor) {
         await cargarAsesores();
       }
 
       await cargarLeads();
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('keydown', onKeydown);
     });
 
     return {
@@ -414,6 +622,18 @@ export default defineComponent({
       cambiarAsesor,
       aplicarFiltros,
       limpiarFiltros,
+
+      // exportar excel
+      modalExportarAbierto,
+      exportando,
+      exportIdAsesor,
+      exportFechaInicio,
+      exportFechaFin,
+      rangoFechasInvalido,
+      abrirModalExportar,
+      cerrarModalExportar,
+      limpiarFiltrosExportar,
+      exportarExcel,
     };
   },
 });
