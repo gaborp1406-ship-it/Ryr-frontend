@@ -45,6 +45,7 @@ interface ILeadDesistidoExport {
   numero: string | null;
   motivo_desistimiento: string | null;
   fecha_desistimiento: string | null;
+  estado_contacto: string | null;
   comentarios: IComentarioDesistido[] | string | null;
 }
 
@@ -429,6 +430,7 @@ export default defineComponent({
         'Número',
         'Motivo de desistimiento',
         'Fecha de desistimiento',
+        'Estado de contacto',
         ...encabezadosComentarios,
       ];
 
@@ -441,6 +443,7 @@ export default defineComponent({
           fila.numero ?? '',
           fila.motivo_desistimiento ?? '',
           fila.fecha_desistimiento ?? '',
+          fila.estado_contacto ?? '',
           ...Array.from({ length: maxComentarios }, (_, i) => comentarios[i] ?? ''),
         ];
       });
@@ -454,6 +457,7 @@ export default defineComponent({
         { wch: 14 }, // Número
         { wch: 34 }, // Motivo
         { wch: 20 }, // Fecha de desistimiento
+        { wch: 18 }, // Estado de contacto
         ...encabezadosComentarios.map(() => ({ wch: 50 })),
       ];
 
