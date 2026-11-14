@@ -279,11 +279,11 @@ export const reabrirLeadEtapa = async (
     throw error;
   }
 };
-
 export const obtenerLeadsDesistidos = async (
   idAgente?: number,
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  estadoContacto?: string
 ) => {
   try {
     const { data } = await automatizateApiNest.get(
@@ -293,6 +293,7 @@ export const obtenerLeadsDesistidos = async (
           id_agente: idAgente,
           fecha_inicio: fechaInicio,
           fecha_fin: fechaFin,
+          estado_contacto: estadoContacto,
         },
       }
     );

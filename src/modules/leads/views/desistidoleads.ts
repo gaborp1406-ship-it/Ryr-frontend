@@ -43,9 +43,12 @@ interface ILeadDesistidoExport {
   nombres_apellidos: string | null;
   dni: string | null;
   numero: string | null;
+  nombre_asesor: string | null;
+  proyecto_interes: string | null;
+  fuente: string | null;
+  estado_contacto: string | null;
   motivo_desistimiento: string | null;
   fecha_desistimiento: string | null;
-  estado_contacto: string | null;
   comentarios: IComentarioDesistido[] | string | null;
 }
 
@@ -376,6 +379,7 @@ export default defineComponent({
     const exportIdAsesor = ref<number | undefined>(undefined);
     const exportFechaInicio = ref<string>('');
     const exportFechaFin = ref<string>('');
+    const exportEstadoContacto = ref<'' | 'contactado' | 'no_contactado'>('');
 
     const rangoFechasInvalido = computed(
       () =>
@@ -389,6 +393,7 @@ export default defineComponent({
       exportIdAsesor.value = idAsesorSeleccionado.value;
       exportFechaInicio.value = fechaInicio.value;
       exportFechaFin.value = fechaFin.value;
+      exportEstadoContacto.value = '';
 
       modalExportarAbierto.value = true;
     }
@@ -402,6 +407,7 @@ export default defineComponent({
       exportIdAsesor.value = undefined;
       exportFechaInicio.value = '';
       exportFechaFin.value = '';
+      exportEstadoContacto.value = '';
     }
 
     function onKeydown(event: KeyboardEvent) {
@@ -428,9 +434,12 @@ export default defineComponent({
         'Nombres y Apellidos',
         'DNI',
         'Número',
+        'Asesor',
+        'Proyecto de interés',
+        'Fuente',
+        'Estado de contacto',
         'Motivo de desistimiento',
         'Fecha de desistimiento',
-        'Estado de contacto',
         ...encabezadosComentarios,
       ];
 
@@ -441,9 +450,12 @@ export default defineComponent({
           fila.nombres_apellidos ?? '',
           fila.dni ?? '',
           fila.numero ?? '',
+          fila.nombre_asesor ?? '',
+          fila.proyecto_interes ?? '',
+          fila.fuente ?? '',
+          fila.estado_contacto ?? '',
           fila.motivo_desistimiento ?? '',
           fila.fecha_desistimiento ?? '',
-          fila.estado_contacto ?? '',
           ...Array.from({ length: maxComentarios }, (_, i) => comentarios[i] ?? ''),
         ];
       });
@@ -455,9 +467,12 @@ export default defineComponent({
         { wch: 34 }, // Nombres y Apellidos
         { wch: 14 }, // DNI
         { wch: 14 }, // Número
+        { wch: 22 }, // Asesor
+        { wch: 28 }, // Proyecto de interés
+        { wch: 22 }, // Fuente
+        { wch: 18 }, // Estado de contacto
         { wch: 34 }, // Motivo
         { wch: 20 }, // Fecha de desistimiento
-        { wch: 18 }, // Estado de contacto
         ...encabezadosComentarios.map(() => ({ wch: 50 })),
       ];
 
@@ -488,7 +503,8 @@ export default defineComponent({
         const filas = (await obtenerLeadsDesistidos(
           idAgente,
           exportFechaInicio.value || undefined,
-          exportFechaFin.value || undefined
+          exportFechaFin.value || undefined,
+          exportEstadoContacto.value || undefined
         )) as ILeadDesistidoExport[];
 
         if (!filas || filas.length === 0) {
@@ -633,6 +649,7 @@ export default defineComponent({
       exportIdAsesor,
       exportFechaInicio,
       exportFechaFin,
+      exportEstadoContacto,
       rangoFechasInvalido,
       abrirModalExportar,
       cerrarModalExportar,

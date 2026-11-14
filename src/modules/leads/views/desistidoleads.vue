@@ -102,17 +102,17 @@
             Limpiar
           </button>
 
-          <!-- EXPORTAR EXCEL -->
-       <button v-if="puedeFiltrarPorAsesor" type="button" @click="abrirModalExportar"
-  class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#2d8c4a]/40 bg-[#2d8c4a]/10 px-5 text-xs font-semibold text-[#1e6236] transition hover:bg-[#2d8c4a]/20">
-  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <path d="m7 10 5 5 5-5" />
-    <path d="M12 15V3" />
-  </svg>
-  Exportar Excel
-</button>
+          <!-- EXPORTAR EXCEL (oculto si es agente) -->
+          <button v-if="puedeFiltrarPorAsesor" type="button" @click="abrirModalExportar"
+            class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#2d8c4a]/40 bg-[#2d8c4a]/10 px-5 text-xs font-semibold text-[#1e6236] transition hover:bg-[#2d8c4a]/20">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M12 15V3" />
+            </svg>
+            Exportar Excel
+          </button>
         </div>
 
       </div>
@@ -290,7 +290,7 @@
               Exportar leads desistidos
             </h2>
             <p class="mt-1 text-xs text-slate-500">
-              Elige los filtros y descarga el Excel con nombre, DNI, número, motivo y comentarios.
+              Elige los filtros y descarga el Excel con los datos del lead, motivo y comentarios.
             </p>
           </div>
 
@@ -318,6 +318,19 @@
               <option v-for="asesor in asesores" :key="asesor.id_asesor" :value="asesor.id_asesor">
                 {{ asesor.nombre_abrev || asesor.nombre }}
               </option>
+            </select>
+          </div>
+
+          <!-- ESTADO DE CONTACTO -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Estado de contacto
+            </label>
+            <select v-model="exportEstadoContacto" :disabled="exportando"
+              class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none transition focus:border-[#2d8c4a] focus:ring-2 focus:ring-[#2d8c4a]/10 disabled:cursor-not-allowed disabled:bg-slate-50">
+              <option value="">Todos</option>
+              <option value="contactado">Contactado</option>
+              <option value="no_contactado">No contactado</option>
             </select>
           </div>
 
