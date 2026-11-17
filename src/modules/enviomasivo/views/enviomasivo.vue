@@ -179,7 +179,8 @@
             <p class="text-xs text-emerald-800/80">
               <strong>{{ excelInfo.filas }}</strong> contacto(s) leídos
               <span v-if="excelInfo.sinTelefono"> · {{ excelInfo.sinTelefono }} fila(s) sin teléfono omitidas</span>
-              <span v-if="excelInfo.columnas.length"> · campos: {{excelInfo.columnas.map((c) => '{' + c + '}').join('') }}</span>
+              <span v-if="excelInfo.columnas.length"> · campos: {{excelInfo.columnas.map((c) => '{' + c + '}').join('')
+              }}</span>
             </p>
           </div>
           <button type="button"
@@ -217,7 +218,7 @@
           {{ excelError }}
         </p>
 
-   
+
       </div>
 
       <div class="mt-5 flex flex-wrap gap-2">
@@ -303,6 +304,12 @@
                     @click="cancelar(c.id)">
                     Cancelar
                   </button>
+
+                  <button type="button"
+                    class="rounded-md border border-teal-700 bg-white px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+                    @click="abrirRespuestas(c)">
+                    Ver
+                  </button>
                 </div>
               </td>
             </tr>
@@ -362,7 +369,7 @@
               <td class="px-2 py-2.5">{{ d.nombre ?? '—' }}</td>
               <td class="px-2 py-2.5">
                 <span :class="claseChip(d.estado)">{{ etiqueta(d.estado) }}</span>
-                <span v-if="d.respondio" :class="[claseChip('LEIDO'), 'ml-1']">Respondió</span>
+
               </td>
             </tr>
           </tbody>
@@ -450,7 +457,68 @@
         </div>
       </div>
     </section>
+    <!-- ───────── Modal: respuestas de la campaña ───────── -->
+    <div v-if="respuestasModal.abierto" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      @click.self="cerrarRespuestas">
+      <div class="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-xl" role="dialog"
+        aria-modal="true" aria-labelledby="t-respuestas">
+        <div class="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
+          <div class="min-w-0">
+            <h2 id="t-respuestas" class="text-lg font-semibold">Respuestas de la campaña</h2>
+            <p class="truncate text-sm text-slate-500">{{ respuestasModal.campania?.nombre }}</p>
+          </div>
+          <button type="button" class="rounded-md px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+            @click="cerrarRespuestas">
+            Cerrar
+          </button>
+        </div>
 
+        <!-- Pestañas -->
+        <div class="flex flex-wrap gap-2 border-b border-slate-200 px-5 py-3" role="tablist">
+          <button v-for="t in TABS_RESPUESTA" :key="t.clave" type="button" role="tab"
+            :aria-selected="respuestasModal.tab === t.clave"
+            class="rounded-full border px-3 py-1 text-xs font-semibold transition" :class="respuestasModal.tab === t.clave
+              ? 'border-teal-700 bg-teal-700 text-white'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-500'"
+            @click="respuestasModal.tab = t.clave">
+            {{ t.texto }} ({{ respuestasModal.resumen[t.clave] }})
+          </button>
+        </div>
+        <!-- Buscador -->
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-3">
+          <input v-model="respuestasModal.busqueda" type="search" placeholder="Buscar por nombre o número"
+            class="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30 sm:w-72" />
+          <span v-if="respuestasModal.busqueda.trim()" class="text-xs text-slate-500">
+            {{ respuestasTab.length }} de {{ respuestasDelTab.length }}
+          </span>
+        </div>
+        <!-- Lista -->
+        <div class="overflow-auto p-5">
+          <p v-if="respuestasModal.cargando" class="py-2 text-sm text-slate-500">Cargando respuestas…</p>
+          <p v-else-if="!respuestasTab.length" class="py-2 text-sm text-slate-500">
+            {{ respuestasModal.busqueda.trim() ? 'Ninguna respuesta coincide con tu búsqueda.' : 'No hay destinatarios en esta categoría.' }}
+          </p>
+          <table v-else class="w-full text-left text-sm">
+            <thead class="sticky top-0 bg-white">
+              <tr class="border-b border-slate-200 text-xs text-slate-500">
+                <th class="px-2 py-2 font-semibold">Teléfono</th>
+                <th class="px-2 py-2 font-semibold">Nombre</th>
+                <th class="px-2 py-2 font-semibold">Mensaje</th>
+                <th class="px-2 py-2 font-semibold">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in respuestasTab" :key="r.id" class="border-b border-slate-100 align-top">
+                <td class="px-2 py-2.5 tabular-nums">{{ r.telefono }}</td>
+                <td class="px-2 py-2.5">{{ r.nombre ?? '—' }}</td>
+                <td class="max-w-[260px] px-2 py-2.5 text-slate-600">{{ r.mensaje || '—' }}</td>
+                <td class="px-2 py-2.5 text-xs text-slate-500">{{ formatoFecha(r.fecha) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

@@ -1,4 +1,3 @@
-// src/modules/enviomasivo/views/enviomasivo.ts
 import { computed, defineComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import * as api from '../actions/masivo.actions';
 import type {
@@ -11,11 +10,21 @@ import type {
   IDestinatarioEstado,
   IOptout,
   IPlantilla,
+  IRespuesta,
   TipoHeader,
+  TipoRespuesta,
 } from '../interfaces/masivo.interface';
 
 const LIMITE = 50;
 const CAMPANIAS_POR_PAGINA = 5;
+
+
+
+const TABS_RESPUESTA: { clave: TipoRespuesta; texto: string }[] = [
+  { clave: 'CONFIRMA', texto: 'Confirmaron' },
+  { clave: 'INFO', texto: 'Piden información' },
+  { clave: 'BAJA', texto: 'No quieren nada' },
+];
 
 const ESTADOS_DESTINATARIO: EstadoDestinatario[] = [
   'PENDIENTE', 'ENVIANDO', 'ENVIADO', 'ENTREGADO', 'LEIDO', 'FALLIDO', 'EXCLUIDO',
@@ -44,6 +53,9 @@ const formatoFecha = (iso?: string | null) =>
     ? new Date(iso).toLocaleString('es-PE', { timeZone: 'America/Lima', dateStyle: 'short', timeStyle: 'short' })
     : '—';
 
+/** Minúsculas y sin tildes, para buscar "jose" y encontrar "José" */
+const sinTildes = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 /** Partes de la barra de avance de una campaña (suman 100 %) */
 const segmentos = (c: ICampaniaResumen) => {
   const total = c.total || 0;
@@ -715,7 +727,61 @@ export default defineComponent({
         notificar('error', mensajeError(e));
       }
     };
+    // ───────── modal de respuestas ─────────
+    const respuestasModal = reactive({
+      abierto: false,
+      cargando: false,
+      campania: null as ICampaniaResumen | null,
+      tab: 'CONFIRMA' as TipoRespuesta,
+      busqueda: '',                                    // ← nuevo
+      items: [] as IRespuesta[],
+      resumen: { CONFIRMA: 0, INFO: 0, BAJA: 0 } as Record<TipoRespuesta, number>,
+    });
 
+    /** Respuestas de la pestaña activa (sin filtrar por búsqueda) */
+    const respuestasDelTab = computed(() =>
+      respuestasModal.items.filter((i) => i.tipo === respuestasModal.tab),
+    );
+
+    /** Lo anterior, filtrado por nombre o teléfono */
+    const respuestasTab = computed(() => {
+      const q = respuestasModal.busqueda.trim();
+      if (!q) return respuestasDelTab.value;
+
+      const soloNumero = /^[\d\s+\-()]+$/.test(q);     // "987 654", "+51 987…" → busca por teléfono
+      const digitos = q.replace(/\D/g, '');
+      const texto = sinTildes(q);
+
+      return respuestasDelTab.value.filter((r) =>
+        soloNumero
+          ? r.telefono.includes(digitos)
+          : sinTildes(r.nombre ?? '').includes(texto) || r.telefono.includes(digitos || '\u0000'),
+      );
+    });
+    const abrirRespuestas = async (c: ICampaniaResumen) => {
+      respuestasModal.abierto = true;
+      respuestasModal.campania = c;
+      respuestasModal.tab = 'CONFIRMA';
+      respuestasModal.busqueda = '';                      // ← nuevo
+      respuestasModal.items = [];
+      respuestasModal.resumen = { CONFIRMA: 0, INFO: 0, BAJA: 0 };
+      respuestasModal.cargando = true;
+      try {
+        const r = await api.obtenerRespuestas(c.id);
+        respuestasModal.items = r.items;
+        respuestasModal.resumen = r.resumen;
+      } catch (e) {
+        notificar('error', mensajeError(e));
+      } finally {
+        respuestasModal.cargando = false;
+      }
+    };
+
+    const cerrarRespuestas = () => {
+      respuestasModal.abierto = false;
+      respuestasModal.campania = null;
+      respuestasModal.items = [];
+    };
     // ───────── ciclo de vida: refresco mientras haya envíos en curso ─────────
     let timer: ReturnType<typeof setInterval> | undefined;
 
@@ -760,6 +826,10 @@ export default defineComponent({
       ocupado, iniciar, pausar, cancelar,
       // exclusión
       optoutTelefono, optouts, optoutsFiltrados, busquedaOptout, cargandoOptout, cargarOptouts, gestionarOptout,
+
+      //destinatrios respuesta
+
+      TABS_RESPUESTA, respuestasModal, respuestasTab, respuestasDelTab, abrirRespuestas, cerrarRespuestas,
     };
   },
 });

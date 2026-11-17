@@ -159,3 +159,22 @@ export interface IOptoutResp {
   telefono: string;
   excluido: boolean;
 }
+
+// ───────── Respuestas clasificadas ─────────
+
+export type TipoRespuesta = 'CONFIRMA' | 'INFO' | 'BAJA';
+
+/** Fila de GET /campanias/:id/respuestas */
+export interface IRespuesta {
+  id: number | string;
+  telefono: string;
+  nombre: string | null;
+  tipo: TipoRespuesta;
+  mensaje: string | null;
+  fecha: string;
+}
+
+export interface IRespuestasResp {
+  resumen: Record<TipoRespuesta, number>;
+  items: IRespuesta[];
+}

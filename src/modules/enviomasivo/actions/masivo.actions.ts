@@ -16,6 +16,7 @@ import type {
   IReintentoResp,
   ICarga,
   TipoHeader,
+  IRespuestasResp,
 } from '../interfaces/masivo.interface';
 
 /** Convierte cualquier error de axios en un Error con el mensaje del backend */
@@ -194,5 +195,16 @@ export const quitarOptout = async (telefono: string): Promise<IOptoutResp> => {
     return data;
   } catch (error) {
     return lanzar(error, 'Error al quitar el teléfono de la lista de exclusión.');
+  }
+};
+
+// ───────── Respuestas clasificadas ─────────
+
+export const obtenerRespuestas = async (id: number | string): Promise<IRespuestasResp> => {
+  try {
+    const { data } = await automatizateApiNest.get(`/campanias/${id}/respuestas`);
+    return data;
+  } catch (error) {
+    return lanzar(error, 'Error al obtener las respuestas de la campaña.');
   }
 };
