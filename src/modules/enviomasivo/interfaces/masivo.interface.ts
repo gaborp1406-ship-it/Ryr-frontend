@@ -65,6 +65,18 @@ export interface ICarga {
   repetidos: number;
 }
 
+// ───────── Archivo del header (POST /campanias/archivo) ─────────
+
+export interface IArchivoSubido {
+  url: string;
+  tipo: TipoHeader;
+  formato: string | null;
+  bytes: number;
+  /** Segundos (solo video) */
+  duracion: number | null;
+  public_id: string;
+}
+
 // ───────── Campañas ─────────
 
 /** Fila de GET /campanias */

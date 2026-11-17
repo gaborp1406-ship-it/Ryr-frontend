@@ -61,29 +61,164 @@
         </label>
       </div>
 
-      <label v-if="headerFormato" class="mt-4 block">
+      <!-- ───────── Archivo del header (video / imagen / PDF) ───────── -->
+      <div v-if="headerFormato" class="mt-4">
         <span class="mb-1 block text-sm font-semibold text-slate-700">
-          URL pública del {{ headerFormato === 'video' ? 'video' : headerFormato === 'image' ? 'imagen' : 'documento' }}
+          {{ headerFormato === 'video' ? 'Video' : headerFormato === 'image' ? 'Imagen' : 'Documento' }} de la plantilla
         </span>
-        <input v-model="form.headerUrl" type="url" placeholder="https://…"
-          class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30" />
-        <span class="mt-1 block text-xs text-slate-500">
-          Debe ser un enlace directo y público (HTTPS). Meta pide el archivo en cada envío.
-        </span>
-      </label>
 
-      <label class="mt-4 block">
-        <span class="mb-1 block text-sm font-semibold text-slate-700">Destinatarios</span>
-        <textarea v-model="form.destinatariosTexto" rows="7" spellcheck="false"
-          placeholder="987654321&#10;+51 993 796 736, Gabriel Torres&#10;955007460, Ana Ruiz, proyecto=Alameda"
-          class="w-full resize-y rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-sm focus:border-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-700/30" />
-        <span class="mt-1 block text-xs text-slate-500">
-     
-          <strong class="text-slate-700">{{ destinatariosParseados.length }}</strong> línea(s) leída(s).
-        </span>
-      </label>
+        <!-- Subiendo / procesando -->
+        <div v-if="subiendoArchivo" class="rounded-xl border border-slate-200 bg-white p-4" role="status"
+          aria-live="polite">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-slate-800">{{ subida.nombre }}</p>
+              <p class="text-xs text-slate-500">
+                {{ formatoTamano(subida.bytes) }} ·
+                {{ subida.fase === 'subiendo' ? 'Subiendo archivo…' : 'Procesando…' }}
+              </p>
+            </div>
+            <span class="text-sm font-bold tabular-nums text-[#2d8c4a]">{{ subida.visual }}%</span>
+          </div>
 
+          <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+            <div class="h-full rounded-full bg-[#2d8c4a] transition-all duration-500"
+              :class="subida.fase === 'procesando' ? 'animate-pulse' : ''" :style="{ width: subida.visual + '%' }">
+            </div>
+          </div>
 
+          <div class="mt-3 flex items-center justify-between gap-3">
+            <span class="text-xs text-slate-500">
+              {{ subida.fase === 'subiendo' ? 'Paso 1 de 2' : 'Paso 2 de 2' }}
+            </span>
+            <button type="button"
+              class="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500"
+              @click="cancelarSubida">
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Listo: vista previa -->
+        <div v-else-if="subida.fase === 'listo' && form.headerUrl"
+          class="rounded-xl border border-[#2d8c4a]/30 bg-[#2d8c4a]/5 p-4">
+          <div class="flex flex-wrap items-start gap-4">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2d8c4a] text-white">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold text-slate-800">Archivo subido</p>
+              <p class="truncate text-xs text-slate-500">
+                {{ subida.nombre }} · {{ formatoTamano(subida.bytes) }}<span v-if="subida.duracion"> · {{
+                  Math.round(subida.duracion) }} s</span>
+              </p>
+              <div class="mt-3">
+                <video v-if="headerFormato === 'video'" :src="form.headerUrl" controls preload="metadata"
+                  class="max-h-56 w-full max-w-sm rounded-lg bg-black"></video>
+                <img v-else-if="headerFormato === 'image'" :src="form.headerUrl" alt="Vista previa"
+                  class="max-h-56 rounded-lg border border-slate-200" />
+                <a v-else :href="form.headerUrl" target="_blank" rel="noopener"
+                  class="text-sm font-semibold text-[#2d8c4a] underline">Abrir documento</a>
+              </div>
+            </div>
+            <button type="button"
+              class="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold hover:border-slate-500"
+              @click="quitarArchivo">
+              Cambiar archivo
+            </button>
+          </div>
+        </div>
+
+        <!-- Inactivo / error: zona para soltar -->
+        <label v-else
+          class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-7 text-center transition focus-within:ring-2 focus-within:ring-teal-700/30"
+          :class="subida.arrastrando
+            ? 'border-teal-600 bg-teal-50'
+            : 'border-slate-300 bg-slate-50 hover:border-teal-600 hover:bg-teal-50/50'"
+          @dragover.prevent="subida.arrastrando = true" @dragleave.prevent="subida.arrastrando = false"
+          @drop.prevent="alSoltarArchivo">
+          <input type="file" class="sr-only" :accept="aceptaArchivo" @change="alElegirArchivo" />
+          <svg viewBox="0 0 24 24" class="h-9 w-9 text-teal-700" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16V4m0 0l-4 4m4-4l4 4" />
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+          </svg>
+          <span class="text-sm font-semibold text-slate-700">
+            Arrastra tu {{ nombreTipoHeader }} aquí o <span class="text-teal-700 underline">elígelo</span>
+          </span>
+          <span class="text-xs text-slate-500">Máximo {{ limiteMbHeader }} MB · se sube a Cloudinary</span>
+        </label>
+
+        <p v-if="subida.fase === 'error'" role="alert"
+          class="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ subida.error }}
+        </p>
+
+      </div>
+
+      <!-- ───────── Destinatarios ───────── -->
+      <div class="mt-4">
+        <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <span class="block text-sm font-semibold text-slate-700">Destinatarios</span>
+          <button type="button" class="text-xs font-semibold text-teal-700 hover:underline"
+            @click="descargarPlantillaExcel">
+            Descargar plantilla de Excel
+          </button>
+        </div>
+
+        <!-- Subir Excel -->
+        <div v-if="excelInfo"
+          class="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <span
+            class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-xs font-black text-white">XLS</span>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-bold text-emerald-900">{{ excelInfo.nombre }}</p>
+            <p class="text-xs text-emerald-800/80">
+              <strong>{{ excelInfo.filas }}</strong> contacto(s) leídos
+              <span v-if="excelInfo.sinTelefono"> · {{ excelInfo.sinTelefono }} fila(s) sin teléfono omitidas</span>
+              <span v-if="excelInfo.columnas.length"> · campos: {{excelInfo.columnas.map((c) => '{' + c + '}').join('') }}</span>
+            </p>
+          </div>
+          <button type="button"
+            class="rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold hover:border-slate-500"
+            @click="quitarExcel">
+            Quitar Excel
+          </button>
+        </div>
+
+        <label v-else
+          class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-5 text-center transition focus-within:ring-2 focus-within:ring-teal-700/30"
+          :class="excelArrastrando
+            ? 'border-teal-600 bg-teal-50'
+            : 'border-slate-300 bg-slate-50 hover:border-teal-600 hover:bg-teal-50/50'"
+          @dragover.prevent="excelArrastrando = true" @dragleave.prevent="excelArrastrando = false"
+          @drop.prevent="alSoltarExcel">
+          <input type="file" class="sr-only" accept=".xlsx,.xls,.csv" @change="alElegirExcel" />
+          <span v-if="excelLeyendo" class="flex items-center gap-2 text-sm font-semibold text-[#2d8c4a]">
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-[#2d8c4a] border-t-transparent"></span>
+            Leyendo Excel…
+          </span>
+          <template v-else>
+            <span class="text-sm font-semibold text-slate-700">
+              Arrastra tu Excel aquí o <span class="text-teal-700 underline">elígelo</span>
+            </span>
+            <span class="text-xs text-slate-500">
+              .xlsx, .xls o .csv · columnas: <strong>telefono</strong>, <strong>nombre</strong>; las demás sirven
+              como <code class="rounded bg-white px-1">{proyecto}</code>, etc.
+            </span>
+          </template>
+        </label>
+
+        <p v-if="excelError" role="alert"
+          class="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ excelError }}
+        </p>
+
+   
+      </div>
 
       <div class="mt-5 flex flex-wrap gap-2">
         <button type="button" :disabled="!formValido || guardando"
@@ -149,7 +284,7 @@
                 </div>
                 <div class="text-xs text-slate-500">
                   {{ c.enviados }}/{{ c.total }} enviados · {{ c.fallidos }} fallidos · {{ c.excluidos }} excluidos
-                  </div>
+                </div>
               </td>
               <td class="px-2 py-3">
                 <div class="flex flex-wrap gap-1.5">
@@ -175,8 +310,7 @@
         </table>
       </div>
 
-      <div v-if="totalPaginasCampanias > 1"
-        class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div v-if="totalPaginasCampanias > 1" class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
         <span class="text-xs text-slate-500">
           Mostrando {{ desdeCampanias }}–{{ hastaCampanias }} de {{ campanias.length }} campañas
         </span>
@@ -194,8 +328,6 @@
           </button>
         </div>
       </div>
-
-    
     </section>
 
     <!-- ───────── Detalle ───────── -->
@@ -203,20 +335,14 @@
       <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="t-detalle" class="text-lg font-semibold">{{ detalle.nombre }}</h2>
-      
         </div>
         <div class="flex gap-1.5">
-      
           <button type="button" class="rounded-md px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
             @click="cerrarDetalle">
             Cerrar
           </button>
         </div>
       </div>
-
-    
-
-     
 
       <p v-if="cargandoDetalle" class="py-2 text-sm text-slate-500">Cargando destinatarios…</p>
       <p v-else-if="!destinatarios.length" class="py-2 text-sm text-slate-500">No hay destinatarios con este filtro.</p>
@@ -228,7 +354,6 @@
               <th class="px-2 py-2 font-semibold">Teléfono</th>
               <th class="px-2 py-2 font-semibold">Nombre</th>
               <th class="px-2 py-2 font-semibold">Estado</th>
-       
             </tr>
           </thead>
           <tbody>

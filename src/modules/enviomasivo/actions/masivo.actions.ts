@@ -2,6 +2,7 @@
 import { automatizateApiNest } from '@/api/automatizateApiNest';
 import { isAxiosError } from 'axios';
 import type {
+  IArchivoSubido,
   ICampaniaDetalle,
   ICampaniaResumen,
   ICrearCampaniaDto,
@@ -14,6 +15,7 @@ import type {
   IPlantilla,
   IReintentoResp,
   ICarga,
+  TipoHeader,
 } from '../interfaces/masivo.interface';
 
 /** Convierte cualquier error de axios en un Error con el mensaje del backend */
@@ -33,6 +35,37 @@ export const listarPlantillas = async (): Promise<IPlantilla[]> => {
     return data;
   } catch (error) {
     return lanzar(error, 'Error al listar las plantillas de Meta.');
+  }
+};
+
+// ───────── Archivo del header (Cloudinary) ─────────
+
+/**
+ * Sube el video/imagen/PDF al backend, que lo manda a Cloudinary y devuelve la URL pública.
+ * `onProgreso` recibe 0-100 mientras el archivo viaja hacia el servidor.
+ */
+export const subirArchivo = async (
+  archivo: File,
+  tipo: TipoHeader,
+  onProgreso?: (porcentaje: number) => void,
+  signal?: AbortSignal,
+): Promise<IArchivoSubido> => {
+  const fd = new FormData();
+  fd.append('archivo', archivo);
+  try {
+    const { data } = await automatizateApiNest.post('/campanias/archivo', fd, {
+      params: { tipo },
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000,
+      signal,
+      onUploadProgress: (e) => {
+        const total = e.total || archivo.size;
+        if (total) onProgreso?.(Math.min(100, Math.round((e.loaded * 100) / total)));
+      },
+    });
+    return data;
+  } catch (error) {
+    return lanzar(error, 'Error al subir el archivo.');
   }
 };
 
