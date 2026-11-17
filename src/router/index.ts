@@ -9,6 +9,7 @@ import { ConexionesRoutes } from '@/modules/estados/routes';
 import { closingRoutes } from '@/modules/leads/routes/closing.routes';
 import { desistedRoutes } from '@/modules/leads/routes/desisted.routes';
 import { LuneRoutes } from '@/modules/lune/routes';
+import { MasiveRoutes } from '@/modules/enviomasivo/routes';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,7 @@ const router = createRouter({
         ConexionesRoutes,
         closingRoutes,
         desistedRoutes,
+        MasiveRoutes
       ],
     },
     {
