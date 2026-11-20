@@ -197,7 +197,7 @@ export default defineComponent({
         // -- KPIs --
         // /dashboard/total-leads -> [{ "total_leads": "4" }]
         const totalLeadsValor = pickNumber(firstItem(totalLeads), [
-          'total_leads',
+          'cantidad',
         ]);
 
         // /dashboard/leads-cierre -> [{ "cantidad_leads_cierre": "1" }]
